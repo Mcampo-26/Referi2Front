@@ -1,9 +1,9 @@
 
 
-
-//export const URL = 'https://e-commerceback-production-c41c.up.railway.app';
-
+export const URL = 'https://referido2-back-6aoa1q1v7-mcampo26s-projects.vercel.app';
 
 
 
-export const URL = "http://localhost:8080"
+
+
+//export const URL = "http://localhost:8080"
