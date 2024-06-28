@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import QRCode from 'qrcode.react';
 import { Button, TextField, Grid, Container, Typography, Card, CardContent, Paper, Box } from '@mui/material';
 import { useQrStore } from '../store/UseQrStore'; // Ruta corregida
 import { WhatsApp } from '@mui/icons-material';
+import axios from 'axios';
+import { URL } from '../utilities/config'; // Asegúrate de que esta ruta sea correcta
 
 export const QrMain = () => {
   const [inputValue, setInputValue] = useState('');
@@ -11,7 +12,7 @@ export const QrMain = () => {
   const [mail, setMail] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [qrValue, setQrValue] = useState('');
+  const [base64Image, setBase64Image] = useState('');
 
   const createQr = useQrStore((state) => state.createQr);
 
@@ -33,14 +34,38 @@ export const QrMain = () => {
         Correo: ${mail}\n
         Hora de inicio: ${startTime}\n
         Hora de fin: ${endTime}
-      `;
-      setQrValue(combinedData);
+      `.trim(); // Trim to remove leading/trailing spaces/newlines
+      const response = await axios.get(`${URL}/Qr/generate-qr`, { params: { text: combinedData } });
+      setBase64Image(response.data.base64Image);
     }
   };
 
   const handleWhatsAppShare = () => {
-    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(qrValue)}`;
-    window.open(whatsappUrl, '_blank');
+    if (!base64Image) {
+      alert('No QR code to share');
+      return;
+    }
+
+    const byteCharacters = atob(base64Image);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
+    const file = new File([blob], 'qr-code.png', { type: 'image/png' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({
+        files: [file],
+        title: 'QR Code',
+        text: 'Here is the QR code',
+      })
+      .then(() => console.log('Successful share'))
+      .catch((error) => console.log('Error sharing', error));
+    } else {
+      alert('Your browser does not support sharing files.');
+    }
   };
 
   return (
@@ -52,7 +77,7 @@ export const QrMain = () => {
           </Typography>
           <Grid container spacing={4}>
             <Grid item xs={12} md={6}>
-              <Box className="p-4 bg-gray-100 rounded-md shadow-md">
+              <Box className="p-4 bg-gray-100 dark:bg-gray-800 rounded-md shadow-md">
                 <TextField
                   label="Empresa"
                   variant="outlined"
@@ -110,7 +135,7 @@ export const QrMain = () => {
                 >
                   Generar QR
                 </Button>
-                {qrValue && (
+                {base64Image && (
                   <Button
                     variant="contained"
                     color="success"
@@ -125,9 +150,9 @@ export const QrMain = () => {
               </Box>
             </Grid>
             <Grid item xs={12} md={6} className="flex justify-center items-center">
-              {qrValue && (
-                <Paper elevation={3} className="p-5 bg-white rounded-md shadow-md">
-                  <QRCode value={qrValue} size={300} />
+              {base64Image && (
+                <Paper elevation={3} className="p-5 bg-white dark:bg-gray-800 rounded-md shadow-md">
+                  <img src={`data:image/png;base64,${base64Image}`} alt="Generated QR Code" />
                 </Paper>
               )}
             </Grid>
@@ -137,4 +162,3 @@ export const QrMain = () => {
     </Container>
   );
 };
-

@@ -19,12 +19,14 @@ import {
   IconButton,
   CircularProgress
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 export const QrList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { getQrs, qrs, loading, deleteQr } = useQrStore();
   const [orderBy, setOrderBy] = useState('nombre');
   const [orderDirection, setOrderDirection] = useState('asc');
+  const theme = useTheme();
 
   useEffect(() => {
     getQrs();
@@ -110,63 +112,69 @@ export const QrList = () => {
 
   return (
     <Container>
-      
-      <div className="w-full md:w-1/3 flex items-center mx-auto mb-4">
+      <Box className="w-full md:w-1/3 flex items-center mx-auto mb-4">
         <TextField
           fullWidth
           variant="outlined"
           placeholder="Buscar QRs por nombre o ID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ marginTop: '1.5rem' }}
+          InputLabelProps={{ style: { color: theme.palette.text.primary } }}
+          InputProps={{
+            style: {
+              color: theme.palette.text.primary,
+              backgroundColor: theme.palette.background.paper,
+            },
+          }}
+          sx={{ marginTop: '1.5rem', bgcolor: theme.palette.background.default }}
         />
         <Button
           variant="contained"
           color="secondary"
           onClick={handleClear}
-          style={{ marginLeft: '1rem', marginTop: '1.5rem' }}
+          sx={{ marginLeft: '1rem', marginTop: '1.5rem' }}
         >
           Limpiar
         </Button>
-      </div>
+      </Box>
 
-      <Typography variant="h4" component="h1" sx={{ mt: 5 }} gutterBottom>
+      <Typography variant="h4" component="h1" sx={{ mt: 5, color: theme.palette.text.primary }} gutterBottom>
         Lista de QRs
       </Typography>
 
       {loading ? (
         <CircularProgress />
       ) : sortedQrs.length ? (
-        <TableContainer component={Paper} style={{ marginTop: '2rem' }}>
+        <TableContainer component={Paper} sx={{ marginTop: '2rem', bgcolor: theme.palette.background.default }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell onClick={() => handleSort('nombre')} style={{ cursor: 'pointer' }}>
+                <TableCell onClick={() => handleSort('nombre')} sx={{ cursor: 'pointer', color: theme.palette.text.primary }}>
                   Nombre {orderBy === 'nombre' && (orderDirection === 'asc' ? '▲' : '▼')}
                 </TableCell>
-                <TableCell onClick={() => handleSort('telefono')} style={{ cursor: 'pointer' }}>
+                <TableCell onClick={() => handleSort('telefono')} sx={{ cursor: 'pointer', color: theme.palette.text.primary }}>
                   Teléfono {orderBy === 'telefono' && (orderDirection === 'asc' ? '▲' : '▼')}
                 </TableCell>
-                <TableCell onClick={() => handleSort('mail')} style={{ cursor: 'pointer' }}>
+                <TableCell onClick={() => handleSort('mail')} sx={{ cursor: 'pointer', color: theme.palette.text.primary }}>
                   Correo {orderBy === 'mail' && (orderDirection === 'asc' ? '▲' : '▼')}
                 </TableCell>
-                <TableCell onClick={() => handleSort('startTime')} style={{ cursor: 'pointer' }}>
+                <TableCell onClick={() => handleSort('startTime')} sx={{ cursor: 'pointer', color: theme.palette.text.primary }}>
                   Hora de inicio {orderBy === 'startTime' && (orderDirection === 'asc' ? '▲' : '▼')}
                 </TableCell>
-                <TableCell onClick={() => handleSort('endTime')} style={{ cursor: 'pointer' }}>
+                <TableCell onClick={() => handleSort('endTime')} sx={{ cursor: 'pointer', color: theme.palette.text.primary }}>
                   Hora de fin {orderBy === 'endTime' && (orderDirection === 'asc' ? '▲' : '▼')}
                 </TableCell>
-                <TableCell>Acciones</TableCell>
+                <TableCell sx={{ color: theme.palette.text.primary }}>Acciones</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {sortedQrs.map((qr, index) => (
                 <TableRow key={qr._id || index}>
-                  <TableCell>{qr.nombre}</TableCell>
-                  <TableCell>{qr.telefono}</TableCell>
-                  <TableCell>{qr.mail}</TableCell>
-                  <TableCell>{qr.startTime}</TableCell>
-                  <TableCell>{qr.endTime}</TableCell>
+                  <TableCell sx={{ color: theme.palette.text.primary }}>{qr.nombre}</TableCell>
+                  <TableCell sx={{ color: theme.palette.text.primary }}>{qr.telefono}</TableCell>
+                  <TableCell sx={{ color: theme.palette.text.primary }}>{qr.mail}</TableCell>
+                  <TableCell sx={{ color: theme.palette.text.primary }}>{qr.startTime}</TableCell>
+                  <TableCell sx={{ color: theme.palette.text.primary }}>{qr.endTime}</TableCell>
                   <TableCell>
                     <IconButton
                       color="secondary"
@@ -181,7 +189,7 @@ export const QrList = () => {
           </Table>
         </TableContainer>
       ) : (
-        <Typography>No hay QRs disponibles.</Typography>
+        <Typography sx={{ color: theme.palette.text.primary }}>No hay QRs disponibles.</Typography>
       )}
     </Container>
   );
