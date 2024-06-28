@@ -6,6 +6,7 @@ import { Home } from "./pages/Home";
 import { QrList } from "./componentes/QrList";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
+import { ScanPage} from "./pages/ScanPage";
 
 const lightTheme = createTheme({
   palette: {
@@ -56,6 +57,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/Admin" element={<QrList />} />
+          <Route path="/Escanear" element={<ScanPage />} />
         </Routes>
       </div>
     </ThemeProvider>
