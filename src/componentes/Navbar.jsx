@@ -18,7 +18,7 @@ import MenuItem from "@mui/material/MenuItem";
 
 const navItems = [
   { id: 1, text: "Inicio", to: "/" },
-  { id: 2, text: "Escanea QR", to: "/Ofertas" },
+  { id: 2, text: "Escanear QR", to: "/Ofertas" },
   { id: 3, text: "admin", to: "/Admin" },
   { id: 4, text: "Referidos", to: "/Products" },
   {
@@ -30,9 +30,8 @@ const navItems = [
   },
 ];
 
-export const Navbar = () => {
+export const Navbar = ({ toggleDarkMode, darkMode }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
 
   const theme = createTheme({
     palette: {
@@ -47,10 +46,7 @@ export const Navbar = () => {
   });
 
   const toggleDrawer = (open) => (event) => {
-    if (
-      event.type === "keydown" &&
-      (event.key === "Tab" || event.key === "Shift")
-    ) {
+    if (event.type === "keydown" && (event.key === "Tab" || event.key === "Shift")) {
       return;
     }
     setDrawerOpen(open);
@@ -58,10 +54,6 @@ export const Navbar = () => {
 
   const closeMenu = () => {
     setDrawerOpen(false);
-  };
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
   };
 
   return (
