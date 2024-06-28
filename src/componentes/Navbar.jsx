@@ -18,7 +18,7 @@ import MenuItem from "@mui/material/MenuItem";
 
 const navItems = [
   { id: 1, text: "Inicio", to: "/" },
-  { id: 2, text: "Escanear QR", to: "/Ofertas" },
+  { id: 2, text: "Escanear QR", to: "/Escanear" },
   { id: 3, text: "admin", to: "/Admin" },
   { id: 4, text: "Referidos", to: "/Products" },
   {
