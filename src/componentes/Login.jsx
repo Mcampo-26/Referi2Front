@@ -27,7 +27,7 @@ export const Login = () => {
       <div className="absolute opacity-60 inset-0 z-0"></div>
       <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl z-10 dark:bg-gray-600">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold">¡Bienvenido a E-Shop!</h2>
+          <h2 className="mt-6 text-3xl font-bold">¡Bienvenido a Referi2</h2>
           <p className="mt-2 text-sm text-gray-600">Por favor, inicia sesión en tu cuenta</p>
         </div>
        
