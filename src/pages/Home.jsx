@@ -1,10 +1,10 @@
 import React from 'react'
-import {QrMain} from '../componentes/QrMain'
+import {InicioHome} from '../componentes/InicioHome'
 
 export const Home = () => {
   return (
     <div>
-     <QrMain/>
+     <InicioHome/>
     </div>
   )
 }

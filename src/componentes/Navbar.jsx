@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import Swal from 'sweetalert2';
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
@@ -15,29 +16,61 @@ import Brightness4 from "@mui/icons-material/Brightness4";
 import Brightness7 from "@mui/icons-material/Brightness7";
 import CloseIcon from "@mui/icons-material/Close";
 import MenuItem from "@mui/material/MenuItem";
-
-const navItems = [
-  { id: 1, text: "Inicio", to: "/" },
-  { id: 2, text: "Escanear QR", to: "/Escanear" },
-  { id: 3, text: "admin", to: "/Admin" },
-  { id: 4, text: "Referidos", to: "/Products" },
-  {
-    id: 8,
-    text: "Cerrar Sesión",
-    action: () => {
-      console.log("Cerrar Sesión");
-    },
-  },
-];
+import useUsuariosStore from "../store/useUsuariosStore";
 
 export const Navbar = ({ toggleDarkMode, darkMode }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { usuario, isAuthenticated, role, logoutUsuario } = useUsuariosStore((state) => ({
+    usuario: state.usuario,
+    isAuthenticated: state.isAuthenticated,
+    role: state.role,
+    logoutUsuario: state.logoutUsuario,
+  }));
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    closeMenu(); // Cierra el menú antes de mostrar el SweetAlert
+    Swal.fire({
+      title: 'Cerrando sesión...',
+      timer: 2000,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    }).then(() => {
+      logoutUsuario();
+      navigate('/');
+    
+    });
+  };
+
+  const navItems = isAuthenticated
+    ? role === "admin"
+      ? [
+          { id: 1, text: "Inicio", to: "/" },
+          { id: 8, text: "Crear", to: "/QrMain" },
+          { id: 2, text: "Escanear QR", to: "/Escanear" },
+          { id: 3, text: "admin", to: "/Admin" },
+          { id: 4, text: "Referidos", to: "/Products" }
+         
+
+        ]
+      : [
+         
+          { id: 8, text: "Crear", to: "/QrMain" },
+          { id: 2, text: "Escanear QR", to: "/Escanear" },
+        
+          { id: 5, text: "Cerrar Sesión", action: handleLogout },
+        ]
+    : [
+        { id: 6, text: "Iniciar Sesión", to: "/Login" },
+        { id: 7, text: "Registrarse", to: "/Register" },
+      ];
 
   const theme = createTheme({
     palette: {
       mode: darkMode ? "dark" : "light",
       primary: {
-        main: darkMode ? "#424242" : "#90caf9", // Gris oscuro en modo oscuro y azul claro en modo claro
+        main: darkMode ? "#424242" : "#90caf9",
       },
       background: {
         default: darkMode ? "#303030" : "#ffffff",
@@ -68,18 +101,30 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
           >
             Referi2
           </Typography>
+          {isAuthenticated && <Typography variant="body1" sx={{ color: 'inherit' }}>Hola, {usuario.nombre}!</Typography>}
+        
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
-            {navItems.map((item) => (
-              <MenuItem
-                key={item.id}
-                component={RouterLink}
-                to={item.to}
-                onClick={item.action ? item.action : closeMenu}
-                sx={{ color: "inherit" }}
-              >
-                {item.text}
-              </MenuItem>
-            ))}
+            {navItems.map((item) =>
+              item.to ? (
+                <MenuItem
+                  key={item.id}
+                  component={RouterLink}
+                  to={item.to}
+                  onClick={closeMenu}
+                  sx={{ color: "inherit" }}
+                >
+                  {item.text}
+                </MenuItem>
+              ) : (
+                <MenuItem
+                  key={item.id}
+                  onClick={item.action}
+                  sx={{ color: "inherit" }}
+                >
+                  {item.text}
+                </MenuItem>
+              )
+            )}
           </Box>
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <IconButton onClick={toggleDarkMode} color="inherit">
@@ -113,17 +158,23 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
             <CloseIcon />
           </IconButton>
           <List>
-            {navItems.map((item) => (
-              <ListItem
-                button
-                key={item.id}
-                component={RouterLink}
-                to={item.to}
-                onClick={item.action ? item.action : closeMenu}
-              >
-                <ListItemText primary={item.text} sx={{ color: "white" }} />
-              </ListItem>
-            ))}
+            {navItems.map((item) =>
+              item.to ? (
+                <ListItem
+                  button
+                  key={item.id}
+                  component={RouterLink}
+                  to={item.to}
+                  onClick={closeMenu}
+                >
+                  <ListItemText primary={item.text} sx={{ color: "white" }} />
+                </ListItem>
+              ) : (
+                <ListItem button key={item.id} onClick={item.action}>
+                  <ListItemText primary={item.text} sx={{ color: "white" }} />
+                </ListItem>
+              )
+            )}
           </List>
         </Box>
       </Drawer>
