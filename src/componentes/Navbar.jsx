@@ -49,8 +49,10 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
           { id: 1, text: "Inicio", to: "/" },
           { id: 8, text: "Crear", to: "/QrMain" },
           { id: 2, text: "Escanear QR", to: "/Escanear" },
-          { id: 3, text: "admin", to: "/Admin" },
-          { id: 4, text: "Referidos", to: "/Products" }
+          { id: 3, text: "Admin", to: "/Admin" },
+          { id: 4, text: "Referidos", to: "/Products" }, 
+          { id: 6, text: "Usuarios", to: "/Users" },  
+          { id: 5, text: "Cerrar Sesión", action: handleLogout },
          
 
         ]

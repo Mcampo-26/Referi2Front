@@ -27,7 +27,7 @@ export const InicioHome = () => {
             Escanea el código QR para empezar.
           </Typography>
           <Box className="flex justify-center mb-4">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQF0bqvE5inv6i2EWQ_9eMw-df1rB0bPTbTRZgSQLv92q8Q0GF0a552KxhjA2cYxG-ayic&usqp=CAU" alt="Código QR" className="w-40 h-40 md:w-64 md:h-64 rounded-lg shadow-md" />
+            <img src="https://cdn.eldestapeweb.com/eldestape/082023/1691074331924/codigo-qr-cuenta-dni-para-referir-png..webp?cw=1127&ch=634&extw=jpg" alt="Código QR" className="w-40 h-40 md:w-64 md:h-64 rounded-lg shadow-md" />
           </Box>
           <Typography variant="body1" className="mb-6" sx={{ color: theme.palette.text.primary }}>
             ¡Comparte este QR con tus amigos y gana recompensas exclusivas! Por cada referido que se registre usando este código, recibirás puntos que podrás canjear!!!

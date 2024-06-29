@@ -10,7 +10,7 @@ import { CssBaseline } from '@mui/material';
 import { ScanPage} from "./pages/ScanPage";
 import { Login } from "./componentes/Login";
 import { Register } from "./componentes/Register";
-
+import {Users} from "./pages/Users"
 const lightTheme = createTheme({
   palette: {
     mode: 'light',
@@ -64,6 +64,7 @@ function App() {
           <Route path="/Escanear" element={<ScanPage />} />
           <Route path="/Login" element={<Login />} />
           <Route path="/Register" element={<Register />} />
+          <Route path="/Users" element={<Users/>} />
         </Routes>
       </div>
     </ThemeProvider>
