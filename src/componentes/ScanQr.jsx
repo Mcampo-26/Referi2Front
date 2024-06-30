@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, Container, Typography, Box, TextField, Grid, Paper } from '@mui/material';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode';
 import { useTheme } from '@mui/material/styles';
 import 'tailwindcss/tailwind.css';
 
@@ -9,40 +9,34 @@ export const ScanQr = () => {
   const [error, setError] = useState(null);
   const [manualInput, setManualInput] = useState('');
   const theme = useTheme();
+  const scannerRef = useRef(null);
 
   useEffect(() => {
-    const scanner = new Html5QrcodeScanner(
-      'reader',
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      false
-    );
-    scanner.render(handleScan, handleError);
-
-    const intervalId = setInterval(() => {
-      const chooseImageText = document.querySelector('.html5-qrcode-text-choose-image');
-      const noImageChosenText = document.querySelector('.html5-qrcode-text-no-image-chosen');
-      const dropImageText = document.querySelector('.html5-qrcode-text-drop-image');
-      const scanUsingCameraText = document.querySelector('.html5-qrcode-text-scan-camera');
-      if (chooseImageText && noImageChosenText && dropImageText && scanUsingCameraText) {
-        chooseImageText.textContent = 'Elegir Imagen';
-        noImageChosenText.textContent = 'No se ha elegido ninguna imagen';
-        dropImageText.textContent = 'O suelte una imagen para escanear';
-        scanUsingCameraText.textContent = 'Escanear usando la cámara directamente';
-        clearInterval(intervalId);
-      }
-    }, 100);
+    const html5QrCode = new Html5Qrcode("reader");
+    scannerRef.current = html5QrCode;
 
     return () => {
-      scanner.clear().catch(error => {
-        console.error('Failed to clear html5QrcodeScanner. ', error);
-      });
-      clearInterval(intervalId);
+      if (html5QrCode.isScanning) {
+        html5QrCode.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
+      }
     };
   }, []);
+
+  const startScan = () => {
+    if (scannerRef.current && !scannerRef.current.isScanning) {
+      scannerRef.current.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        handleScan,
+        handleError
+      ).catch(err => console.error('Failed to start scanning.', err));
+    }
+  };
 
   const handleScan = (data) => {
     if (data) {
       setScannedData(parseData(data));
+      stopScan();
     }
   };
 
@@ -51,12 +45,27 @@ export const ScanQr = () => {
     setError(err);
   };
 
+  const stopScan = () => {
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      scannerRef.current.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
+    }
+  };
+
   const handleInputChange = (event) => {
     setManualInput(event.target.value);
   };
 
   const handleInputSubmit = () => {
     setScannedData(parseData(manualInput));
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      scannerRef.current.scanFile(file, true)
+        .then(handleScan)
+        .catch(handleError);
+    }
   };
 
   const parseData = (data) => {
@@ -86,8 +95,17 @@ export const ScanQr = () => {
         Escanear QR Code
       </Typography>
       <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} className="w-full md:w-auto">
-        {/* Asegúrate de que el contenedor de la imagen QR tenga el ancho completo */}
+        {/* Contenedor del lector QR */}
       </Box>
+      <Button variant="contained" color="primary" onClick={startScan} sx={{ mb: 2 }}>
+        Iniciar Escaneo
+      </Button>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        style={{ marginBottom: '20px' }}
+      />
       <Box
         width="100%"
         maxWidth="600px"
