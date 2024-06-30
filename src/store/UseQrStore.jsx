@@ -30,6 +30,17 @@ export const useQrStore = create((set, get) => ({
     }
   },
 
+  getQrsByUser: async (userId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axios.get(`${URL}/Qr/user/${userId}`);
+      set({ qrs: response.data, loading: false });
+    } catch (error) {
+      console.error('Error al obtener los QR Codes por usuario:', error.response || error.message);
+      set({ loading: false, error: 'Error al obtener los QR Codes por usuario' });
+    }
+  },
+
   getQrById: (id) => {
     const { qrs } = get();
     return qrs.find((qr) => qr._id === id);
