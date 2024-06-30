@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Button, TextField, Grid, Container, Typography, Card, CardContent, Paper, Box } from '@mui/material';
 import { useQrStore } from '../store/UseQrStore'; // Ruta corregida
+import { useUsuariosStore } from '../store/useUsuariosStore'; // Asumiendo que tienes un store para gestionar el usuario
 import { WhatsApp } from '@mui/icons-material';
 import axios from 'axios';
 import { useTheme, ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { styled } from '@mui/system';
+import { URL } from '../utilities/config';
 
-const URL = 'https://referido2back.onrender.com'; // Nueva URL del backend
+
 
 const StyledBox = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
@@ -24,10 +26,12 @@ export const QrMain = () => {
   const [base64Image, setBase64Image] = useState('');
 
   const createQr = useQrStore((state) => state.createQr);
+  const { userId } = useUsuariosStore(); // Obtén el userId del store del usuario
   const theme = useTheme();
 
   const handleGenerateClick = async () => {
     const qrData = {
+      userId, // Incluye el userId del usuario actual
       value: inputValue,
       nombre,
       telefono,

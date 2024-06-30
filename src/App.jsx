@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { Navbar } from './componentes/Navbar';
 import './index.css';
 import { Home } from "./pages/Home";
-import { QrList } from "./componentes/QrList";
+import { Referidos } from "./pages/Referidos";
 import { QrMain } from "./componentes/QrMain";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
@@ -11,6 +11,7 @@ import { ScanPage} from "./pages/ScanPage";
 import { Login } from "./componentes/Login";
 import { Register } from "./componentes/Register";
 import {Users} from "./pages/Users"
+
 const lightTheme = createTheme({
   palette: {
     mode: 'light',
@@ -60,11 +61,12 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/QrMain" element={<QrMain />} />
-          <Route path="/Admin" element={<QrList />} />
+        
           <Route path="/Escanear" element={<ScanPage />} />
           <Route path="/Login" element={<Login />} />
           <Route path="/Register" element={<Register />} />
           <Route path="/Users" element={<Users/>} />
+          <Route path="/Referidos" element={<Referidos/>} />
         </Routes>
       </div>
     </ThemeProvider>

@@ -1,36 +1,36 @@
-import React, { useEffect, useState } from "react";
-import Swal from "sweetalert2";
-import useQrStore from "../store/UseQrStore";
+import React, { useEffect, useState } from 'react';
+import { useQrStore } from '../store/UseQrStore';
+import { useUsuariosStore } from '../store/useUsuariosStore'; // Asumiendo que tienes un store para gestionar el usuario
+import { Box, Typography, Paper, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Container, Button, TextField } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
-import {
-  Container,
-  Typography,
-  Button,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Box,
-  IconButton,
-  CircularProgress
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
+
+const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection }) => {
+  return (
+    <TableCell onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
+      <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+        {children} {orderBy === column && (orderDirection === 'asc' ? '▲' : '▼')}
+      </Typography>
+    </TableCell>
+  );
+};
 
 export const QrList = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const { getQrs, qrs, loading, deleteQr } = useQrStore();
-  const [orderBy, setOrderBy] = useState('nombre');
+  const { qrs, getQrsByUser, deleteQr, loading, error } = useQrStore();
+  const { userId } = useUsuariosStore(); // Obtén el userId del store del usuario
+  const [orderBy, setOrderBy] = useState('value');
   const [orderDirection, setOrderDirection] = useState('asc');
-  const theme = useTheme();
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    getQrs();
-  }, []);
+    if (userId) {
+      getQrsByUser(userId);
+    }
+  }, [userId, getQrsByUser]);
 
   const handleSort = (column) => {
     if (column === orderBy) {
@@ -41,8 +41,8 @@ export const QrList = () => {
     }
   };
 
-  const handleDelete = (_id) => {
-    Swal.fire({
+  const handleDelete = (id) => {
+    MySwal.fire({
       title: "¿Estás seguro de que deseas eliminar este QR?",
       text: "Esta acción no se puede deshacer.",
       icon: "warning",
@@ -53,51 +53,34 @@ export const QrList = () => {
       cancelButtonText: "Cancelar",
     }).then((result) => {
       if (result.isConfirmed) {
-        Swal.fire({
-          title: "Eliminando QR, aguarde por favor...",
-          allowOutsideClick: false,
-          didOpen: () => {
-            Swal.showLoading();
-          },
-        });
-
-        setTimeout(() => {
-          deleteQr(_id)
-            .then(() => {
-              Swal.close();
-              Swal.fire({
-                title: "¡QR eliminado con éxito!",
-                icon: "success",
-                confirmButtonColor: "#3085d6",
-                confirmButtonText: "Ok",
-              });
-            })
-            .catch((error) => {
-              Swal.close();
-              Swal.fire({
-                title: "Error",
-                text: "Hubo un problema al eliminar el QR.",
-                icon: "error",
-                confirmButtonColor: "#d33",
-                confirmButtonText: "Ok",
-              });
-              console.error("Error al eliminar el QR:", error);
+        deleteQr(id)
+          .then(() => {
+            MySwal.fire({
+              title: "¡QR eliminado con éxito!",
+              icon: "success",
+              confirmButtonColor: "#3085d6",
+              confirmButtonText: "Ok",
             });
-        }, 800);
+          })
+          .catch((error) => {
+            MySwal.fire({
+              icon: "error",
+              title: "Error",
+              text: "Hubo un error al eliminar el QR.",
+            });
+            console.error("Error al eliminar el QR:", error);
+          });
       }
     });
   };
 
-  const handleClear = () => {
-    setSearchTerm('');
-  };
-
   const filteredQrs = qrs.filter((qr) =>
     qr &&
-    qr.nombre &&
     (
+      qr.value.toLowerCase().includes(searchTerm.toLowerCase()) ||
       qr.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      qr._id.toLowerCase().includes(searchTerm.toLowerCase())
+      qr.telefono.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      qr.mail.toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
 
@@ -110,72 +93,80 @@ export const QrList = () => {
     return 0;
   });
 
+  if (loading) {
+    return <CircularProgress />;
+  }
+
+  if (error) {
+    return <Typography variant="h6" color="error">{error}</Typography>;
+  }
+
   return (
     <Container>
       <Box className="w-full md:w-1/3 flex items-center mx-auto mb-4">
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Buscar QRs por nombre o ID..."
+          placeholder="Buscar QRs por valor, nombre, teléfono o correo..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          InputLabelProps={{ style: { color: theme.palette.text.primary } }}
-          InputProps={{
-            style: {
-              color: theme.palette.text.primary,
-              backgroundColor: theme.palette.background.paper,
-            },
-          }}
-          sx={{ marginTop: '1.5rem', bgcolor: theme.palette.background.default }}
+          sx={{ marginTop: '3rem' }}
         />
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={handleClear}
-          sx={{ marginLeft: '1rem', marginTop: '1.5rem' }}
-        >
-          Limpiar
-        </Button>
+        {searchTerm && (
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => setSearchTerm('')}
+            sx={{ marginLeft: '1rem', marginTop: '3rem' }}
+          >
+            Limpiar
+          </Button>
+        )}
       </Box>
-
-      <Typography variant="h4" component="h1" sx={{ mt: 5, color: theme.palette.text.primary }} gutterBottom>
-        Lista de QRs
-      </Typography>
-
-      {loading ? (
-        <CircularProgress />
-      ) : sortedQrs.length ? (
-        <TableContainer component={Paper} sx={{ marginTop: '2rem', bgcolor: theme.palette.background.default }}>
+      <Typography variant="h4" mb={4}>Mis QR Codes</Typography>
+      {sortedQrs.length ? (
+        <TableContainer component={Paper} style={{ marginTop: '2rem' }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell onClick={() => handleSort('nombre')} sx={{ cursor: 'pointer', color: theme.palette.text.primary }}>
-                  Nombre {orderBy === 'nombre' && (orderDirection === 'asc' ? '▲' : '▼')}
-                </TableCell>
-                <TableCell onClick={() => handleSort('telefono')} sx={{ cursor: 'pointer', color: theme.palette.text.primary }}>
-                  Teléfono {orderBy === 'telefono' && (orderDirection === 'asc' ? '▲' : '▼')}
-                </TableCell>
-                <TableCell onClick={() => handleSort('mail')} sx={{ cursor: 'pointer', color: theme.palette.text.primary }}>
-                  Correo {orderBy === 'mail' && (orderDirection === 'asc' ? '▲' : '▼')}
-                </TableCell>
-                <TableCell onClick={() => handleSort('startTime')} sx={{ cursor: 'pointer', color: theme.palette.text.primary }}>
-                  Hora de inicio {orderBy === 'startTime' && (orderDirection === 'asc' ? '▲' : '▼')}
-                </TableCell>
-                <TableCell onClick={() => handleSort('endTime')} sx={{ cursor: 'pointer', color: theme.palette.text.primary }}>
-                  Hora de fin {orderBy === 'endTime' && (orderDirection === 'asc' ? '▲' : '▼')}
-                </TableCell>
-                <TableCell sx={{ color: theme.palette.text.primary }}>Acciones</TableCell>
+                <StyledTableCell onClick={() => handleSort('value')} orderBy={orderBy} column="value" orderDirection={orderDirection}>
+                 Usuario
+                </StyledTableCell>
+                <StyledTableCell onClick={() => handleSort('nombre')} orderBy={orderBy} column="nombre" orderDirection={orderDirection}>
+                  Nombre
+                </StyledTableCell>
+                <StyledTableCell onClick={() => handleSort('telefono')} orderBy={orderBy} column="telefono" orderDirection={orderDirection}>
+                  Teléfono
+                </StyledTableCell>
+                <StyledTableCell onClick={() => handleSort('mail')} orderBy={orderBy} column="mail" orderDirection={orderDirection}>
+                  Correo
+                </StyledTableCell>
+                <StyledTableCell onClick={() => handleSort('startTime')} orderBy={orderBy} column="startTime" orderDirection={orderDirection}>
+                  Hora de Inicio
+                </StyledTableCell>
+                <StyledTableCell onClick={() => handleSort('endTime')} orderBy={orderBy} column="endTime" orderDirection={orderDirection}>
+                  Hora de Fin
+                </StyledTableCell>
+                <StyledTableCell>
+                  <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+                    Acciones
+                  </Typography>
+                </StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedQrs.map((qr, index) => (
-                <TableRow key={qr._id || index}>
-                  <TableCell sx={{ color: theme.palette.text.primary }}>{qr.nombre}</TableCell>
-                  <TableCell sx={{ color: theme.palette.text.primary }}>{qr.telefono}</TableCell>
-                  <TableCell sx={{ color: theme.palette.text.primary }}>{qr.mail}</TableCell>
-                  <TableCell sx={{ color: theme.palette.text.primary }}>{qr.startTime}</TableCell>
-                  <TableCell sx={{ color: theme.palette.text.primary }}>{qr.endTime}</TableCell>
+              {sortedQrs.map((qr) => (
+                <TableRow key={qr._id}>
+                  <TableCell>{qr.value}</TableCell>
+                  <TableCell>{qr.nombre}</TableCell>
+                  <TableCell>{qr.telefono}</TableCell>
+                  <TableCell>{qr.mail}</TableCell>
+                  <TableCell>{qr.startTime}</TableCell>
+                  <TableCell>{qr.endTime}</TableCell>
                   <TableCell>
+                    {qr.base64Image && (
+                      <img src={`data:image/png;base64,${qr.base64Image}`} alt="QR Code" style={{ width: 30, height: 30, marginRight: 8 }} />
+                    )}
                     <IconButton
                       color="secondary"
                       onClick={() => handleDelete(qr._id)}
@@ -189,7 +180,7 @@ export const QrList = () => {
           </Table>
         </TableContainer>
       ) : (
-        <Typography sx={{ color: theme.palette.text.primary }}>No hay QRs disponibles.</Typography>
+        <Typography>No hay QR Codes disponibles.</Typography>
       )}
     </Container>
   );
