@@ -7,10 +7,11 @@ import { Referidos } from "./pages/Referidos";
 import { QrMain } from "./componentes/QrMain";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
-import { ScanPage} from "./pages/ScanPage";
+import { ScanPage } from "./pages/ScanPage";
 import { Login } from "./componentes/Login";
 import { Register } from "./componentes/Register";
-import {Users} from "./pages/Users"
+import { QrDetails } from "./componentes/QrDetails";
+import { Users } from "./pages/Users";
 
 const lightTheme = createTheme({
   palette: {
@@ -61,12 +62,12 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/QrMain" element={<QrMain />} />
-        
           <Route path="/Escanear" element={<ScanPage />} />
           <Route path="/Login" element={<Login />} />
           <Route path="/Register" element={<Register />} />
-          <Route path="/Users" element={<Users/>} />
-          <Route path="/Referidos" element={<Referidos/>} />
+          <Route path="/Users" element={<Users />} />
+          <Route path="/Referidos" element={<Referidos />} />
+          <Route path="/QrDetails/:id" element={<QrDetails />} />
         </Routes>
       </div>
     </ThemeProvider>

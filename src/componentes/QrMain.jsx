@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import { Button, TextField, Grid, Container, Typography, Card, CardContent, Paper, Box } from '@mui/material';
-import { useQrStore } from '../store/UseQrStore'; // Ruta corregida
-import { useUsuariosStore } from '../store/useUsuariosStore'; // Asumiendo que tienes un store para gestionar el usuario
+import { useQrStore } from '../store/UseQrStore';
+import { useUsuariosStore } from '../store/useUsuariosStore';
 import { WhatsApp } from '@mui/icons-material';
-import axios from 'axios';
-import { useTheme, ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { useTheme, ThemeProvider, CssBaseline, useMediaQuery } from '@mui/material';
 import { styled } from '@mui/system';
-import { URL } from '../utilities/config';
-
-
 
 const StyledBox = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
@@ -26,12 +22,14 @@ export const QrMain = () => {
   const [base64Image, setBase64Image] = useState('');
 
   const createQr = useQrStore((state) => state.createQr);
-  const { userId } = useUsuariosStore(); // Obtén el userId del store del usuario
+  const getQrById = useQrStore((state) => state.getQrById);
+  const { userId } = useUsuariosStore();
   const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up('md'));
 
   const handleGenerateClick = async () => {
     const qrData = {
-      userId, // Incluye el userId del usuario actual
+      userId,
       value: inputValue,
       nombre,
       telefono,
@@ -40,17 +38,15 @@ export const QrMain = () => {
       endTime
     };
     const newQr = await createQr(qrData);
-    if (newQr) {
-      const combinedData = `
-        Texto: ${inputValue}\n
-        Nombre: ${nombre}\n
-        Teléfono: ${telefono}\n
-        Correo: ${mail}\n
-        Hora de inicio: ${startTime}\n
-        Hora de fin: ${endTime}
-      `.trim(); // Trim to remove leading/trailing spaces/newlines
-      const response = await axios.get(`${URL}/Qr/generate-qr`, { params: { text: combinedData } });
-      setBase64Image(response.data.base64Image);
+    if (newQr && newQr._id) {
+      const qrWithImage = await getQrById(newQr._id);
+      if (qrWithImage && qrWithImage.base64Image) {
+        setBase64Image(qrWithImage.base64Image);
+      } else {
+        console.error('No se recibió la imagen base64');
+      }
+    } else {
+      console.error('Error al crear el QR');
     }
   };
 
@@ -173,8 +169,12 @@ export const QrMain = () => {
               </Grid>
               <Grid item xs={12} md={6} className="flex justify-center items-center">
                 {base64Image && (
-                  <Paper elevation={3} className="p-5 bg-white dark:bg-gray-800 rounded-md shadow-md">
-                    <img src={`data:image/png;base64,${base64Image}`} alt="Generated QR Code" />
+                  <Paper elevation={3} className="p-0 bg-white dark:bg-gray-800 rounded-md shadow-md flex justify-center items-center w-full h-full">
+                    <img
+                      src={`data:image/png;base64,${base64Image}`}
+                      alt="Generated QR Code"
+                      className="w-full h-full max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl"
+                    />
                   </Paper>
                 )}
               </Grid>
