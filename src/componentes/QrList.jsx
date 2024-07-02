@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQrStore } from '../store/UseQrStore';
 import { useUsuariosStore } from '../store/useUsuariosStore'; // Asumiendo que tienes un store para gestionar el usuario
 import { Box, Typography, Paper, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Container, Button, TextField } from '@mui/material';
@@ -25,6 +26,7 @@ export const QrList = () => {
   const [orderBy, setOrderBy] = useState('value');
   const [orderDirection, setOrderDirection] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (userId) {
@@ -72,6 +74,10 @@ export const QrList = () => {
           });
       }
     });
+  };
+
+  const handleQrClick = (id) => {
+    navigate(`/QrDetails/${id}`);
   };
 
   const filteredQrs = qrs.filter((qr) =>
@@ -130,7 +136,7 @@ export const QrList = () => {
             <TableHead>
               <TableRow>
                 <StyledTableCell onClick={() => handleSort('value')} orderBy={orderBy} column="value" orderDirection={orderDirection}>
-                 Usuario
+                  Usuario
                 </StyledTableCell>
                 <StyledTableCell onClick={() => handleSort('nombre')} orderBy={orderBy} column="nombre" orderDirection={orderDirection}>
                   Nombre
@@ -165,7 +171,12 @@ export const QrList = () => {
                   <TableCell>{qr.endTime}</TableCell>
                   <TableCell>
                     {qr.base64Image && (
-                      <img src={`data:image/png;base64,${qr.base64Image}`} alt="QR Code" style={{ width: 30, height: 30, marginRight: 8 }} />
+                      <img 
+                        src={`data:image/png;base64,${qr.base64Image}`} 
+                        alt="QR Code" 
+                        style={{ width: 30, height: 30, marginRight: 8, cursor: 'pointer' }} 
+                        onClick={() => handleQrClick(qr._id)}
+                      />
                     )}
                     <IconButton
                       color="secondary"

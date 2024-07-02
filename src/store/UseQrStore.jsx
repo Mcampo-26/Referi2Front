@@ -1,11 +1,12 @@
 import create from 'zustand';
 import axios from 'axios';
-import { URL } from '../utilities/config';  // Asegúrate de que esta ruta sea correcta
+import { URL } from '../utilities/config';
 
-export const useQrStore = create((set, get) => ({
+export const useQrStore = create((set) => ({
   qrs: [],
   loading: false,
   error: null,
+  qr: null,
   totalRecords: 0,
   totalPages: 1,
   currentPage: 1,
@@ -41,16 +42,23 @@ export const useQrStore = create((set, get) => ({
     }
   },
 
-  getQrById: (id) => {
-    const { qrs } = get();
-    return qrs.find((qr) => qr._id === id);
+  getQrById: async (id) => {
+    set({ loading: true, error: null, qr: null });
+    try {
+      const response = await axios.get(`${URL}/Qr/${id}`);
+      set({ qr: response.data, loading: false });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener QR por ID:', error.response || error.message);
+      set({ loading: false, error: 'Error al obtener QR por ID' });
+    }
   },
 
   createQr: async (qr) => {
     set({ loading: true, error: null });
     try {
       const response = await axios.post(`${URL}/Qr/create`, qr);
-      const nuevoQr = response.data.qr;
+      const nuevoQr = response.data.newQr;
       set((state) => ({
         qrs: [...state.qrs, nuevoQr],
         loading: false,
