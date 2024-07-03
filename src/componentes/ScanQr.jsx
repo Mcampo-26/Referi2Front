@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, Container, Typography, Box, TextField, Grid, Paper } from '@mui/material';
-import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { useTheme } from '@mui/material/styles';
 import 'tailwindcss/tailwind.css';
 
@@ -8,8 +8,23 @@ export const ScanQr = () => {
   const [scannedData, setScannedData] = useState({});
   const [error, setError] = useState(null);
   const [manualInput, setManualInput] = useState('');
+  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 768); // Estado para detectar el tamaño de la pantalla
   const theme = useTheme();
   const scannerRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Verifica el tamaño de la pantalla al montar el componente
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     const html5QrCode = new Html5Qrcode("reader");
@@ -91,33 +106,56 @@ export const ScanQr = () => {
 
   return (
     <Container maxWidth="md" className="flex flex-col items-center justify-center mt-20" sx={{ paddingBottom: '40px', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-      <Typography variant="h4" className="text-center mb-4" sx={{ color: theme.palette.text.primary }}>
+      
+      {isSmallScreen && (<Typography variant="h4" className="text-center mb-4" >
         Escanear QR Code
       </Typography>
-      <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} className="w-full md:w-auto">
+      )}
+       {!isSmallScreen && (<Typography variant="h4" className="text-center mb-4" >
+       Imagen de QR Code
+      </Typography>
+      )}
+            <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md">
         {/* Contenedor del lector QR */}
       </Box>
-      <Button variant="contained" color="primary" onClick={startScan} sx={{ mb: 2 }}>
-        Iniciar Escaneo
-      </Button>
+      {/* Mostrar el botón "Iniciar Escaneo" solo en pantallas pequeñas */}
+      {isSmallScreen && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={startScan}
+          className="mb-6 "
+        >
+          Iniciar Escaneo
+        </Button>
+      )}
+      {/* Mostrar el botón "Subir Archivo" solo en pantallas medianas y grandes */}
+      {!isSmallScreen && (
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => fileInputRef.current.click()}
+          className="mb-2 mt-2"
+        >
+          Subir Archivo
+        </Button>
+      )}
       <input
         type="file"
         accept="image/*"
+        ref={fileInputRef}
         onChange={handleFileChange}
-        style={{ marginBottom: '20px' }}
+        style={{ display: 'none' }}
       />
       <Box
         width="100%"
         maxWidth="600px"
         mb={4}
         p={4}
+        mt={6}
         borderRadius={2}
         boxShadow={3}
-        sx={{
-          backgroundColor: theme.palette.background.paper,
-          color: theme.palette.text.primary,
-          transition: 'background-color 0.3s ease, color 0.3s ease',
-        }}
+        className="bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300"
       >
         <TextField
           fullWidth
@@ -129,7 +167,7 @@ export const ScanQr = () => {
           InputProps={{
             style: {
               color: theme.palette.text.primary,
-              backgroundColor: theme.palette.background.paper,
+              backgroundColor: theme.palette.mode === 'dark' ? '#2e2e2e' : theme.palette.background.paper, // Color de fondo específico en modo oscuro
             },
           }}
           InputLabelProps={{
@@ -165,15 +203,7 @@ export const ScanQr = () => {
           mb={4}
           p={4}
           borderRadius={2}
-          sx={{
-            textAlign: 'center',
-            backgroundColor: theme.palette.background.paper,
-            color: theme.palette.text.primary,
-            transition: 'background-color 0.3s ease, color 0.3s ease',
-            width: '100%', // Asegura que el ancho sea completo
-            maxWidth: '600px', // Ajusta el tamaño máximo
-          }}
-          className="mx-auto"
+          className="w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300"
         >
           <Typography variant="h6" mb={5} gutterBottom>
             Información del QR:
@@ -208,14 +238,7 @@ export const ScanQr = () => {
           p={4}
           borderRadius={2}
           boxShadow={3}
-          sx={{
-            backgroundColor: theme.palette.background.paper,
-            color: theme.palette.text.primary,
-            transition: 'background-color 0.3s ease, color 0.3s ease',
-            width: '100%', // Asegura que el ancho sea completo
-            maxWidth: '600px', // Ajusta el tamaño máximo
-          }}
-          className="mx-auto"
+          className="w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300"
         >
           <Typography variant="body1" color="error">
             Error al escanear el QR: {error.message}
