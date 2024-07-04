@@ -12,6 +12,7 @@ import { Login } from "./componentes/Login";
 import { Register } from "./componentes/Register";
 import { QrDetails } from "./componentes/QrDetails";
 import { Users } from "./pages/Users";
+import { Roles } from "./componentes/Roles";
 
 const lightTheme = createTheme({
   palette: {
@@ -68,6 +69,7 @@ function App() {
           <Route path="/Users" element={<Users />} />
           <Route path="/Referidos" element={<Referidos />} />
           <Route path="/QrDetails/:id" element={<QrDetails />} />
+          <Route path="/roles" element={<Roles />} />
         </Routes>
       </div>
     </ThemeProvider>
