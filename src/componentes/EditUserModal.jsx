@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import useUsuariosStore from "../store/useUsuariosStore";
+import useRolesStore from "../store/useRolesStore";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import {
@@ -29,8 +30,8 @@ const style = {
 
 export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
   const { updateUsuario, getUsuarios } = useUsuariosStore();
+  const { roles, getAllRoles } = useRolesStore();
   const [updatedUser, setUpdatedUser] = useState({ ...editedUser });
-  const isAdminUser = editedUser.email === "admin@admin";
 
   useEffect(() => {
     if (editedUser) {
@@ -49,7 +50,6 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
   const validateInputs = () => {
     if (!updatedUser.nombre.trim()) return "El nombre del usuario es requerido.";
     if (!updatedUser.email.trim()) return "El correo electrónico es requerido.";
-    if (!updatedUser.password.trim()) return "La contraseña es requerida.";
     if (!updatedUser.role.trim()) return "El rol del usuario es requerido.";
     return null;
   };
@@ -62,7 +62,6 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
         icon: "error",
         title: "Por favor complete los campos",
         text: validationError,
-      
       });
       return;
     }
@@ -78,10 +77,15 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
           didOpen: () => {
             Swal.showLoading();
           },
-        
         });
 
-        await updateUsuario(updatedUser._id, updatedUser);
+        // Solo enviar los campos necesarios
+        const { role } = updatedUser;
+        const updatedFields = { role };
+
+        console.log('Datos enviados para actualizar usuario:', updatedFields);
+
+        await updateUsuario(updatedUser._id, updatedFields);
         await getUsuarios();
 
         MySwal.close();
@@ -89,7 +93,6 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
           icon: "success",
           title: "Usuario actualizado",
           text: "El usuario se ha actualizado correctamente.",
-      
         });
       } catch (error) {
         MySwal.close();
@@ -97,13 +100,11 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
           icon: "error",
           title: "Error",
           text: "Hubo un error al actualizar el usuario.",
-       
         });
         console.error("Error al actualizar el usuario:", error);
       }
     }, 500); // Retraso de 100ms antes de mostrar el SweetAlert
   };
-
   return (
     <Modal
       open={isOpen}
@@ -141,9 +142,8 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
             value={updatedUser.email || ""}
             onChange={handleChange}
             required
-            disabled={isAdminUser}
+            disabled={editedUser.email === "admin@admin.com"}
           />
-         
           <TextField
             fullWidth
             margin="normal"
@@ -153,10 +153,12 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
             value={updatedUser.role || ""}
             onChange={handleChange}
             required
-            disabled={isAdminUser}
           >
-            <MenuItem value="usuario">Usuario</MenuItem>
-            <MenuItem value="admin">Admin</MenuItem>
+            {roles.map((role) => (
+              <MenuItem key={role._id} value={role._id}>
+                {role.name}
+              </MenuItem>
+            ))}
           </TextField>
           <Box mt={2} display="flex" justifyContent="center">
             <Button

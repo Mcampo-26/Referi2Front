@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { EditUserModal } from "./EditUserModal";
+import { create } from 'zustand';
 import useUsuariosStore from "../store/useUsuariosStore";
+import useRolesStore from "../store/useRolesStore";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +26,8 @@ import {
   useTheme
 } from '@mui/material';
 
+const MySwal = withReactContent(Swal);
+
 const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection }) => {
   return (
     <TableCell onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
@@ -34,22 +38,25 @@ const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection })
   );
 };
 
-const MySwal = withReactContent(Swal);
-
 export const UserList = () => {
-  const theme = useTheme(); // Usa el hook useTheme para acceder al tema
+  const theme = useTheme();
   const [orderBy, setOrderBy] = useState('nombre');
   const [orderDirection, setOrderDirection] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editedUser, setEditedUser] = useState(null);
-  const { getUsuarios, usuarios, loading, deleteUsuario, totalRecords, totalPages, currentPage } = useUsuariosStore();
+  const { getUsuarios, usuarios, loading: loadingUsuarios, deleteUsuario, totalRecords, totalPages, currentPage } = useUsuariosStore();
+  const { getAllRoles, roles, loading: loadingRoles } = useRolesStore();
   const navigate = useNavigate();
   const recordsPerPage = 10;
 
   useEffect(() => {
     getUsuarios(currentPage, recordsPerPage);
   }, [currentPage, recordsPerPage, getUsuarios]);
+
+  useEffect(() => {
+    getAllRoles();
+  }, [getAllRoles]);
 
   const handleSort = (column) => {
     if (column === orderBy) {
@@ -60,9 +67,9 @@ export const UserList = () => {
     }
   };
 
-  const handleDelete = (_id) => {
-    if (_id === "admin@admin") {
-      MySwal.fire({
+  const handleDelete = (_id, email) => {
+    if (email === "admin@admin.com") {
+      Swal.fire({
         icon: 'warning',
         title: 'No permitido',
         text: 'No se puede eliminar al administrador.',
@@ -70,7 +77,7 @@ export const UserList = () => {
       return;
     }
 
-    MySwal.fire({
+    Swal.fire({
       title: "¿Estás seguro de que deseas eliminar este usuario?",
       text: "Esta acción no se puede deshacer.",
       icon: "warning",
@@ -83,7 +90,7 @@ export const UserList = () => {
       if (result.isConfirmed) {
         deleteUsuario(_id)
           .then(() => {
-            MySwal.fire({
+            Swal.fire({
               title: "¡Usuario eliminado con éxito!",
               icon: "success",
               confirmButtonColor: "#3085d6",
@@ -92,7 +99,7 @@ export const UserList = () => {
             getUsuarios(currentPage, recordsPerPage); // Refrescar la lista de usuarios
           })
           .catch((error) => {
-            MySwal.fire({
+            Swal.fire({
               icon: "error",
               title: "Error",
               text: "Hubo un error al eliminar el usuario.",
@@ -104,8 +111,8 @@ export const UserList = () => {
   };
 
   const handleEdit = (user) => {
-    if (user.email === "admin@admin") {
-      MySwal.fire({
+    if (user.email === "admin@admin.com") {
+      Swal.fire({
         icon: 'warning',
         title: 'No permitido',
         text: 'No se puede editar al administrador.',
@@ -157,24 +164,13 @@ export const UserList = () => {
     return 0;
   });
 
+  if (loadingUsuarios || loadingRoles) {
+    return <CircularProgress />;
+  }
+
   return (
     <Container>
       <Box className="w-full md:w-1/3 flex items-center mx-auto mb-4">
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Buscar QRs por nombre o ID..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputLabelProps={{ style: { color: theme.palette.text.primary } }}
-          InputProps={{
-            style: {
-              color: theme.palette.text.primary,
-              backgroundColor: theme.palette.background.paper,
-            },
-          }}
-          sx={{ marginTop: '3rem', bgcolor: theme.palette.background.default }}
-        />
         {searchTerm && (
           <Button
             variant="contained"
@@ -187,7 +183,7 @@ export const UserList = () => {
         )}
       </Box>
       <div className="flex justify-between items-center mb-4 ">
-        <Typography variant="h4" component="h1" mt={4}gutterBottom>
+        <Typography variant="h4" component="h1" mt={4} gutterBottom>
           Lista de Usuarios
         </Typography>
         <Button
@@ -211,9 +207,7 @@ export const UserList = () => {
         />
       </div>
 
-      {loading ? (
-        <CircularProgress />
-      ) : sortedUsers.length ? (
+      {sortedUsers.length ? (
         <TableContainer component={Paper} style={{ marginTop: '2rem' }}>
           <Table>
             <TableHead>
@@ -235,23 +229,23 @@ export const UserList = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedUsers.map((usuario, index) => (
-                <TableRow key={usuario._id || index}>
+              {sortedUsers.map((usuario) => (
+                <TableRow key={usuario._id}>
                   <TableCell>{usuario.nombre || "Nombre no disponible"}</TableCell>
                   <TableCell>{usuario.email || "Email no disponible"}</TableCell>
-                  <TableCell>{usuario.role || "Rol no disponible"}</TableCell>
+                  <TableCell>{usuario.role?.name || "Rol no disponible"}</TableCell>
                   <TableCell>
                     <IconButton
                       color="primary"
-                      onClick={usuario.email !== "admin@admin" ? () => handleEdit(usuario) : () => MySwal.fire({icon: 'warning', title: 'No permitido', text: 'No se puede editar al administrador.'})}
-                      style={usuario.email === "admin@admin" ? { color: 'gray' } : {}}
+                      onClick={usuario.email !== "admin@admin.com" ? () => handleEdit(usuario) : () => Swal.fire({icon: 'warning', title: 'No permitido', text: 'No se puede editar al administrador.'})}
+                      style={usuario.email === "admin@admin.com" ? { color: 'gray' } : {}}
                     >
                       <FontAwesomeIcon icon={faPenToSquare} />
                     </IconButton>
                     <IconButton
                       color="secondary"
-                      onClick={usuario.email !== "admin@admin" ? () => handleDelete(usuario._id) : () => MySwal.fire({icon: 'warning', title: 'No permitido', text: 'No se puede eliminar al administrador.'})}
-                      style={usuario.email === "admin@admin" ? { color: 'gray' } : {}}
+                      onClick={usuario.email !== "admin@admin.com" ? () => handleDelete(usuario._id, usuario.email) : () => Swal.fire({icon: 'warning', title: 'No permitido', text: 'No se puede eliminar al administrador.'})}
+                      style={usuario.email === "admin@admin.com" ? { color: 'gray' } : {}}
                     >
                       <FontAwesomeIcon icon={faTrash} />
                     </IconButton>

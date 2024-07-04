@@ -17,9 +17,7 @@ export const useUsuariosStore = create((set, get) => ({
   getUsuarios: async (page = 1, limit = 10) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.get(`${URL}/Usuarios/get`, {
-        params: { page, limit }
-      });
+      const response = await axios.get(`${URL}/usuarios/get`, { params: { page, limit } });
       const { usuarios, total, totalPages, currentPage } = response.data;
       set({
         usuarios,
@@ -42,7 +40,7 @@ export const useUsuariosStore = create((set, get) => ({
   createUsuario: async (usuario) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post(`${URL}/Usuarios/create`, usuario);
+      const response = await axios.post(`${URL}/usuarios/create`, usuario);
       const nuevoUsuario = response.data;
       set((state) => ({
         usuarios: [...state.usuarios, nuevoUsuario],
@@ -55,26 +53,41 @@ export const useUsuariosStore = create((set, get) => ({
     }
   },
 
-  updateUsuario: async (id, updatedUsuario) => {
+  updateUsuario: async (id, updatedFields) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.put(`${URL}/Usuarios/update/${id}`, updatedUsuario);
-      set((state) => ({
-        usuarios: state.usuarios.map((usuario) =>
-          usuario._id === id ? response.data.usuario : usuario
-        ),
-        loading: false,
-      }));
+        const response = await axios.put(`${URL}/usuarios/update/${id}`, updatedFields);
+        const usuarioActualizado = response.data.usuario;
+
+        set((state) => ({
+            usuarios: state.usuarios.map((usuario) =>
+                usuario._id === id ? usuarioActualizado : usuario
+            ),
+            loading: false,
+        }));
+
+        // Actualiza el usuario en localStorage si es el usuario logueado
+        const usuarioLogueado = JSON.parse(localStorage.getItem('usuario'));
+        if (usuarioLogueado && usuarioLogueado._id === id) {
+            localStorage.setItem('usuario', JSON.stringify(usuarioActualizado));
+            const role = usuarioActualizado.role ? (usuarioActualizado.role._id || usuarioActualizado.role) : null;
+            if (role) {
+                localStorage.setItem('role', role);
+            } else {
+                localStorage.removeItem('role');
+            }
+        }
     } catch (error) {
-      console.error('Error al actualizar usuario:', error.response || error.message);
-      set({ loading: false, error: 'Error al actualizar usuario' });
+        console.error('Error al actualizar usuario:', error.response || error.message);
+        set({ loading: false, error: 'Error al actualizar usuario' });
     }
-  },
+},
+
 
   deleteUsuario: async (id) => {
     set({ loading: true, error: null });
     try {
-      await axios.delete(`${URL}/Usuarios/delete/${id}`);
+      await axios.delete(`${URL}/usuarios/delete/${id}`);
       set((state) => ({
         usuarios: state.usuarios.filter((usuario) => usuario._id !== id),
         loading: false,
@@ -88,29 +101,42 @@ export const useUsuariosStore = create((set, get) => ({
   loginUsuario: async (email, password) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post(`${URL}/Usuarios/login`, { email, password });
-      if (response.status === 200) {
-        const usuario = response.data.usuario;
-        set({ 
-          usuario, 
-          userId: usuario._id,
-          isAuthenticated: true, 
-          role: usuario.role,
-          loading: false 
-        });
-        localStorage.setItem('usuario', JSON.stringify(usuario));
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('role', usuario.role);
-        localStorage.setItem('userId', usuario._id);
-        return true;
-      } else {
-        throw new Error('Authentication failed');
-      }
+        const response = await axios.post(`${URL}/usuarios/login`, { email, password });
+        if (response.status === 200) {
+            const usuario = response.data.usuario;
+            console.log('Usuario devuelto por la API:', usuario);
+
+            // Manejar el caso cuando el usuario no tiene rol
+            const role = usuario.role ? usuario.role.name : null;
+
+            set({
+                usuario,
+                userId: usuario._id,
+                isAuthenticated: true,
+                role: role, // Asignar el nombre del rol
+                loading: false
+            });
+
+            localStorage.setItem('usuario', JSON.stringify(usuario));
+            localStorage.setItem('isAuthenticated', 'true');
+            if (role) {
+                localStorage.setItem('role', role);
+            } else {
+                localStorage.removeItem('role');
+            }
+            localStorage.setItem('userId', usuario._id);
+            return true;
+        } else {
+            throw new Error('Authentication failed');
+        }
     } catch (error) {
-      set({ error: error.response?.data?.message || 'Login failed', loading: false, isAuthenticated: false });
-      return false;
+        console.error('Error durante el login:', error);
+        set({ error: error.response?.data?.message || 'Login failed', loading: false, isAuthenticated: false });
+        return false;
     }
-  },
+},
+
+
   
   logoutUsuario: () => {
     localStorage.removeItem('usuario');
