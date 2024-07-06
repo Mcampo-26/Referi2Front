@@ -1,17 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Container, Typography, Box, TextField, Grid, Paper } from '@mui/material';
+import { Button, Container, Typography, Box, TextField, Grid, Paper, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Html5Qrcode } from 'html5-qrcode';
 import { useTheme } from '@mui/material/styles';
+import useQrStore from '../store/UseQrStore';
+import useServiciosStore from '../store/useServiciosStore';
 import 'tailwindcss/tailwind.css';
 
 export const ScanQr = () => {
   const [scannedData, setScannedData] = useState({});
   const [error, setError] = useState(null);
   const [manualInput, setManualInput] = useState('');
-  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 768); // Estado para detectar el tamaño de la pantalla
+  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 768);
+  const [selectedService, setSelectedService] = useState('');
+  const [details, setDetails] = useState('');
+  const { servicios, getAllServicios, loading, error: serviciosError } = useServiciosStore((state) => ({
+    servicios: state.servicios,
+    getAllServicios: state.getAllServicios,
+    loading: state.loading,
+    error: state.error,
+  }));
+  const { updateQr } = useQrStore((state) => ({
+    updateQr: state.updateQr,
+  }));
   const theme = useTheme();
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    getAllServicios();
+  }, [getAllServicios]);
+
+  useEffect(() => {
+    console.log('Servicios en componente:', servicios); // Verifica los servicios en el componente
+  }, [servicios]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -19,7 +40,7 @@ export const ScanQr = () => {
     };
 
     window.addEventListener('resize', handleResize);
-    handleResize(); // Verifica el tamaño de la pantalla al montar el componente
+    handleResize();
 
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -50,11 +71,24 @@ export const ScanQr = () => {
 
   const handleScan = (data) => {
     if (data) {
-      setScannedData(parseData(data));
-      stopScan();
+      const parsedData = parseData(data);
+      console.log('Datos escaneados:', parsedData); // Verifica los datos escaneados
+      setScannedData({
+        ...parsedData,
+        id: parsedData._id || parsedData.id
+      });
     }
   };
-
+  
+  const handleInputSubmit = () => {
+    const parsedData = parseData(manualInput);
+    console.log('Datos ingresados manualmente:', parsedData); // Verifica los datos ingresados manualmente
+    setScannedData({
+      ...parsedData,
+      id: parsedData._id || parsedData.id
+    });
+  };
+    
   const handleError = (err) => {
     console.error(err);
     setError(err);
@@ -70,10 +104,6 @@ export const ScanQr = () => {
     setManualInput(event.target.value);
   };
 
-  const handleInputSubmit = () => {
-    setScannedData(parseData(manualInput));
-  };
-
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -87,7 +117,9 @@ export const ScanQr = () => {
     const parsedData = {};
     const dataArray = data.split(/\s+/);
     dataArray.forEach((item, index) => {
-      if (item.toLowerCase() === 'texto:') {
+      if (item.toLowerCase() === 'id:') {
+        parsedData.id = dataArray[index + 1] || 'N/A';
+      } else if (item.toLowerCase() === 'texto:') {
         parsedData.text = dataArray[index + 1] || 'N/A';
       } else if (item.toLowerCase() === 'nombre:') {
         parsedData.name = dataArray[index + 1] || 'N/A';
@@ -101,24 +133,54 @@ export const ScanQr = () => {
         parsedData.endTime = dataArray[index + 3] || 'N/A';
       }
     });
+    console.log('Datos parseados:', parsedData); // Verifica los datos parseados
     return parsedData;
+  };
+  
+  const handleUpdateQr = async () => {
+    console.log('handleUpdateQr called'); // Verifica que la función se esté llamando
+    
+    console.log('scannedData:', scannedData); // Verifica el contenido de scannedData
+    
+    if (!scannedData.id) {
+      setError(new Error("No QR code ID found."));
+      console.log("No QR code ID found");
+      return;
+    }
+    
+    const qrData = {
+      ...scannedData, // Incluye los datos escaneados
+      service: selectedService, // Añade el servicio seleccionado
+      details, // Añade los detalles
+      isUsed: true // Marcar como usado
+    };
+    
+    console.log('Datos a enviar:', qrData); // Verifica los datos que se están enviando
+    console.log('QR ID:', scannedData.id); // Verifica el ID del QR
+    
+    try {
+      await updateQr(scannedData.id, qrData);
+      console.log("updateQr llamada con éxito");
+      alert("QR actualizado con éxito");
+    } catch (error) {
+      console.error("Error al actualizar QR:", error);
+    }
   };
 
   return (
     <Container maxWidth="md" className="flex flex-col items-center justify-center mt-20" sx={{ paddingBottom: '40px', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-      
-      {isSmallScreen && (<Typography variant="h4" className="text-center mb-4" >
-        Escanear QR Code
-      </Typography>
+      {isSmallScreen && (
+        <Typography variant="h4" className="text-center mb-4">
+          Escanear QR Code
+        </Typography>
       )}
-       {!isSmallScreen && (<Typography variant="h4" className="text-center mb-4" >
-       Imagen de QR Code
-      </Typography>
+      {!isSmallScreen && (
+        <Typography variant="h4" className="text-center mb-4">
+          Imagen de QR Code
+        </Typography>
       )}
-            <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md">
-        {/* Contenedor del lector QR */}
+      <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md">
       </Box>
-      {/* Mostrar el botón "Iniciar Escaneo" solo en pantallas pequeñas */}
       {isSmallScreen && (
         <Button
           variant="contained"
@@ -129,7 +191,6 @@ export const ScanQr = () => {
           Iniciar Escaneo
         </Button>
       )}
-      {/* Mostrar el botón "Subir Archivo" solo en pantallas medianas y grandes */}
       {!isSmallScreen && (
         <Button
           variant="contained"
@@ -167,7 +228,7 @@ export const ScanQr = () => {
           InputProps={{
             style: {
               color: theme.palette.text.primary,
-              backgroundColor: theme.palette.mode === 'dark' ? '#2e2e2e' : theme.palette.background.paper, // Color de fondo específico en modo oscuro
+              backgroundColor: theme.palette.mode === 'dark' ? '#2e2e2e' : theme.palette.background.paper,
             },
           }}
           InputLabelProps={{
@@ -190,7 +251,6 @@ export const ScanQr = () => {
             },
           }}
         />
-
         <Button variant="contained" color="primary" onClick={handleInputSubmit} sx={{ mt: 2 }}>
           Mostrar Información
         </Button>
@@ -228,6 +288,36 @@ export const ScanQr = () => {
               <Typography variant="body1"><strong>Hora de fin:</strong> {scannedData.endTime}</Typography>
             </Grid>
           </Grid>
+          <FormControl fullWidth margin="normal" variant="outlined">
+            <InputLabel>Servicio</InputLabel>
+            <Select
+              value={selectedService}
+              onChange={(e) => setSelectedService(e.target.value)}
+              label="Servicio"
+            >
+              {servicios.map((servicio) => (
+                <MenuItem key={servicio._id} value={servicio._id}>
+                  {servicio.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            fullWidth
+            label="Detalles"
+            variant="outlined"
+            value={details}
+            onChange={(e) => setDetails(e.target.value)}
+            margin="normal"
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleUpdateQr}
+            sx={{ mt: 2 }}
+          >
+            Guardar Cambios
+          </Button>
         </Box>
       )}
       {error && (
@@ -242,6 +332,36 @@ export const ScanQr = () => {
         >
           <Typography variant="body1" color="error">
             Error al escanear el QR: {error.message}
+          </Typography>
+        </Box>
+      )}
+      {serviciosError && (
+        <Box
+          mt={4}
+          mb={4}
+          textAlign="center"
+          p={4}
+          borderRadius={2}
+          boxShadow={3}
+          className="w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300"
+        >
+          <Typography variant="body1" color="error">
+            Error al obtener servicios: {serviciosError.message}
+          </Typography>
+        </Box>
+      )}
+      {loading && (
+        <Box
+          mt={4}
+          mb={4}
+          textAlign="center"
+          p={4}
+          borderRadius={2}
+          boxShadow={3}
+          className="w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300"
+        >
+          <Typography variant="body1">
+            Cargando servicios...
           </Typography>
         </Box>
       )}

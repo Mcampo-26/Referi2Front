@@ -85,7 +85,7 @@ export const QrDetails = () => {
           </Typography>
           <Paper elevation={3} sx={{ p: 2, borderRadius: 1 }}>
             <Typography variant="body1" component="div">
-              Aquí puedes agregar más detalles sobre el QR, como información adicional, instrucciones, etc.
+              {qr.details || "No hay detalles adicionales disponibles."}
             </Typography>
           </Paper>
         </Box>

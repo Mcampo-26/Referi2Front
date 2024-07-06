@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQrStore } from '../store/UseQrStore';
-import { useUsuariosStore } from '../store/useUsuariosStore'; // Asumiendo que tienes un store para gestionar el usuario
+import useQrStore from '../store/UseQrStore';
+import useUsuariosStore from '../store/useUsuariosStore';
 import { Box, Typography, Paper, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Container, Button, TextField } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faCheckCircle, faCircle } from '@fortawesome/free-solid-svg-icons';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 
@@ -21,18 +21,20 @@ const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection })
 };
 
 export const QrList = () => {
-  const { qrs, getQrsByUser, deleteQr, loading, error } = useQrStore();
-  const { userId } = useUsuariosStore(); // Obtén el userId del store del usuario
+  const { qrs, getQrsByAssignedUser, deleteQr, loading, error } = useQrStore();
+  const { userId } = useUsuariosStore();
   const [orderBy, setOrderBy] = useState('value');
   const [orderDirection, setOrderDirection] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (userId) {
-      getQrsByUser(userId);
+    const storedUserId = localStorage.getItem('userId'); // Obtén el userId del localStorage
+    if (storedUserId) {
+      console.log("Fetching QRs for user:", storedUserId);
+      getQrsByAssignedUser(storedUserId);
     }
-  }, [userId, getQrsByUser]);
+  }, [getQrsByAssignedUser]);
 
   const handleSort = (column) => {
     if (column === orderBy) {
@@ -135,8 +137,11 @@ export const QrList = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <StyledTableCell onClick={() => handleSort('value')} orderBy={orderBy} column="value" orderDirection={orderDirection}>
-                  Usuario
+                <StyledTableCell onClick={() => handleSort('empresaId.name')} orderBy={orderBy} column="empresaId.name" orderDirection={orderDirection}>
+                  Empresa
+                </StyledTableCell>
+                <StyledTableCell onClick={() => handleSort('assignedTo.nombre')} orderBy={orderBy} column="assignedTo.nombre" orderDirection={orderDirection}>
+                  Usuario Asignado
                 </StyledTableCell>
                 <StyledTableCell onClick={() => handleSort('nombre')} orderBy={orderBy} column="nombre" orderDirection={orderDirection}>
                   Nombre
@@ -158,35 +163,50 @@ export const QrList = () => {
                     Acciones
                   </Typography>
                 </StyledTableCell>
+                <StyledTableCell>
+                  <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+                    Estado
+                  </Typography>
+                </StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedQrs.map((qr) => (
-                <TableRow key={qr._id}>
-                  <TableCell>{qr.value}</TableCell>
-                  <TableCell>{qr.nombre}</TableCell>
-                  <TableCell>{qr.telefono}</TableCell>
-                  <TableCell>{qr.mail}</TableCell>
-                  <TableCell>{qr.startTime}</TableCell>
-                  <TableCell>{qr.endTime}</TableCell>
-                  <TableCell>
-                    {qr.base64Image && (
-                      <img 
-                        src={`data:image/png;base64,${qr.base64Image}`} 
-                        alt="QR Code" 
-                        style={{ width: 30, height: 30, marginRight: 8, cursor: 'pointer' }} 
-                        onClick={() => handleQrClick(qr._id)}
+              {sortedQrs.map((qr) => {
+                console.log(`QR ID: ${qr._id}, isUsed: ${qr.isUsed}`);
+                return (
+                  <TableRow key={qr._id}>
+                    <TableCell>{qr.empresaId ? qr.empresaId.name : 'N/A'}</TableCell>
+                    <TableCell>{qr.assignedTo ? qr.assignedTo.nombre : 'N/A'}</TableCell>
+                    <TableCell>{qr.nombre}</TableCell>
+                    <TableCell>{qr.telefono}</TableCell>
+                    <TableCell>{qr.mail}</TableCell>
+                    <TableCell>{qr.startTime}</TableCell>
+                    <TableCell>{qr.endTime}</TableCell>
+                    <TableCell>
+                      {qr.base64Image && (
+                        <img 
+                          src={`data:image/png;base64,${qr.base64Image}`} 
+                          alt="QR Code" 
+                          style={{ width: 30, height: 30, marginRight: 8, cursor: 'pointer' }} 
+                          onClick={() => handleQrClick(qr._id)}
+                        />
+                      )}
+                      <IconButton
+                        color="secondary"
+                        onClick={() => handleDelete(qr._id)}
+                      >
+                        <FontAwesomeIcon icon={faTrash} />
+                      </IconButton>
+                    </TableCell>
+                    <TableCell>
+                      <FontAwesomeIcon
+                        icon={qr.isUsed ? faCheckCircle : faCircle}
+                        color={qr.isUsed ? 'red' : 'green'}
                       />
-                    )}
-                    <IconButton
-                      color="secondary"
-                      onClick={() => handleDelete(qr._id)}
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>
