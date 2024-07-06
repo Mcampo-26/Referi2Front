@@ -42,6 +42,17 @@ export const useQrStore = create((set) => ({
     }
   },
 
+  getQrsByAssignedUser: async (userId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axios.get(`${URL}/Qr/assigned/${userId}`);
+      set({ qrs: response.data, loading: false });
+    } catch (error) {
+      console.error('Error al obtener los QR Codes asignados:', error.response || error.message);
+      set({ loading: false, error: 'Error al obtener los QR Codes asignados' });
+    }
+  },
+
   getQrById: async (id) => {
     set({ loading: true, error: null, qr: null });
     try {
@@ -70,19 +81,22 @@ export const useQrStore = create((set) => ({
     }
   },
 
-  updateQr: async (id, updatedQr) => {
+  updateQr: async (id, data) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.put(`${URL}/Qr/update/${id}`, updatedQr);
+      const response = await axios.put(`${URL}/Qr/update/${id}`, data);
+      const updatedQr = response.data.qr;
       set((state) => ({
         qrs: state.qrs.map((qr) =>
-          qr._id === id ? response.data.qr : qr
+          qr._id === id ? updatedQr : qr
         ),
         loading: false,
       }));
+      return updatedQr;
     } catch (error) {
-      console.error('Error al actualizar QR:', error.response || error.message);
-      set({ loading: false, error: 'Error al actualizar QR' });
+      console.error('Error al actualizar el QR:', error.response || error.message);
+      set({ loading: false, error: 'Error al actualizar el QR' });
+      throw error;
     }
   },
 
