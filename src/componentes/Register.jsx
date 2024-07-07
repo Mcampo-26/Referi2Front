@@ -19,10 +19,8 @@ export const Register = () => {
     nombre: '',
     email: '',
     password: '',
-    direccion1: '',
-    direccion2: '',
+    confirmPassword: '',
     telefono: '',
-    role: 'usuario'
   });
   const navigate = useNavigate();
 
@@ -39,6 +37,7 @@ export const Register = () => {
     if (formData.password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
     if (!/[A-Z]/.test(formData.password)) return 'La contraseña debe contener al menos una letra mayúscula.';
     if (!/\d/.test(formData.password)) return 'La contraseña debe contener al menos un número.';
+    if (formData.password !== formData.confirmPassword) return 'Las contraseñas no coinciden.';
     if (!phoneRegex.test(formData.telefono)) return 'El número de teléfono debe contener solo números y un máximo de 15 caracteres.';
     return null;
   };
@@ -140,9 +139,21 @@ export const Register = () => {
               value={formData.password}
               onChange={handleChange}
             />
+            <TextField
+              variant="outlined"
+              margin="normal"
+              required
+              fullWidth
+              name="confirmPassword"
+              label="Confirmar Contraseña"
+              type="password"
+              id="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+            />
             <Typography variant="body2" color="textSecondary" align="center" sx={{ mb: 2 }}>
               Debe contener al menos 1 letra mayúscula, 1 número y mínimo 8 caracteres.
-            </Typography>     
+            </Typography>
             <TextField
               variant="outlined"
               margin="normal"
@@ -169,5 +180,3 @@ export const Register = () => {
     </Container>
   );
 };
-
-
