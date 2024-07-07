@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Container, Typography, Box, TextField, Grid, Paper, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Button, Box, Typography, Container, TextField, Grid, Paper, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Html5Qrcode } from 'html5-qrcode';
 import { useTheme } from '@mui/material/styles';
 import useQrStore from '../store/UseQrStore';
@@ -31,7 +31,7 @@ export const ScanQr = () => {
   }, [getAllServicios]);
 
   useEffect(() => {
-    console.log('Servicios en componente:', servicios); // Verifica los servicios en el componente
+    console.log('Servicios en componente:', servicios);
   }, [servicios]);
 
   useEffect(() => {
@@ -65,33 +65,41 @@ export const ScanQr = () => {
         { fps: 10, qrbox: 250 },
         handleScan,
         handleError
-      ).catch(err => console.error('Failed to start scanning.', err));
+      ).catch(err => {
+        console.error('Failed to start scanning.', err);
+        setError(err);
+      });
     }
   };
 
   const handleScan = (data) => {
     if (data) {
       const parsedData = parseData(data);
-      console.log('Datos escaneados:', parsedData); // Verifica los datos escaneados
+      console.log('Datos escaneados:', parsedData);
       setScannedData({
         ...parsedData,
         id: parsedData._id || parsedData.id
       });
+      stopScan();
     }
   };
-  
+
   const handleInputSubmit = () => {
     const parsedData = parseData(manualInput);
-    console.log('Datos ingresados manualmente:', parsedData); // Verifica los datos ingresados manualmente
+    console.log('Datos ingresados manualmente:', parsedData);
     setScannedData({
       ...parsedData,
       id: parsedData._id || parsedData.id
     });
   };
-    
+
   const handleError = (err) => {
-    console.error(err);
-    setError(err);
+    if (err.name === 'NotFoundException') {
+      console.warn('QR code not found. Retrying...');
+    } else {
+      console.error('Error during scan:', err);
+      setError(err);
+    }
   };
 
   const stopScan = () => {
@@ -107,9 +115,19 @@ export const ScanQr = () => {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
+      console.log('Archivo seleccionado:', file);
       scannerRef.current.scanFile(file, true)
         .then(handleScan)
-        .catch(handleError);
+        .catch(err => {
+          if (err.name === 'NotFoundException') {
+            console.warn('QR code not found in file. Please try another file.');
+          } else {
+            console.error('Error scanning file:', err);
+            setError(err);
+          }
+        });
+    } else {
+      console.log('No file selected');
     }
   };
 
@@ -133,31 +151,29 @@ export const ScanQr = () => {
         parsedData.endTime = dataArray[index + 3] || 'N/A';
       }
     });
-    console.log('Datos parseados:', parsedData); // Verifica los datos parseados
+    console.log('Datos parseados:', parsedData);
     return parsedData;
   };
-  
+
   const handleUpdateQr = async () => {
-    console.log('handleUpdateQr called'); // Verifica que la función se esté llamando
-    
-    console.log('scannedData:', scannedData); // Verifica el contenido de scannedData
-    
+    console.log('handleUpdateQr called');
+    console.log('scannedData:', scannedData);
     if (!scannedData.id) {
       setError(new Error("No QR code ID found."));
       console.log("No QR code ID found");
       return;
     }
-    
+
     const qrData = {
-      ...scannedData, // Incluye los datos escaneados
-      service: selectedService, // Añade el servicio seleccionado
-      details, // Añade los detalles
-      isUsed: true // Marcar como usado
+      ...scannedData,
+      service: selectedService,
+      details,
+      isUsed: true
     };
-    
-    console.log('Datos a enviar:', qrData); // Verifica los datos que se están enviando
-    console.log('QR ID:', scannedData.id); // Verifica el ID del QR
-    
+
+    console.log('Datos a enviar:', qrData);
+    console.log('QR ID:', scannedData.id);
+
     try {
       await updateQr(scannedData.id, qrData);
       console.log("updateQr llamada con éxito");
