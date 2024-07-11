@@ -6,7 +6,7 @@ const useServiciosStore = create((set) => ({
   servicios: [],
   loading: false,
   error: null,
-
+  
   getAllServicios: async () => {
     set({ loading: true, error: null });
     try {
@@ -21,12 +21,27 @@ const useServiciosStore = create((set) => ({
       set({ loading: false, error: 'Error al obtener todos los servicios' });
     }
   },
+  getServiciosByEmpresaId: async (empresaId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axios.get(`${URL}/Servicio/byEmpresa/${empresaId}`);
+      console.log('Servicios por empresa:', response.data); // Verificar si los servicios son obtenidos correctamente
+      set({
+        servicios: response.data,
+        loading: false,
+      });
+    } catch (error) {
+      console.error('Error al obtener servicios por empresa:', error.response || error.message);
+      set({ loading: false, error: 'Error al obtener servicios por empresa' });
+    }
+  },
 
   createServicio: async (servicio) => {
     set({ loading: true, error: null });
     try {
       const response = await axios.post(`${URL}/Servicio/create`, servicio);
       const nuevoServicio = response.data;
+      console.log('Servicio creado:', nuevoServicio);
       set((state) => ({
         servicios: [...state.servicios, nuevoServicio],
         loading: false,
@@ -42,6 +57,7 @@ const useServiciosStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       await axios.delete(`${URL}/Servicio/delete/${id}`);
+      console.log('Servicio eliminado:', id);
       set((state) => ({
         servicios: state.servicios.filter((servicio) => servicio._id !== id),
         loading: false,
@@ -57,6 +73,7 @@ const useServiciosStore = create((set) => ({
     try {
       const response = await axios.put(`${URL}/Servicio/update/${servicioId}`, updatedServicio);
       const updatedServicioData = response.data;
+      console.log('Servicio actualizado:', updatedServicioData);
       set((state) => ({
         servicios: state.servicios.map((servicio) =>
           servicio._id === servicioId ? updatedServicioData : servicio

@@ -21,7 +21,8 @@ import {
   Paper,
   CircularProgress,
   Typography,
-  Container
+  Container,
+  Box
 } from '@mui/material';
 
 const MySwal = withReactContent(Swal);
@@ -33,6 +34,7 @@ export const Roles = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingRoleId, setEditingRoleId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     getAllRoles();
@@ -171,14 +173,53 @@ export const Roles = () => {
     }
   };
 
+  const filteredRoles = roles.filter((role) =>
+    role.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <Container maxWidth="md">
-      <div className="flex justify-between items-center mt-10 mb-6">
-        <Typography variant="h4">Administración de roles</Typography>
+      <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
+        <Typography variant="h4" mb={4}>Administración de roles</Typography>
+      </Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} mt={2} flexWrap="wrap">
+        <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
+          <TextField
+            variant="outlined"
+            placeholder="Buscar Roles..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{
+              width: { xs: '100%', sm: '300px' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'white',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'white',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: 'white',
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: 'white',
+              },
+              '& .MuiInputLabel-root': {
+                color: 'white',
+              },
+            }}
+          />
+          {searchTerm && (
+            <Button variant="contained" color="secondary" onClick={() => setSearchTerm('')} sx={{ ml: 1 }}>
+              Limpiar
+            </Button>
+          )}
+        </Box>
         <Button variant="contained" color="primary" onClick={handleCreate}>
           + Agregar Rol
         </Button>
-      </div>
+      </Box>
 
       <Dialog open={showModal} onClose={toggleModal}>
         <DialogTitle>{isEditing ? 'Editar Rol' : 'Agregar Nuevo Rol'}</DialogTitle>
@@ -215,7 +256,7 @@ export const Roles = () => {
         <Typography color="error" align="center">
           Error al cargar datos: {error}
         </Typography>
-      ) : roles && roles.length > 0 ? (
+      ) : filteredRoles && filteredRoles.length > 0 ? (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -233,7 +274,7 @@ export const Roles = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {roles.map((role, index) => (
+              {filteredRoles.map((role, index) => (
                 <TableRow key={`${role._id}-${index}`}>
                   <TableCell>{role.name}</TableCell>
                   <TableCell align="right">

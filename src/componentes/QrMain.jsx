@@ -21,48 +21,51 @@ export const QrMain = () => {
   const [mail, setMail] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [date, setDate] = useState('');
   const [base64Image, setBase64Image] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
 
   const createQr = useQrStore((state) => state.createQr);
   const { empresas, getAllEmpresas } = useEmpresasStore();
-  const { usuarios, getUsuarios } = useUsuariosStore(); // Estado del store de usuarios
+  const { usuarios, getUsuarios } = useUsuariosStore();
 
   const theme = useTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('md'));
 
   useEffect(() => {
     getAllEmpresas();
-    getUsuarios(); // Obtener la lista de usuarios al montar el componente
+    getUsuarios();
   }, [getAllEmpresas, getUsuarios]);
 
   useEffect(() => {
-    console.log("Usuarios:", usuarios); // Verificar si los usuarios están cargando correctamente
+    console.log("Usuarios:", usuarios);
   }, [usuarios]);
 
   const handleGenerateClick = async () => {
-    const userId = localStorage.getItem('userId'); // Obtén el userId del localStorage
+    const userId = localStorage.getItem('userId');
     if (!userId) {
       console.error("User ID is missing");
       return;
     }
-
+  
+    const empresa = empresas.find(e => e._id === empresaId);
     const qrData = {
-      userId, // Asegúrate de incluir el userId
-      empresaId, // Incluye empresaId
+      userId,
+      assignedTo: { _id: assignedTo, nombre: usuarios.find(u => u._id === assignedTo)?.nombre },
+      empresaId: { _id: empresaId, name: empresa?.name || 'N/A' },
       value: inputValue,
       nombre,
       telefono,
       mail,
       startTime,
       endTime,
-      assignedTo, // Incluye el usuario asignado
+      date
     };
-
+  
     console.log("Datos enviados para generar QR:", qrData);
-
+  
     try {
-      const newQr = await createQr(qrData);
+      const newQr = await createQr(qrData); // Enviar el objeto directamente
       console.log("QR creado:", newQr);
       if (newQr && newQr.base64Image) {
         setBase64Image(newQr.base64Image);
@@ -71,6 +74,8 @@ export const QrMain = () => {
       console.error("Error al crear QR:", error);
     }
   };
+  
+  
 
   const handleWhatsAppShare = () => {
     // Lógica para compartir en WhatsApp
@@ -150,6 +155,17 @@ export const QrMain = () => {
                     fullWidth
                     margin="normal"
                   />
+                  <TextField
+                    label="Fecha"
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    fullWidth
+                    margin="normal"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
                   <FormControl fullWidth margin="normal" variant="outlined">
                     <InputLabel>Asignar a usuario</InputLabel>
                     <Select
@@ -190,17 +206,16 @@ export const QrMain = () => {
               <Grid item xs={12} md={6} className="flex justify-center items-center">
                 {base64Image && (
                   <Paper elevation={3} className="p-0 bg-white dark:bg-gray-800 rounded-md shadow-md flex justify-center items-center w-full h-full">
-                   <img
-  src={`data:image/png;base64,${base64Image}`}
-  alt="Generated QR Code"
-  className="w-full h-full max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg"
-  style={{
-    width: '350%', 
-    height:'80%',// Ajusta según tus necesidades
-    maxWidth: '300px', // Ajusta según tus necesidades
-  }}
-/>
-
+                    <img
+                      src={`data:image/png;base64,${base64Image}`}
+                      alt="Generated QR Code"
+                      className="w-full h-full max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg"
+                      style={{
+                        width: '350%',
+                        height: '80%',
+                        maxWidth: '300px',
+                      }}
+                    />
                   </Paper>
                 )}
               </Grid>

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { URL } from '../utilities/config';
 
 const useEmpresasStore = create((set) => ({
+  empresa: null,
   empresas: [],
   loading: false,
   error: null,
@@ -18,6 +19,20 @@ const useEmpresasStore = create((set) => ({
     } catch (error) {
       console.error('Error al obtener todas las empresas:', error.response || error.message);
       set({ loading: false, error: 'Error al obtener todas las empresas' });
+    }
+  },
+
+  getEmpresaById: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axios.get(`${URL}/Empresa/${id}`);
+      set({
+        empresa: response.data,
+        loading: false,
+      });
+    } catch (error) {
+      console.error('Error al obtener la empresa:', error.response || error.message);
+      set({ loading: false, error: 'Error al obtener la empresa' });
     }
   },
 

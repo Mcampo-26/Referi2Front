@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useEmpresasStore from '../store/useEmpresaStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
@@ -21,18 +22,21 @@ import {
   Paper,
   CircularProgress,
   Typography,
-  Container
+  Container,
+  Box
 } from '@mui/material';
 
 const MySwal = withReactContent(Swal);
 
 export const Empresas = () => {
+  const navigate = useNavigate();
   const { empresas, getAllEmpresas, loading, error, createEmpresa, updateEmpresa, deleteEmpresa, totalPages } = useEmpresasStore();
   const [showModal, setShowModal] = useState(false);
   const [newEmpresaName, setNewEmpresaName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editingEmpresaId, setEditingEmpresaId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     getAllEmpresas();
@@ -171,14 +175,57 @@ export const Empresas = () => {
     }
   };
 
+  const filteredEmpresas = empresas.filter((empresa) =>
+    empresa.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleRowClick = (id) => {
+    navigate(`/EmpresaDetails/${id}`);
+  };
+
   return (
     <Container maxWidth="md">
-      <div className="flex justify-between items-center mt-10 mb-6">
-        <Typography variant="h4">Administración de empresas</Typography>
+      <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
+        <Typography variant="h4" mb={4}>Administración de empresas</Typography>
+      </Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} mt={2} flexWrap="wrap">
+        <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
+          <TextField
+            variant="outlined"
+            placeholder="Buscar Empresas..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{
+              width: { xs: '100%', sm: '300px' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'white',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'white',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: 'white',
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: 'white',
+              },
+              '& .MuiInputLabel-root': {
+                color: 'white',
+              },
+            }}
+          />
+          {searchTerm && (
+            <Button variant="contained" color="secondary" onClick={() => setSearchTerm('')} sx={{ ml: 1 }}>
+              Limpiar
+            </Button>
+          )}
+        </Box>
         <Button variant="contained" color="primary" onClick={handleCreate}>
           + Agregar Empresa
         </Button>
-      </div>
+      </Box>
 
       <Dialog open={showModal} onClose={toggleModal}>
         <DialogTitle>{isEditing ? 'Editar Empresa' : 'Agregar Nueva Empresa'}</DialogTitle>
@@ -215,7 +262,7 @@ export const Empresas = () => {
         <Typography color="error" align="center">
           Error al cargar datos: {error}
         </Typography>
-      ) : empresas && empresas.length > 0 ? (
+      ) : filteredEmpresas && filteredEmpresas.length > 0 ? (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -233,19 +280,19 @@ export const Empresas = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {empresas.map((empresa, index) => (
-                <TableRow key={`${empresa._id}-${index}`}>
+              {filteredEmpresas.map((empresa, index) => (
+                <TableRow key={`${empresa._id}-${index}`} onClick={() => handleRowClick(empresa._id)} style={{ cursor: 'pointer' }}>
                   <TableCell>{empresa.name}</TableCell>
                   <TableCell align="right">
                     <FontAwesomeIcon
                       icon={faPenToSquare}
                       className="h-6 w-5 text-blue-400 hover:text-blue-700 cursor-pointer mr-4"
-                      onClick={() => handleEdit(empresa)}
+                      onClick={(e) => { e.stopPropagation(); handleEdit(empresa); }}
                     />
                     <FontAwesomeIcon
                       icon={faTrash}
                       className="h-4 w-4 text-red-600 hover:text-red-800 cursor-pointer"
-                      onClick={() => handleDelete(empresa._id)}
+                      onClick={(e) => { e.stopPropagation(); handleDelete(empresa._id); }}
                     />
                   </TableCell>
                 </TableRow>

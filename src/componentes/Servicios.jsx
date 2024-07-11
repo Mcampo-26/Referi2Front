@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, Grid, Container, Typography, Card, CardContent, Paper, Box, MenuItem, Select, InputLabel, FormControl, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Button, TextField, Container, Typography, Paper, Box, MenuItem, Select, InputLabel, FormControl, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import useServiciosStore from '../store/useServiciosStore';
 import useEmpresasStore from '../store/useEmpresaStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -22,6 +22,7 @@ export const Servicios = () => {
   const [empresaId, setEmpresaId] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editingServicioId, setEditingServicioId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { servicios, getAllServicios, loading, error, createServicio, updateServicio, deleteServicio } = useServiciosStore();
   const { empresas, getAllEmpresas } = useEmpresasStore();
@@ -149,14 +150,53 @@ export const Servicios = () => {
     }
   };
 
+  const filteredServicios = servicios.filter(servicio =>
+    servicio.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <Container maxWidth="md">
-      <div className="flex justify-between items-center mt-10 mb-6">
-        <Typography variant="h4">Administración de servicios</Typography>
+      <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
+        <Typography variant="h4" mb={4}>Administración de ervicios</Typography>
+      </Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} mt={2} flexWrap="wrap">
+        <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
+          <TextField
+            variant="outlined"
+            placeholder="Buscar Servicios..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{
+              width: { xs: '100%', sm: '300px' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'white',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'white',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: 'white',
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: 'white',
+              },
+              '& .MuiInputLabel-root': {
+                color: 'white',
+              },
+            }}
+          />
+          {searchTerm && (
+            <Button variant="contained" color="secondary" onClick={() => setSearchTerm('')} sx={{ ml: 1 }}>
+              Limpiar
+            </Button>
+          )}
+        </Box>
         <Button variant="contained" color="primary" onClick={handleCreate}>
           + Agregar Servicio
         </Button>
-      </div>
+      </Box>
 
       <Dialog open={showModal} onClose={toggleModal}>
         <DialogTitle>{isEditing ? 'Editar Servicio' : 'Agregar Nuevo Servicio'}</DialogTitle>
@@ -207,7 +247,7 @@ export const Servicios = () => {
         <Typography color="error" align="center">
           Error al cargar datos: {error}
         </Typography>
-      ) : servicios && servicios.length > 0 ? (
+      ) : filteredServicios && filteredServicios.length > 0 ? (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -230,7 +270,7 @@ export const Servicios = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {servicios.map((servicio, index) => (
+              {filteredServicios.map((servicio, index) => (
                 <TableRow key={`${servicio._id}-${index}`}>
                   <TableCell>{servicio.name}</TableCell>
                   <TableCell>{empresas.find(e => e._id === servicio.empresaId)?.name}</TableCell>

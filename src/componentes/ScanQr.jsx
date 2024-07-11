@@ -13,9 +13,9 @@ export const ScanQr = () => {
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 768);
   const [selectedService, setSelectedService] = useState('');
   const [details, setDetails] = useState('');
-  const { servicios, getAllServicios, loading, error: serviciosError } = useServiciosStore((state) => ({
+  const { servicios, getServiciosByEmpresaId, loading, error: serviciosError } = useServiciosStore((state) => ({
     servicios: state.servicios,
-    getAllServicios: state.getAllServicios,
+    getServiciosByEmpresaId: state.getServiciosByEmpresaId,
     loading: state.loading,
     error: state.error,
   }));
@@ -25,14 +25,6 @@ export const ScanQr = () => {
   const theme = useTheme();
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
-
-  useEffect(() => {
-    getAllServicios();
-  }, [getAllServicios]);
-
-  useEffect(() => {
-    console.log('Servicios en componente:', servicios);
-  }, [servicios]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -58,6 +50,32 @@ export const ScanQr = () => {
     };
   }, []);
 
+  const parseData = (data) => {
+    const parsedData = JSON.parse(data);
+    console.log('Datos recibidos para parsear:', parsedData);
+  
+    const fullData = {
+      id: parsedData.id || 'N/A',
+      userId: parsedData.uId || 'N/A',
+      assignedTo: { _id: parsedData.aId || 'N/A' },
+      empresaId: {
+        _id: parsedData.eId || 'N/A',
+        name: parsedData.eName || 'N/A'
+      },
+      value: parsedData.v || 'N/A',
+      nombre: parsedData.n || 'N/A',
+      telefono: parsedData.t || 'N/A',
+      mail: parsedData.m || 'N/A',
+      startTime: parsedData.sT || 'N/A',
+      endTime: parsedData.eT || 'N/A',
+      date: parsedData.d || 'N/A'
+    };
+  
+    console.log('Datos parseados:', fullData);
+    return fullData;
+  };
+  
+  
   const startScan = () => {
     if (scannerRef.current && !scannerRef.current.isScanning) {
       scannerRef.current.start(
@@ -72,25 +90,45 @@ export const ScanQr = () => {
     }
   };
 
-  const handleScan = (data) => {
+  const handleScan = async (data) => {
     if (data) {
+      console.log('Datos escaneados crudos:', data);
       const parsedData = parseData(data);
       console.log('Datos escaneados:', parsedData);
+  
       setScannedData({
         ...parsedData,
-        id: parsedData._id || parsedData.id
+        id: parsedData._id || parsedData.id,
+        empresaId: parsedData.empresaId
       });
+  
+      if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
+        console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
+        await getServiciosByEmpresaId(parsedData.empresaId._id);
+      } else {
+        console.error('Empresa ID no válido:', parsedData.empresaId._id);
+      }
+  
       stopScan();
     }
   };
-
-  const handleInputSubmit = () => {
+  
+  
+  
+  const handleInputSubmit = async () => {
     const parsedData = parseData(manualInput);
     console.log('Datos ingresados manualmente:', parsedData);
     setScannedData({
       ...parsedData,
-      id: parsedData._id || parsedData.id
+      id: parsedData._id || parsedData.id,
+      empresaId: parsedData.empresaId
     });
+    if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
+      console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
+      await getServiciosByEmpresaId(parsedData.empresaId._id);
+    } else {
+      console.error('Empresa ID no válido:', parsedData.empresaId._id);
+    }
   };
 
   const handleError = (err) => {
@@ -116,8 +154,12 @@ export const ScanQr = () => {
     const file = event.target.files[0];
     if (file) {
       console.log('Archivo seleccionado:', file);
+  
       scannerRef.current.scanFile(file, true)
-        .then(handleScan)
+        .then((decodedText) => {
+          console.log('Texto decodificado del QR:', decodedText);
+          handleScan(decodedText); // Llama a handleScan con los datos decodificados
+        })
         .catch(err => {
           if (err.name === 'NotFoundException') {
             console.warn('QR code not found in file. Please try another file.');
@@ -130,31 +172,7 @@ export const ScanQr = () => {
       console.log('No file selected');
     }
   };
-
-  const parseData = (data) => {
-    const parsedData = {};
-    const dataArray = data.split(/\s+/);
-    dataArray.forEach((item, index) => {
-      if (item.toLowerCase() === 'id:') {
-        parsedData.id = dataArray[index + 1] || 'N/A';
-      } else if (item.toLowerCase() === 'texto:') {
-        parsedData.text = dataArray[index + 1] || 'N/A';
-      } else if (item.toLowerCase() === 'nombre:') {
-        parsedData.name = dataArray[index + 1] || 'N/A';
-      } else if (item.toLowerCase() === 'teléfono:') {
-        parsedData.phone = dataArray[index + 1] || 'N/A';
-      } else if (item.toLowerCase() === 'correo:') {
-        parsedData.email = dataArray[index + 1] || 'N/A';
-      } else if (item.toLowerCase() === 'hora' && dataArray[index + 1]?.toLowerCase() === 'de' && dataArray[index + 2]?.toLowerCase() === 'inicio:') {
-        parsedData.startTime = dataArray[index + 3] || 'N/A';
-      } else if (item.toLowerCase() === 'hora' && dataArray[index + 1]?.toLowerCase() === 'de' && dataArray[index + 2]?.toLowerCase() === 'fin:') {
-        parsedData.endTime = dataArray[index + 3] || 'N/A';
-      }
-    });
-    console.log('Datos parseados:', parsedData);
-    return parsedData;
-  };
-
+  
   const handleUpdateQr = async () => {
     console.log('handleUpdateQr called');
     console.log('scannedData:', scannedData);
@@ -234,39 +252,6 @@ export const ScanQr = () => {
         boxShadow={3}
         className="bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300"
       >
-        <TextField
-          fullWidth
-          label="Ingresar código QR manualmente"
-          variant="outlined"
-          value={manualInput}
-          onChange={handleInputChange}
-          className="mb-4"
-          InputProps={{
-            style: {
-              color: theme.palette.text.primary,
-              backgroundColor: theme.palette.mode === 'dark' ? '#2e2e2e' : theme.palette.background.paper,
-            },
-          }}
-          InputLabelProps={{
-            style: {
-              color: theme.palette.text.primary,
-            },
-          }}
-          sx={{
-            marginTop: '1.5rem',
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: theme.palette.text.primary,
-              },
-              '&:hover fieldset': {
-                borderColor: theme.palette.text.primary,
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: theme.palette.text.primary,
-              },
-            },
-          }}
-        />
         <Button variant="contained" color="primary" onClick={handleInputSubmit} sx={{ mt: 2 }}>
           Mostrar Información
         </Button>
@@ -286,22 +271,28 @@ export const ScanQr = () => {
           </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <Typography variant="body1"><strong>Texto:</strong> {scannedData.text}</Typography>
+              <Typography variant="body1"><strong>Descuento :</strong> {scannedData.value} %</Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Typography variant="body1"><strong>Nombre:</strong> {scannedData.name}</Typography>
+              <Typography variant="body1"><strong>Nombre:</strong> {scannedData.nombre}</Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Typography variant="body1"><strong>Teléfono:</strong> {scannedData.phone}</Typography>
+              <Typography variant="body1"><strong>Teléfono:</strong> {scannedData.telefono}</Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Typography variant="body1"><strong>Correo:</strong> {scannedData.email}</Typography>
+              <Typography variant="body1"><strong>Correo:</strong> {scannedData.mail}</Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Typography variant="body1"><strong>Hora de inicio:</strong> {scannedData.startTime}</Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Typography variant="body1"><strong>Hora de fin:</strong> {scannedData.endTime}</Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Typography variant="body1"><strong>Fecha:</strong> {new Date(scannedData.date).toLocaleDateString()}</Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Typography variant="body1"><strong>Empresa:</strong> {scannedData.empresaId?.name || 'N/A'}</Typography>
             </Grid>
           </Grid>
           <FormControl fullWidth margin="normal" variant="outlined">

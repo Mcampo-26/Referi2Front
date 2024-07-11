@@ -65,10 +65,14 @@ export const useQrStore = create((set) => ({
     }
   },
 
-  createQr: async (qr) => {
+   createQr: async (qr) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post(`${URL}/Qr/create`, qr);
+      const response = await axios.post(`${URL}/Qr/create`, qr, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       const nuevoQr = response.data.newQr;
       set((state) => ({
         qrs: [...state.qrs, nuevoQr],
@@ -78,6 +82,7 @@ export const useQrStore = create((set) => ({
     } catch (error) {
       console.error('Error al crear QR:', error.response || error.message);
       set({ loading: false, error: 'Error al crear QR' });
+      throw error; // Asegúrate de lanzar el error para manejarlo en handleGenerateClick
     }
   },
 

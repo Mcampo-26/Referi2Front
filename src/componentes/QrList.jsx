@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useQrStore from '../store/UseQrStore';
 import useUsuariosStore from '../store/useUsuariosStore';
-import { Box, Typography, Paper, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Container, Button, TextField } from '@mui/material';
+import {
+  Box, Typography, CircularProgress, IconButton, Container, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Button
+} from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faCheckCircle, faCircle } from '@fortawesome/free-solid-svg-icons';
 import Swal from 'sweetalert2';
@@ -12,10 +14,8 @@ const MySwal = withReactContent(Swal);
 
 const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection }) => {
   return (
-    <TableCell onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
-      <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-        {children} {orderBy === column && (orderDirection === 'asc' ? '▲' : '▼')}
-      </Typography>
+    <TableCell onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default', fontWeight: 'bold' }}>
+      {children} {orderBy === column && (orderDirection === 'asc' ? '▲' : '▼')}
     </TableCell>
   );
 };
@@ -29,7 +29,7 @@ export const QrList = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem('userId'); // Obtén el userId del localStorage
+    const storedUserId = localStorage.getItem('userId');
     if (storedUserId) {
       console.log("Fetching QRs for user:", storedUserId);
       getQrsByAssignedUser(storedUserId);
@@ -111,29 +111,46 @@ export const QrList = () => {
 
   return (
     <Container>
-      <Box className="w-full md:w-1/3 flex items-center mx-auto mb-4">
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Buscar QRs por valor, nombre, teléfono o correo..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ marginTop: '3rem' }}
-        />
-        {searchTerm && (
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => setSearchTerm('')}
-            sx={{ marginLeft: '1rem', marginTop: '3rem' }}
-          >
-            Limpiar
-          </Button>
-        )}
+      <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
+        <Typography variant="h4" mb={4}>Mis QR Codes</Typography>
       </Box>
-      <Typography variant="h4" mb={4}>Mis QR Codes</Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} mt={2} flexWrap="wrap">
+        <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
+          <TextField
+            variant="outlined"
+            placeholder="Buscar QRs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{
+              width: { xs: '100%', sm: '300px' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'white', // Cambia el color del borde
+                },
+                '&:hover fieldset': {
+                  borderColor: 'white', // Cambia el color del borde al pasar el mouse
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: 'white', // Cambia el color del borde cuando está enfocado
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: 'white', // Cambia el color del texto del input
+              },
+              '& .MuiInputLabel-root': {
+                color: 'white', // Cambia el color del placeholder
+              },
+            }}
+          />
+          {searchTerm && (
+            <Button variant="contained" color="secondary" onClick={() => setSearchTerm('')} sx={{ ml: 1 }}>
+              Limpiar
+            </Button>
+          )}
+        </Box>
+      </Box>
       {sortedQrs.length ? (
-        <TableContainer component={Paper} style={{ marginTop: '2rem' }}>
+        <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow>
@@ -159,54 +176,48 @@ export const QrList = () => {
                   Hora de Fin
                 </StyledTableCell>
                 <StyledTableCell>
-                  <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                    Acciones
-                  </Typography>
+                  Acciones
                 </StyledTableCell>
                 <StyledTableCell>
-                  <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                    Estado
-                  </Typography>
+                  Estado
                 </StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedQrs.map((qr) => {
-                console.log(`QR ID: ${qr._id}, isUsed: ${qr.isUsed}`);
-                return (
-                  <TableRow key={qr._id}>
-                    <TableCell>{qr.empresaId ? qr.empresaId.name : 'N/A'}</TableCell>
-                    <TableCell>{qr.assignedTo ? qr.assignedTo.nombre : 'N/A'}</TableCell>
-                    <TableCell>{qr.nombre}</TableCell>
-                    <TableCell>{qr.telefono}</TableCell>
-                    <TableCell>{qr.mail}</TableCell>
-                    <TableCell>{qr.startTime}</TableCell>
-                    <TableCell>{qr.endTime}</TableCell>
-                    <TableCell>
-                      {qr.base64Image && (
-                        <img 
-                          src={`data:image/png;base64,${qr.base64Image}`} 
-                          alt="QR Code" 
-                          style={{ width: 30, height: 30, marginRight: 8, cursor: 'pointer' }} 
-                          onClick={() => handleQrClick(qr._id)}
-                        />
-                      )}
-                      <IconButton
-                        color="secondary"
-                        onClick={() => handleDelete(qr._id)}
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </IconButton>
-                    </TableCell>
-                    <TableCell>
-                      <FontAwesomeIcon
-                        icon={qr.isUsed ? faCheckCircle : faCircle}
-                        color={qr.isUsed ? 'red' : 'green'}
+              {sortedQrs.map((qr) => (
+                <TableRow key={qr._id}>
+                  <TableCell>{qr.empresaId ? qr.empresaId.name : 'N/A'}</TableCell>
+                  <TableCell>{qr.assignedTo ? qr.assignedTo.nombre : 'N/A'}</TableCell>
+                  <TableCell>{qr.nombre}</TableCell>
+                  <TableCell>{qr.telefono}</TableCell>
+                  <TableCell>{qr.mail}</TableCell>
+                  <TableCell>{qr.startTime}</TableCell>
+                  <TableCell>{qr.endTime}</TableCell>
+                  <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
+                    {qr.base64Image && (
+                      <Avatar 
+                        src={`data:image/png;base64,${qr.base64Image}`} 
+                        alt="QR Code" 
+                        sx={{ width: 30, height: 30, marginRight: 2, cursor: 'pointer' }} 
+                        onClick={() => handleQrClick(qr._id)}
+                        variant="square" // Añadido para que el Avatar se vea cuadrado
                       />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                    )}
+                    <IconButton
+                      color="secondary"
+                      onClick={() => handleDelete(qr._id)}
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </IconButton>
+                  </TableCell>
+                  <TableCell>
+                    <FontAwesomeIcon
+                      icon={qr.isUsed ? faCheckCircle : faCircle}
+                      color={qr.isUsed ? 'red' : 'green'}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
