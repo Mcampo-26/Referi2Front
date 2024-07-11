@@ -13,8 +13,9 @@ import { Register } from "./componentes/Register";
 import { QrDetails } from "./componentes/QrDetails";
 import { Users } from "./pages/Users";
 import { Roles } from "./componentes/Roles";
-import { Empresas } from "./componentes/Empresa";
+import { Empresas } from "./componentes/Empresas";
 import { Servicios } from "./componentes/Servicios";
+import { EmpresaDetails } from "./componentes/EmpresaDetails";
 
 const lightTheme = createTheme({
   palette: {
@@ -63,7 +64,7 @@ function App() {
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <Navbar toggleDarkMode={toggleDarkMode} darkMode={darkMode} />
         <Routes>
-          <Route path="/" element={<Home />} />          
+          <Route path="/" element={<Home />} />
           <Route path="/QrMain" element={<QrMain />} />
           <Route path="/Escanear" element={<ScanPage />} />
           <Route path="/Login" element={<Login />} />
@@ -74,7 +75,7 @@ function App() {
           <Route path="/roles" element={<Roles />} />
           <Route path="/empresas" element={<Empresas />} />
           <Route path="/servicios" element={<Servicios />} />
-
+          <Route path="/empresaDetails/:id" element={<EmpresaDetails />} />
         </Routes>
       </div>
     </ThemeProvider>

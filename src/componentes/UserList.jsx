@@ -170,42 +170,52 @@ export const UserList = () => {
 
   return (
     <Container>
-      <Box className="w-full md:w-1/3 flex items-center mx-auto mb-4">
-        {searchTerm && (
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleClear}
-            sx={{ marginLeft: '1rem', marginTop: '3rem' }}
-          >
-            Limpiar
-          </Button>
-        )}
+      <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
+        <Typography variant="h4" mb={4}>Lista de Usuarios</Typography>
       </Box>
-      <div className="flex justify-between items-center mb-4 ">
-        <Typography variant="h4" component="h1" mt={4} gutterBottom>
-          Lista de Usuarios
-        </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} mt={2} flexWrap="wrap">
+        <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
+          <TextField
+            variant="outlined"
+            placeholder="Buscar Usuarios..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{
+              width: { xs: '100%', sm: '300px' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'white',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'white',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: 'white',
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: 'white',
+              },
+              '& .MuiInputLabel-root': {
+                color: 'white',
+              },
+            }}
+          />
+          {searchTerm && (
+            <Button variant="contained" color="secondary" onClick={handleClear} sx={{ ml: 1 }}>
+              Limpiar
+            </Button>
+          )}
+        </Box>
         <Button
           variant="contained"
           color="primary"
           onClick={() => navigate('/register')}
-          style={{ marginTop: '1rem' }}
+          sx={{ mt: { xs: 2, sm: 0 } }}
         >
           Nuevo Usuario
         </Button>
-      </div>
-
-      <div className="w-full md:w-1/3 flex items-center mx-auto mb-4">
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Buscar usuarios por nombre, ID o correo..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ marginTop: '1.5rem' }}
-        />
-      </div>
+      </Box>
 
       {sortedUsers.length ? (
         <TableContainer component={Paper} style={{ marginTop: '2rem' }}>
@@ -237,14 +247,14 @@ export const UserList = () => {
                   <TableCell>
                     <IconButton
                       color="primary"
-                      onClick={usuario.email !== "admin@admin.com" ? () => handleEdit(usuario) : () => Swal.fire({icon: 'warning', title: 'No permitido', text: 'No se puede editar al administrador.'})}
+                      onClick={usuario.email !== "admin@admin.com" ? () => handleEdit(usuario) : () => Swal.fire({ icon: 'warning', title: 'No permitido', text: 'No se puede editar al administrador.' })}
                       style={usuario.email === "admin@admin.com" ? { color: 'gray' } : {}}
                     >
                       <FontAwesomeIcon icon={faPenToSquare} />
                     </IconButton>
                     <IconButton
                       color="secondary"
-                      onClick={usuario.email !== "admin@admin.com" ? () => handleDelete(usuario._id, usuario.email) : () => Swal.fire({icon: 'warning', title: 'No permitido', text: 'No se puede eliminar al administrador.'})}
+                      onClick={usuario.email !== "admin@admin.com" ? () => handleDelete(usuario._id, usuario.email) : () => Swal.fire({ icon: 'warning', title: 'No permitido', text: 'No se puede eliminar al administrador.' })}
                       style={usuario.email === "admin@admin.com" ? { color: 'gray' } : {}}
                     >
                       <FontAwesomeIcon icon={faTrash} />

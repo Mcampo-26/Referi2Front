@@ -52,7 +52,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
           { id: 6, text: "Usuarios", to: "/Users" },
 
           { id: 10, text: "Empresas", to: "/Empresas" },
-          { id: 11, text: "Servicios", to: "/Servicios" },
+        
 
          { id: 9, text: 'Roles', to: '/roles' },
 
