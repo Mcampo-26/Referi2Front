@@ -90,21 +90,20 @@ export const useQrStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await axios.put(`${URL}/Qr/update/${id}`, data);
-      const updatedQr = response.data.qr;
       set((state) => ({
         qrs: state.qrs.map((qr) =>
-          qr._id === id ? updatedQr : qr
+          qr._id === id ? { ...qr, ...response.data.qr } : qr
         ),
         loading: false,
       }));
-      return updatedQr;
+      return response.data;
     } catch (error) {
       console.error('Error al actualizar el QR:', error.response || error.message);
       set({ loading: false, error: 'Error al actualizar el QR' });
       throw error;
     }
   },
-
+  
   deleteQr: async (id) => {
     set({ loading: true, error: null });
     try {
@@ -119,26 +118,29 @@ export const useQrStore = create((set) => ({
     }
   },
 
-  useQr: async (id) => {
-    set({ loading: true, error: null });
-    try {
-      const response = await axios.post(`${URL}/Qr/use/${id}`);
-      if (response.status === 200) {
-        set((state) => ({
-          qrs: state.qrs.map((qr) =>
-            qr._id === id ? { ...qr, usageCount: response.data.usageCount } : qr
-          ),
-          loading: false,
-        }));
-        return response.data.usageCount;
-      } else {
-        throw new Error('Failed to use QR');
-      }
-    } catch (error) {
-      console.error('Error al usar QR:', error.response || error.message);
-      set({ loading: false, error: 'Error al usar QR' });
+// useQrStore.js
+useQr: async (id) => {
+  set({ loading: true, error: null });
+  try {
+    const response = await axios.post(`${URL}/Qr/use/${id}`);
+    if (response.status === 200) {
+      set((state) => ({
+        qrs: state.qrs.map((qr) =>
+          qr._id === id ? { ...qr, usageCount: response.data.usageCount, isUsed: response.data.usageCount >= qr.maxUsageCount } : qr
+        ),
+        loading: false,
+      }));
+      return response.data.usageCount;
+    } else {
+      throw new Error('Failed to use QR');
     }
-  },
+  } catch (error) {
+    console.error('Error al usar QR:', error.response || error.message);
+    set({ loading: false, error: 'Error al usar QR' });
+    throw error;
+  }
+},
+
 }));
 
 export default useQrStore;

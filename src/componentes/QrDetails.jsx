@@ -9,7 +9,9 @@ import {
   Typography,
   Paper,
   CircularProgress,
+  IconButton
 } from '@mui/material';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 
 export const QrDetails = () => {
   const { id } = useParams();
@@ -46,6 +48,11 @@ export const QrDetails = () => {
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const handleWhatsAppClick = (phoneNumber) => {
+    const formattedNumber = phoneNumber.replace(/\D/g, '');
+    window.open(`https://wa.me/${formattedNumber}`, '_blank');
   };
 
   if (loading) {
@@ -88,10 +95,13 @@ export const QrDetails = () => {
                 Correo: {qr.mail}
               </Typography>
             </Paper>           
-            <Paper elevation={3} sx={{ p: 2, borderRadius: 1, mb: 2 }}>
-              <Typography variant="body2" component="div" sx={{ fontWeight: 'bold' }}>
+            <Paper elevation={3} sx={{ p: 2, borderRadius: 1, mb: 2, display: 'flex', alignItems: 'center' }}>
+              <Typography variant="body2" component="div" sx={{ fontWeight: 'bold', flex: 1 }}>
                 Teléfono: {qr.telefono}
               </Typography>
+              <IconButton onClick={() => handleWhatsAppClick(qr.telefono)} sx={{ ml: 2 }}>
+                <WhatsAppIcon color="success" />
+              </IconButton>
             </Paper>
             <Paper elevation={3} sx={{ p: 2, borderRadius: 1, mb: 2 }}>
               <Typography variant="body2" component="div" sx={{ fontWeight: 'bold' }}>
@@ -100,19 +110,21 @@ export const QrDetails = () => {
             </Paper>
           </Grid>
         </Grid>
-        <Box mt={4} width="100%">
-          <Typography variant="h5" gutterBottom>
-          Servicios Realizados 
-          </Typography>
-          <Paper elevation={3} sx={{ p: 2, borderRadius: 1, mb: 4 }}>
-            <Typography variant="body1" component="div">
-              Servicio {getServiceName(qr.service) || "No hay detalles adicionales disponibles."}
+        {qr.isUsed && (
+          <Box mt={4} width="100%">
+            <Typography variant="h5" gutterBottom>
+              Servicios Realizados 
             </Typography>
-            <Typography variant="body1" component="div">
-              {qr.details || "No hay detalles adicionales disponibles."}
-            </Typography>
-          </Paper>
-        </Box>
+            <Paper elevation={3} sx={{ p: 2, borderRadius: 1, mb: 4 }}>
+              <Typography variant="body1" component="div">
+                Servicio {getServiceName(qr.service) || "No hay detalles adicionales disponibles."}
+              </Typography>
+              <Typography variant="body1" component="div">
+                {qr.details || "No hay detalles adicionales disponibles."}
+              </Typography>
+            </Paper>
+          </Box>
+        )}
       </Box>
     </Container>
   );
