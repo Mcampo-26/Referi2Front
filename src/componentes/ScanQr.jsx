@@ -97,39 +97,41 @@ export const ScanQr = () => {
   };
 
   const handleScan = async (data) => {
-    if (data) {
-      console.log('Datos escaneados crudos:', data);
-      const parsedData = parseData(data);
-      console.log('Datos escaneados:', parsedData);
+  if (data) {
+    console.log('Datos escaneados crudos:', data);
+    const parsedData = parseData(data);
+    console.log('Datos escaneados:', parsedData);
 
-      const qrFromDb = await getQrById(parsedData.id);
-      if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
-        stopScan(); // Cierra la cámara antes de mostrar el alert
-        Swal.fire({
-          title: 'QR no usable',
-          text: 'El QR ya no puede ser usado.',
-          icon: 'warning',
-          confirmButtonText: 'Aceptar'
-        });
-        return;
-      }
-
-      setScannedData({
-        ...parsedData,
-        id: parsedData._id || parsedData.id,
-        empresaId: parsedData.empresaId
+    const qrFromDb = await getQrById(parsedData.id);
+    if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
+      Swal.fire({
+        title: 'QR no usable',
+        text: 'El QR ya no puede ser usado.',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
+      }).then(() => {
+        stopScan();
       });
-
-      if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
-        console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
-        await getServiciosByEmpresaId(parsedData.empresaId._id);
-      } else {
-        console.error('Empresa ID no válido:', parsedData.empresaId._id);
-      }
-
-      stopScan(); // Cierra la cámara después de procesar los datos
+      return;
     }
-  };
+
+    setScannedData({
+      ...parsedData,
+      id: parsedData._id || parsedData.id,
+      empresaId: parsedData.empresaId
+    });
+
+    if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
+      console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
+      await getServiciosByEmpresaId(parsedData.empresaId._id);
+    } else {
+      console.error('Empresa ID no válido:', parsedData.empresaId._id);
+    }
+
+    stopScan();
+  }
+};
+
 
   const handleError = (err) => {
     if (err.name === 'NotFoundException') {
