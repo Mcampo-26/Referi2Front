@@ -97,53 +97,54 @@ export const ScanQr = () => {
   };
 
   const handleScan = async (data) => {
-    if (data) {
-      console.log('Datos escaneados crudos:', data);
-      const parsedData = parseData(data);
-      console.log('Datos escaneados:', parsedData);
+  if (data) {
+    console.log('Datos escaneados crudos:', data);
+    const parsedData = parseData(data);
+    console.log('Datos escaneados:', parsedData);
 
-      const qrFromDb = await getQrById(parsedData.id);
-      if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
-        Swal.fire({
-          title: 'QR no usable',
-          text: 'El QR ya no puede ser usado.',
-          icon: 'warning',
-          confirmButtonText: 'Aceptar'
-        });
-        return;
-      }
-
-      setScannedData({
-        ...parsedData,
-        id: parsedData._id || parsedData.id,
-        empresaId: parsedData.empresaId
-      });
-
-      if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
-        console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
-        await getServiciosByEmpresaId(parsedData.empresaId._id);
-      } else {
-        console.error('Empresa ID no válido:', parsedData.empresaId._id);
-      }
-
-      stopScan();
+    const qrFromDb = await getQrById(parsedData.id);
+    if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
+      Swal.fire({
+        title: 'QR no usable',
+        text: 'El QR ya no puede ser usado.',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
+      }).then(() => stopScan()); // Cierra la cámara
+      return;
     }
-  };
+
+    setScannedData({
+      ...parsedData,
+      id: parsedData._id || parsedData.id,
+      empresaId: parsedData.empresaId
+    });
+
+    if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
+      console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
+      await getServiciosByEmpresaId(parsedData.empresaId._id);
+    } else {
+      console.error('Empresa ID no válido:', parsedData.empresaId._id);
+    }
+
+    stopScan(); // Cierra la cámara después de escanear
+  }
+};
 
   const handleError = (err) => {
-    if (err.name === 'NotFoundException') {
-      console.warn('QR code not found. Retrying...');
-    } else {
-      console.error('Error during scan:', err);
-      setError(err);
-    }
-  };
+  if (err.name === 'NotFoundException') {
+    console.warn('QR code not found. Retrying...');
+  } else {
+    console.error('Error during scan:', err);
+    setError(err);
+    stopScan(); // Cierra la cámara después de un error
+  }
+};
+ const stopScan = () => {
+  if (scannerRef.current && scannerRef.current.isScanning) {
+    scannerRef.current.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
+  }
+};
 
-  const stopScan = () => {
-    if (scannerRef.current && scannerRef.current.isScanning) {
-      scannerRef.current.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
-    }
-  };
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
@@ -362,20 +363,22 @@ export const ScanQr = () => {
           </Box>
         </Fade>
       )}
-      {error && (
-        <Box
-          mt={4}
-          mb={4}
-          textAlign="center"
-          p={4}
-          borderRadius={2}
-          boxShadow={3}
-          className="w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300"
-        >
-          <Typography variant="body1" color="error">
-            Error al escanear el QR: {error.message}
-          </Typography>
-        </Box>
+ {error && (
+  <Box
+    mt={4}
+    mb={4}
+    textAlign="center"
+    p={4}
+    borderRadius={2}
+    boxShadow={3}
+    className="w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300"
+  >
+    <Typography variant="body1" color="error">
+      Error al escanear el QR: {error.message}
+    </Typography>
+  </Box>
+)}
+
       )}
       {serviciosError && (
         <Box
