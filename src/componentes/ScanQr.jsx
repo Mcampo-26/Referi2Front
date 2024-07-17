@@ -279,17 +279,7 @@ export const ScanQr = () => {
         onChange={handleFileChange}
         style={{ display: 'none' }}
       />
-      <Box
-        width="100%"
-        maxWidth="600px"
-        mb={4}
-        p={4}
-        mt={6}
-        borderRadius={2}
-        boxShadow={3}
-        className={`bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300 `}
-      >
-      </Box>
+      
       {scannedData && (
         <Box
           component={Paper}
