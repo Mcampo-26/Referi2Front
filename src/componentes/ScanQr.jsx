@@ -382,9 +382,7 @@ export const ScanQr = () => {
           boxShadow={3}
           className="w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300"
         >
-          <Typography variant="body1" color="error">
-            Error al escanear el QR: {error.message}
-          </Typography>
+         
         </Box>
       )}
       {serviciosError && (
