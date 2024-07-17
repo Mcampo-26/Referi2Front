@@ -260,7 +260,7 @@ export const ScanQr = () => {
         >
           Iniciar Escaneo
         </Button>
-      )}
+      
       {!isSmallScreen && (
         <Button
           variant="contained"
