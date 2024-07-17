@@ -97,54 +97,54 @@ export const ScanQr = () => {
   };
 
   const handleScan = async (data) => {
-  if (data) {
-    console.log('Datos escaneados crudos:', data);
-    const parsedData = parseData(data);
-    console.log('Datos escaneados:', parsedData);
+    if (data) {
+      console.log('Datos escaneados crudos:', data);
+      const parsedData = parseData(data);
+      console.log('Datos escaneados:', parsedData);
 
-    const qrFromDb = await getQrById(parsedData.id);
-    if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
-      Swal.fire({
-        title: 'QR no usable',
-        text: 'El QR ya no puede ser usado.',
-        icon: 'warning',
-        confirmButtonText: 'Aceptar'
-      }).then(() => stopScan()); // Cierra la cámara
-      return;
+      const qrFromDb = await getQrById(parsedData.id);
+      if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
+        stopScan(); // Cierra la cámara antes de mostrar el alert
+        Swal.fire({
+          title: 'QR no usable',
+          text: 'El QR ya no puede ser usado.',
+          icon: 'warning',
+          confirmButtonText: 'Aceptar'
+        });
+        return;
+      }
+
+      setScannedData({
+        ...parsedData,
+        id: parsedData._id || parsedData.id,
+        empresaId: parsedData.empresaId
+      });
+
+      if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
+        console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
+        await getServiciosByEmpresaId(parsedData.empresaId._id);
+      } else {
+        console.error('Empresa ID no válido:', parsedData.empresaId._id);
+      }
+
+      stopScan(); // Cierra la cámara después de procesar los datos
     }
-
-    setScannedData({
-      ...parsedData,
-      id: parsedData._id || parsedData.id,
-      empresaId: parsedData.empresaId
-    });
-
-    if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
-      console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
-      await getServiciosByEmpresaId(parsedData.empresaId._id);
-    } else {
-      console.error('Empresa ID no válido:', parsedData.empresaId._id);
-    }
-
-    stopScan(); // Cierra la cámara después de escanear
-  }
-};
+  };
 
   const handleError = (err) => {
-  if (err.name === 'NotFoundException') {
-    console.warn('QR code not found. Retrying...');
-  } else {
-    console.error('Error during scan:', err);
-    setError(err);
-    stopScan(); // Cierra la cámara después de un error
-  }
-};
- const stopScan = () => {
-  if (scannerRef.current && scannerRef.current.isScanning) {
-    scannerRef.current.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
-  }
-};
+    if (err.name === 'NotFoundException') {
+      console.warn('QR code not found. Retrying...');
+    } else {
+      console.error('Error during scan:', err);
+      setError(err);
+    }
+  };
 
+  const stopScan = () => {
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      scannerRef.current.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
+    }
+  };
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
@@ -163,7 +163,7 @@ export const ScanQr = () => {
               text: 'El QR ya no puede ser usado.',
               icon: 'warning',
               confirmButtonText: 'Aceptar'
-            });
+            }).then(() => stopScan()); // Cierra la cámara después de mostrar el alert
             return;
           }
 
@@ -175,6 +175,7 @@ export const ScanQr = () => {
           } else {
             console.error('Error scanning file:', err);
             setError(err);
+            stopScan(); // Cierra la cámara después de un error
           }
         });
     } else {
@@ -217,12 +218,10 @@ export const ScanQr = () => {
         icon: 'success',
         confirmButtonText: 'Aceptar'
       }).then(() => {
-        setTimeout(() => {
-          setScannedData(null); // Resetea el estado de scannedData
-          setSelectedService('');
-          setDetails('');
-          setFadeOut(false); // Elimina la clase fade-out después de ocultar los datos
-        }, 100); // El tiempo de la transición debe coincidir con el CSS
+        setScannedData(null); // Resetea el estado de scannedData
+        setSelectedService('');
+        setDetails('');
+        setFadeOut(false); // Elimina la clase fade-out después de ocultar los datos
       });
     } catch (error) {
       console.error("Error al actualizar QR:", error);
@@ -260,7 +259,7 @@ export const ScanQr = () => {
         >
           Iniciar Escaneo
         </Button>
-      
+      )}
       {!isSmallScreen && (
         <Button
           variant="contained"
@@ -278,107 +277,113 @@ export const ScanQr = () => {
         onChange={handleFileChange}
         style={{ display: 'none' }}
       />
-      
+      <Box
+        width="100%"
+        maxWidth="600px"
+        mb={4}
+        p={4}
+        mt={6}
+        borderRadius={2}
+        boxShadow={3}
+        className={`bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300 `}
+      >
+      </Box>
       {scannedData && (
-        <Fade in={!fadeOut} timeout={100}>
-          <Box
-            component={Paper}
-            elevation={3}
-            mt={4}
-            mb={4}
-            p={4}
-            borderRadius={2}
-            className={`w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300 ${fadeOut ? 'fade-out' : ''}`}
-          >
-            {scannedData.isUsed && scannedData.usageCount >= scannedData.maxUsageCount ? (
-              <Typography variant="body1" color="error" align="center">
-                QR no usable. El QR ya no puede ser usado.
+        <Box
+          component={Paper}
+          elevation={3}
+          mt={4}
+          mb={4}
+          p={4}
+          borderRadius={2}
+          className={`w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300 ${fadeOut ? 'fade-out' : ''}`}
+        >
+          {scannedData.isUsed && scannedData.usageCount >= scannedData.maxUsageCount ? (
+            <Typography variant="body1" color="error" align="center">
+              QR no usable. El QR ya no puede ser usado.
+            </Typography>
+          ) : (
+            <>
+              <Typography variant="h6" mb={5} gutterBottom>
+                Información del QR:
               </Typography>
-            ) : (
-              <>
-                <Typography variant="h6" mb={5} gutterBottom>
-                  Información del QR:
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Descuento :</strong> {scannedData.value} %</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Nombre:</strong> {scannedData.nombre}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Teléfono:</strong> {scannedData.telefono}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Correo:</strong> {scannedData.mail}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Hora de inicio:</strong> {scannedData.startTime}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Hora de fin:</strong> {scannedData.endTime}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Fecha:</strong> {new Date(scannedData.date).toLocaleDateString()}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Empresa:</strong> {scannedData.empresaId?.name || 'N/A'}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Usos restantes:</strong> {usosRestantes >= 0 ? usosRestantes : 'N/A'}</Typography>
-                  </Grid>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1"><strong>Descuento :</strong> {scannedData.value} %</Typography>
                 </Grid>
-                <FormControl fullWidth margin="normal" variant="outlined">
-                  <InputLabel>Servicio</InputLabel>
-                  <Select
-                    value={selectedService}
-                    onChange={(e) => setSelectedService(e.target.value)}
-                    label="Servicio"
-                  >
-                    {servicios.map((servicio) => (
-                      <MenuItem key={servicio._id} value={servicio._id}>
-                        {servicio.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <TextField
-                  fullWidth
-                  label="Detalles"
-                  variant="outlined"
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
-                  margin="normal"
-                />
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleUpdateQr}
-                  sx={{ mt: 2 }}
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1"><strong>Nombre:</strong> {scannedData.nombre}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1"><strong>Teléfono:</strong> {scannedData.telefono}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1"><strong>Correo:</strong> {scannedData.mail}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1"><strong>Hora de inicio:</strong> {scannedData.startTime}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1"><strong>Hora de fin:</strong> {scannedData.endTime}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1"><strong>Fecha:</strong> {new Date(scannedData.date).toLocaleDateString()}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1"><strong>Empresa:</strong> {scannedData.empresaId?.name || 'N/A'}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1"><strong>Usos restantes:</strong> {usosRestantes >= 0 ? usosRestantes : 'N/A'}</Typography>
+                </Grid>
+              </Grid>
+              <FormControl fullWidth margin="normal" variant="outlined">
+                <InputLabel>Servicio</InputLabel>
+                <Select
+                  value={selectedService}
+                  onChange={(e) => setSelectedService(e.target.value)}
+                  label="Servicio"
                 >
-                  Guardar Cambios
-                </Button>
-              </>
-            )}
-          </Box>
-        </Fade>
+                  {servicios.map((servicio) => (
+                    <MenuItem key={servicio._id} value={servicio._id}>
+                      {servicio.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                fullWidth
+                label="Detalles"
+                variant="outlined"
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+                margin="normal"
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleUpdateQr}
+                sx={{ mt: 2 }}
+              >
+                Guardar Cambios
+              </Button>
+            </>
+          )}
+        </Box>
       )}
- {error && (
-  <Box
-    mt={4}
-    mb={4}
-    textAlign="center"
-    p={4}
-    borderRadius={2}
-    boxShadow={3}
-    className="w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300"
-  >
-    <Typography variant="body1" color="error">
-      Error al escanear el QR: {error.message}
-    </Typography>
-  </Box>
-)}
-
+      {error && (
+        <Box
+          mt={4}
+          mb={4}
+          textAlign="center"
+          p={4}
+          borderRadius={2}
+          boxShadow={3}
+          className="w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300"
+        >
+          <Typography variant="body1" color="error">
+            Error al escanear el QR: {error.message}
+          </Typography>
+        </Box>
       )}
       {serviciosError && (
         <Box
