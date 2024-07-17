@@ -29,6 +29,3 @@ body.light-mode .MuiContainer-root {
 body.dark-mode .MuiContainer-root {
     background-color: #424242;
 }
-
-
-/* Añade más estilos según sea necesario para dark y light mode */

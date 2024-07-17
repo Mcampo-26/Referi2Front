@@ -1,0 +1,8 @@
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.1s ease-out;
+}
+
+.hidden {
+    display: none;
+}

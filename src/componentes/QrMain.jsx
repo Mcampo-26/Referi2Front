@@ -113,6 +113,7 @@ export const QrMain = () => {
       console.log("QR creado:", newQr);
       if (newQr && newQr.base64Image) {
         setBase64Image(newQr.base64Image);
+        Swal.fire('QR creado', 'QR creado exitosamente', 'success');
       }
     } catch (error) {
       console.error("Error al crear QR:", error);
