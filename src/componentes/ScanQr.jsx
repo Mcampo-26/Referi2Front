@@ -22,9 +22,10 @@ export const ScanQr = () => {
     loading: state.loading,
     error: state.error,
   }));
-  const { updateQr, getQrById } = useQrStore((state) => ({
+  const { updateQr, getQrById, useQr } = useQrStore((state) => ({
     updateQr: state.updateQr,
     getQrById: state.getQrById,
+    useQr: state.useQr
   }));
   const theme = useTheme();
   const scannerRef = useRef(null);
@@ -73,8 +74,8 @@ export const ScanQr = () => {
       startTime: parsedData.sT || 'N/A',
       endTime: parsedData.eT || 'N/A',
       date: parsedData.d || 'N/A',
-      maxUsageCount: parsedData.mUC || 'N/A',
-      usageCount: parsedData.uC || 'N/A',
+      maxUsageCount: parsedData.mUC || 0,
+      usageCount: parsedData.uC || 0,
       isUsed: parsedData.isUsed || false,
     };
 
@@ -116,7 +117,9 @@ export const ScanQr = () => {
       setScannedData({
         ...parsedData,
         id: parsedData._id || parsedData.id,
-        empresaId: parsedData.empresaId
+        empresaId: parsedData.empresaId,
+        usageCount: qrFromDb.usageCount, // Actualizar con los datos del backend
+        maxUsageCount: qrFromDb.maxUsageCount, // Actualizar con los datos del backend
       });
 
       if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
@@ -216,12 +219,10 @@ export const ScanQr = () => {
         icon: 'success',
         confirmButtonText: 'Aceptar'
       }).then(() => {
-        setTimeout(() => {
-          setScannedData(null); // Resetea el estado de scannedData
-          setSelectedService('');
-          setDetails('');
-          setFadeOut(false); // Elimina la clase fade-out después de ocultar los datos
-        }, 100); // El tiempo de la transición debe coincidir con el CSS
+        setScannedData(null); // Resetea el estado de scannedData
+        setSelectedService('');
+        setDetails('');
+        setFadeOut(false); // Elimina la clase fade-out después de ocultar los datos
       });
     } catch (error) {
       console.error("Error al actualizar QR:", error);
@@ -322,6 +323,9 @@ export const ScanQr = () => {
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body1"><strong>Empresa:</strong> {scannedData.empresaId?.name || 'N/A'}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body1"><strong>Usado:</strong> {scannedData.usageCount}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body1"><strong>Usos restantes:</strong> {usosRestantes >= 0 ? usosRestantes : 'N/A'}</Typography>

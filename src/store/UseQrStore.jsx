@@ -66,7 +66,7 @@ export const useQrStore = create((set) => ({
     }
   },
   
-   createQr: async (qr) => {
+  createQr: async (qr) => {
     set({ loading: true, error: null });
     try {
       const response = await axios.post(`${URL}/Qr/create`, qr, {
@@ -137,6 +137,37 @@ export const useQrStore = create((set) => ({
     } catch (error) {
       console.error('Error al usar QR:', error.response || error.message);
       set({ loading: false, error: 'Error al usar QR' });
+      throw error;
+    }
+  },
+
+  // Nuevo método para generar y almacenar el PDF
+  generatePdf: async (qrId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axios.post(`${URL}/Qr/generate-pdf/${qrId}`);
+      set({ loading: false });
+      return response.data;
+    } catch (error) {
+      console.error('Error al generar PDF:', error.response || error.message);
+      set({ loading: false, error: 'Error al generar PDF' });
+      throw error;
+    }
+  },
+
+  // Nuevo método para obtener el PDF
+  getPdf: async (qrId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axios.get(`${URL}/Qr/pdf/${qrId}`, {
+        responseType: 'blob',
+      });
+      const pdfBlob = new Blob([response.data], { type: 'application/pdf' });
+      set({ loading: false });
+      return URL.createObjectURL(pdfBlob);
+    } catch (error) {
+      console.error('Error al obtener PDF:', error.response || error.message);
+      set({ loading: false, error: 'Error al obtener PDF' });
       throw error;
     }
   },

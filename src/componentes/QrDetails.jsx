@@ -75,8 +75,8 @@ export const QrDetails = () => {
         </Typography>
         <Grid container spacing={4}>
           <Grid item xs={12} md={6}>
-            <Paper elevation={3} sx={{ p: 2, borderRadius: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', transform: 'scale(0.9)', mt: -2 }}>
-              <img src={selectedImage} alt="QR Code" style={{ width: '90%', height: 'auto', display: 'block' }} />
+            <Paper elevation={3} sx={{ p: 2, borderRadius: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', transform: 'scale(0.9)', mt: 5 }}>
+              <img src={selectedImage}  alt="QR Code" style={{ width: '90%', height: 'auto', display: 'block', }} />
             </Paper>
           </Grid>
           <Grid item xs={12} md={6} mt={6}>
@@ -108,23 +108,18 @@ export const QrDetails = () => {
                 Fecha: {formatDate(qr.date)}
               </Typography>
             </Paper>
-          </Grid>
-        </Grid>
-        {qr.isUsed && (
-          <Box mt={4} width="100%">
-            <Typography variant="h5" gutterBottom>
-              Servicios Realizados 
-            </Typography>
-            <Paper elevation={3} sx={{ p: 2, borderRadius: 1, mb: 4 }}>
-              <Typography variant="body1" component="div">
-                Servicio {getServiceName(qr.service) || "No hay detalles adicionales disponibles."}
-              </Typography>
-              <Typography variant="body1" component="div">
-                {qr.details || "No hay detalles adicionales disponibles."}
+            <Paper elevation={3} sx={{ p: 2, borderRadius: 1, mb: 2 }}>
+              <Typography variant="body2" component="div" sx={{ fontWeight: 'bold' }}>
+                Usado: {qr.usageCount}
               </Typography>
             </Paper>
-          </Box>
-        )}
+            <Paper elevation={3} sx={{ p: 2, borderRadius: 1, mb: 2 }}>
+              <Typography variant="body2" component="div" sx={{ fontWeight: 'bold' }}>
+                Usos restantes: {qr.maxUsageCount - qr.usageCount}
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
       </Box>
     </Container>
   );
