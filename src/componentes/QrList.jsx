@@ -3,29 +3,49 @@ import { useNavigate } from 'react-router-dom';
 import useQrStore from '../store/UseQrStore';
 import useUsuariosStore from '../store/useUsuariosStore';
 import {
-  Box, Typography, CircularProgress, IconButton, Container, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Button
+  Box, Typography, CircularProgress, IconButton, Container, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Button, Collapse, useTheme
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faCheckCircle, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faCheckCircle, faCircle, faChevronDown, faChevronUp, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import 'tailwindcss/tailwind.css'; // Asegúrate de tener Tailwind CSS configurado correctamente
 
 const MySwal = withReactContent(Swal);
 
-const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection }) => {
+const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection, className }) => {
   return (
-    <TableCell onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default', fontWeight: 'bold' }}>
-      {children} {orderBy === column && (orderDirection === 'asc' ? '▲' : '▼')}
+    <TableCell
+      onClick={onClick}
+      className={`${className} cursor-pointer font-bold`}
+      style={{ cursor: onClick ? 'pointer' : 'default', fontSize: '1rem' }}
+    >
+      <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
+        {children} {orderBy === column && (orderDirection === 'asc' ? '▲' : '▼')}
+      </Typography>
     </TableCell>
   );
 };
 
+const UpdateRow = ({ update, index, theme }) => {
+  return (
+    <TableRow>
+      <TableCell>{index + 1}</TableCell>
+      <TableCell>{new Date(update.updatedAt).toLocaleString()}</TableCell>
+      <TableCell>{update.service?.name || 'N/A'}</TableCell>
+      <TableCell>{update.details}</TableCell>
+    </TableRow>
+  );
+};
+
 export const QrList = () => {
+  const theme = useTheme();
   const { qrs, getQrsByAssignedUser, deleteQr, loading, error } = useQrStore();
   const { userId } = useUsuariosStore();
   const [orderBy, setOrderBy] = useState('value');
   const [orderDirection, setOrderDirection] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
+  const [openRow, setOpenRow] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -82,6 +102,14 @@ export const QrList = () => {
     navigate(`/QrDetails/${id}`);
   };
 
+  const handleRowClick = (id) => {
+    setOpenRow(openRow === id ? null : id);
+  };
+
+  const handleGeneratePdf = (qr) => {
+    navigate('/pdfs', { state: { qr } });
+  };
+
   const filteredQrs = qrs.filter((qr) =>
     qr &&
     (
@@ -112,7 +140,7 @@ export const QrList = () => {
   return (
     <Container>
       <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
-        <Typography variant="h4" mb={4}>Mis QR Codes</Typography>
+        <Typography variant="h4" mb={4} className="text-center">Mis QR Codes</Typography>
       </Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} mt={2} flexWrap="wrap">
         <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
@@ -125,20 +153,20 @@ export const QrList = () => {
               width: { xs: '100%', sm: '300px' },
               '& .MuiOutlinedInput-root': {
                 '& fieldset': {
-                  borderColor: 'white', // Cambia el color del borde
+                  borderColor: theme.palette.mode === 'dark' ? 'white' : 'black',
                 },
                 '&:hover fieldset': {
-                  borderColor: 'white', // Cambia el color del borde al pasar el mouse
+                  borderColor: theme.palette.mode === 'dark' ? 'white' : 'black',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: 'white', // Cambia el color del borde cuando está enfocado
+                  borderColor: theme.palette.mode === 'dark' ? 'white' : 'black',
                 },
               },
               '& .MuiInputBase-input': {
-                color: 'white', // Cambia el color del texto del input
+                color: theme.palette.mode === 'dark' ? 'white' : 'black',
               },
               '& .MuiInputLabel-root': {
-                color: 'white', // Cambia el color del placeholder
+                color: theme.palette.mode === 'dark' ? 'white' : 'black',
               },
             }}
           />
@@ -150,73 +178,136 @@ export const QrList = () => {
         </Box>
       </Box>
       {sortedQrs.length ? (
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} className={`shadow-lg rounded-lg overflow-hidden border ${theme.palette.mode === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
           <Table>
-            <TableHead>
+            <TableHead className={`${theme.palette.mode === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-200'}`}>
               <TableRow>
-                <StyledTableCell onClick={() => handleSort('empresaId.name')} orderBy={orderBy} column="empresaId.name" orderDirection={orderDirection}>
+                <TableCell className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
+                  <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
+                    N°
+                  </Typography>
+                </TableCell>
+                <StyledTableCell onClick={() => handleSort('empresaId.name')} orderBy={orderBy} column="empresaId.name" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   Empresa
                 </StyledTableCell>
-                <StyledTableCell onClick={() => handleSort('assignedTo.nombre')} orderBy={orderBy} column="assignedTo.nombre" orderDirection={orderDirection}>
+                <StyledTableCell onClick={() => handleSort('assignedTo.nombre')} orderBy={orderBy} column="assignedTo.nombre" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   Usuario Asignado
                 </StyledTableCell>
-                <StyledTableCell onClick={() => handleSort('nombre')} orderBy={orderBy} column="nombre" orderDirection={orderDirection}>
+                <StyledTableCell onClick={() => handleSort('nombre')} orderBy={orderBy} column="nombre" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   Nombre
                 </StyledTableCell>
-                <StyledTableCell onClick={() => handleSort('telefono')} orderBy={orderBy} column="telefono" orderDirection={orderDirection}>
+                <StyledTableCell onClick={() => handleSort('telefono')} orderBy={orderBy} column="telefono" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   Teléfono
                 </StyledTableCell>
-                <StyledTableCell onClick={() => handleSort('mail')} orderBy={orderBy} column="mail" orderDirection={orderDirection}>
+                <StyledTableCell onClick={() => handleSort('mail')} orderBy={orderBy} column="mail" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   Correo
                 </StyledTableCell>
-                <StyledTableCell onClick={() => handleSort('startTime')} orderBy={orderBy} column="startTime" orderDirection={orderDirection}>
+                <StyledTableCell onClick={() => handleSort('startTime')} orderBy={orderBy} column="startTime" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   Hora de Inicio
                 </StyledTableCell>
-                <StyledTableCell onClick={() => handleSort('endTime')} orderBy={orderBy} column="endTime" orderDirection={orderDirection}>
+                <StyledTableCell onClick={() => handleSort('endTime')} orderBy={orderBy} column="endTime" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   Hora de Fin
                 </StyledTableCell>
-                <StyledTableCell>
-                  Acciones
-                </StyledTableCell>
-                <StyledTableCell>
-                  Estado
-                </StyledTableCell>
+                <TableCell className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
+                  <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
+                    Acciones
+                  </Typography>
+                </TableCell>
+                <TableCell className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
+                  <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
+                    Estado
+                  </Typography>
+                </TableCell>
+                <TableCell className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
+                  <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
+                    Actualizaciones
+                  </Typography>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedQrs.map((qr) => (
-                <TableRow key={qr._id}>
-                  <TableCell>{qr.empresaId ? qr.empresaId.name : 'N/A'}</TableCell>
-                  <TableCell>{qr.assignedTo ? qr.assignedTo.nombre : 'N/A'}</TableCell>
-                  <TableCell>{qr.nombre}</TableCell>
-                  <TableCell>{qr.telefono}</TableCell>
-                  <TableCell>{qr.mail}</TableCell>
-                  <TableCell>{qr.startTime}</TableCell>
-                  <TableCell>{qr.endTime}</TableCell>
-                  <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
-                    {qr.base64Image && (
-                      <Avatar 
-                        src={`data:image/png;base64,${qr.base64Image}`} 
-                        alt="QR Code" 
-                        sx={{ width: 30, height: 30, marginRight: 2, cursor: 'pointer' }} 
-                        onClick={() => handleQrClick(qr._id)}
-                        variant="square" // Añadido para que el Avatar se vea cuadrado
+              {sortedQrs.map((qr, index) => (
+                <React.Fragment key={qr._id}>
+                  <TableRow className={`${theme.palette.mode === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{qr.empresaId ? qr.empresaId.name : 'N/A'}</TableCell>
+                    <TableCell>{qr.assignedTo ? qr.assignedTo.nombre : 'N/A'}</TableCell>
+                    <TableCell>{qr.nombre}</TableCell>
+                    <TableCell>{qr.telefono}</TableCell>
+                    <TableCell>{qr.mail}</TableCell>
+                    <TableCell>{qr.startTime}</TableCell>
+                    <TableCell>{qr.endTime}</TableCell>
+                    <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
+                      {qr.base64Image && (
+                        <Avatar 
+                          src={`data:image/png;base64,${qr.base64Image}`} 
+                          alt="QR Code" 
+                          sx={{ width: 30, height: 30, marginRight: 2, cursor: 'pointer' }} 
+                          onClick={() => handleQrClick(qr._id)}
+                          variant="square"
+                        />
+                      )}
+                      <IconButton
+                        color="secondary"
+                        onClick={() => handleDelete(qr._id)}
+                      >
+                        <FontAwesomeIcon icon={faTrash} />
+                      </IconButton>
+                      {qr.isUsed && (
+                        <IconButton
+                          color="primary"
+                          onClick={() => handleGeneratePdf(qr)}
+                        >
+                          <FontAwesomeIcon icon={faFilePdf} />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <FontAwesomeIcon
+                        icon={qr.isUsed ? faCheckCircle : faCircle}
+                        color={qr.isUsed ? 'red' : 'green'}
                       />
-                    )}
-                    <IconButton
-                      color="secondary"
-                      onClick={() => handleDelete(qr._id)}
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </IconButton>
-                  </TableCell>
-                  <TableCell>
-                    <FontAwesomeIcon
-                      icon={qr.isUsed ? faCheckCircle : faCircle}
-                      color={qr.isUsed ? 'red' : 'green'}
-                    />
-                  </TableCell>
-                </TableRow>
+                    </TableCell>
+                    <TableCell>
+                      {qr.isUsed && (
+                        <IconButton
+                          color="secondary"
+                          onClick={() => handleRowClick(qr._id)}
+                        >
+                          <FontAwesomeIcon icon={openRow === qr._id ? faChevronUp : faChevronDown} />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                  {qr.isUsed && (
+                    <TableRow>
+                      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={11}>
+                        <Collapse in={openRow === qr._id} timeout="auto" unmountOnExit>
+                          <Box margin={1} className={`p-4 border ${theme.palette.mode === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'} rounded-lg shadow-inner`}>
+                            <Typography variant="h6" gutterBottom component="div">
+                              Actualizaciones
+                            </Typography>
+                            <Table size="small" aria-label="updates">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>N°</TableCell>
+                                  <TableCell>Fecha</TableCell>
+                                  <TableCell>Servicio</TableCell>
+                                  <TableCell>Detalles</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {qr.updates.map((update, idx) => (
+                                  <UpdateRow key={update._id} update={update} index={idx} theme={theme} />
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))}
             </TableBody>
           </Table>
