@@ -31,6 +31,7 @@ export const ScanQr = () => {
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  // Manejo de redimensionamiento de pantalla para actualizar el estado
   useEffect(() => {
     const handleResize = () => {
       setIsSmallScreen(window.innerWidth < 768);
@@ -44,6 +45,7 @@ export const ScanQr = () => {
     };
   }, []);
 
+  // Inicialización del escáner de QR y limpieza al desmontar el componente
   useEffect(() => {
     const html5QrCode = new Html5Qrcode("reader");
     scannerRef.current = html5QrCode;
@@ -55,6 +57,7 @@ export const ScanQr = () => {
     };
   }, []);
 
+  // Función para parsear los datos escaneados
   const parseData = (data) => {
     const parsedData = JSON.parse(data);
     console.log('Datos recibidos para parsear:', parsedData);
@@ -77,12 +80,14 @@ export const ScanQr = () => {
       maxUsageCount: parsedData.mUC || 0,
       usageCount: parsedData.uC || 0,
       isUsed: parsedData.isUsed || false,
+      updates: parsedData.updates || [], // Asegurarse de que se incluyan las actualizaciones
     };
 
     console.log('Datos parseados:', fullData);
     return fullData;
   };
 
+  // Función para iniciar el escaneo
   const startScan = () => {
     if (scannerRef.current && !scannerRef.current.isScanning) {
       scannerRef.current.start(
@@ -97,12 +102,14 @@ export const ScanQr = () => {
     }
   };
 
+  // Función para manejar el resultado del escaneo
   const handleScan = async (data) => {
     if (data) {
       console.log('Datos escaneados crudos:', data);
       const parsedData = parseData(data);
       console.log('Datos escaneados:', parsedData);
 
+      // Obtén los datos del QR desde el backend
       const qrFromDb = await getQrById(parsedData.id);
       if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
         Swal.fire({
@@ -114,14 +121,17 @@ export const ScanQr = () => {
         return;
       }
 
+      // Actualiza los datos escaneados con información del backend
       setScannedData({
         ...parsedData,
         id: parsedData._id || parsedData.id,
         empresaId: parsedData.empresaId,
         usageCount: qrFromDb.usageCount, // Actualizar con los datos del backend
         maxUsageCount: qrFromDb.maxUsageCount, // Actualizar con los datos del backend
+        updates: qrFromDb.updates || [], // Asegurarse de que se incluyan las actualizaciones
       });
 
+      // Obtén los servicios por empresa
       if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
         console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
         await getServiciosByEmpresaId(parsedData.empresaId._id);
@@ -133,6 +143,7 @@ export const ScanQr = () => {
     }
   };
 
+  // Manejo de errores en el escaneo
   const handleError = (err) => {
     if (err.name === 'NotFoundException') {
       console.warn('QR code not found. Retrying...');
@@ -142,12 +153,14 @@ export const ScanQr = () => {
     }
   };
 
+  // Función para detener el escaneo
   const stopScan = () => {
     if (scannerRef.current && scannerRef.current.isScanning) {
       scannerRef.current.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
     }
   };
 
+  // Manejo de selección de archivo para escanear QR desde una imagen
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -184,6 +197,7 @@ export const ScanQr = () => {
     }
   };
 
+  // Función para actualizar el QR en el backend
   const handleUpdateQr = async () => {
     console.log('handleUpdateQr called');
     console.log('scannedData:', scannedData);
@@ -192,27 +206,28 @@ export const ScanQr = () => {
       console.log("No QR code ID found");
       return;
     }
-
+  
     const qrData = {
       service: selectedService,
-      details
+      details,
+      updatedAt: new Date().toISOString(), // Añadir la fecha de actualización
     };
-
+  
     console.log('Datos a enviar:', qrData);
     console.log('QR ID:', scannedData.id);
-
+  
     try {
       const response = await updateQr(scannedData.id, qrData);
       console.log("Response from backend:", response);
       const updatedQr = response.qr;
       console.log("QR actualizado con éxito:", updatedQr);
-
+  
       if (!updatedQr) {
         throw new Error("QR data is undefined");
       }
-
+  
       setFadeOut(true); // Aplica la clase fade-out
-
+  
       Swal.fire({
         title: 'QR actualizado',
         text: 'El QR ha sido actualizado correctamente.',
