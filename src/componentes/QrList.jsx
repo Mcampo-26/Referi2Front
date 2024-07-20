@@ -48,6 +48,7 @@ export const QrList = () => {
   const [openRow, setOpenRow] = useState(null);
   const navigate = useNavigate();
 
+  // Obtén los QR asignados al usuario al montar el componente
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
     if (storedUserId) {
@@ -56,6 +57,7 @@ export const QrList = () => {
     }
   }, [getQrsByAssignedUser]);
 
+  // Función para manejar la ordenación de las columnas
   const handleSort = (column) => {
     if (column === orderBy) {
       setOrderDirection(orderDirection === 'asc' ? 'desc' : 'asc');
@@ -65,6 +67,7 @@ export const QrList = () => {
     }
   };
 
+  // Función para manejar la eliminación de un QR
   const handleDelete = (id) => {
     MySwal.fire({
       title: "¿Estás seguro de que deseas eliminar este QR?",
@@ -98,18 +101,22 @@ export const QrList = () => {
     });
   };
 
+  // Función para manejar el click en un QR
   const handleQrClick = (id) => {
     navigate(`/QrDetails/${id}`);
   };
 
+  // Función para manejar la expansión de las filas de actualizaciones
   const handleRowClick = (id) => {
     setOpenRow(openRow === id ? null : id);
   };
 
+  // Función para generar un PDF del QR
   const handleGeneratePdf = (qr) => {
     navigate('/pdfs', { state: { qr } });
   };
 
+  // Filtrar y ordenar los QR según los términos de búsqueda y la ordenación
   const filteredQrs = qrs.filter((qr) =>
     qr &&
     (
@@ -269,7 +276,7 @@ export const QrList = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      {qr.isUsed && (
+                      {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
                         <IconButton
                           color="secondary"
                           onClick={() => handleRowClick(qr._id)}
@@ -279,7 +286,7 @@ export const QrList = () => {
                       )}
                     </TableCell>
                   </TableRow>
-                  {qr.isUsed && (
+                  {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
                     <TableRow>
                       <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={11}>
                         <Collapse in={openRow === qr._id} timeout="auto" unmountOnExit>
