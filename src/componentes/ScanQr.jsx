@@ -16,6 +16,7 @@ export const ScanQr = () => {
   const [selectedService, setSelectedService] = useState('');
   const [details, setDetails] = useState('');
   const [fadeOut, setFadeOut] = useState(false); // Estado para la transición
+  const [isScanning, setIsScanning] = useState(false); // Estado para saber si está escaneando
   const { servicios, getServiciosByEmpresaId, loading, error: serviciosError } = useServiciosStore((state) => ({
     servicios: state.servicios,
     getServiciosByEmpresaId: state.getServiciosByEmpresaId,
@@ -88,13 +89,13 @@ export const ScanQr = () => {
   };
 
   // Función para iniciar el escaneo
-   const startScan = () => {
+  const startScan = () => {
     if (scannerRef.current && !scannerRef.current.isScanning) {
       setError(null); // Limpiar el error al iniciar un nuevo escaneo
       setIsScanning(true); // Indicar que se está escaneando
       scannerRef.current.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 300 },
+        { fps: 15, qrbox: 300 },
         handleScan,
         handleError
       ).catch(err => {
@@ -194,9 +195,11 @@ export const ScanQr = () => {
         .catch(err => {
           if (err.name === 'NotFoundException') {
             console.warn('QR code not found in file. Please try another file.');
+            stopScan(); // Detener el escaneo automáticamente si no se encuentra un QR en el archivo
           } else {
             console.error('Error scanning file:', err);
             setError(err);
+            stopScan(); // Detener el escaneo si hay cualquier otro error
           }
         });
     } else {
@@ -278,7 +281,7 @@ export const ScanQr = () => {
           variant="contained"
           color="primary"
           onClick={startScan}
-          className="mb-6 "
+          className="mb-6"
         >
           Iniciar Escaneo
         </Button>
@@ -291,6 +294,16 @@ export const ScanQr = () => {
           className="mb-2 mt-2"
         >
           Subir Archivo
+        </Button>
+      )}
+      {isScanning && (
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={stopScan}
+          className="mb-2 mt-2"
+        >
+          Detener Escaneo
         </Button>
       )}
       <input
@@ -436,3 +449,4 @@ export const ScanQr = () => {
     </Container>
   );
 };
+
