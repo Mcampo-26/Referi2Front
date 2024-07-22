@@ -16,7 +16,6 @@ export const ScanQr = () => {
   const [selectedService, setSelectedService] = useState('');
   const [details, setDetails] = useState('');
   const [fadeOut, setFadeOut] = useState(false); // Estado para la transición
-  const [isScanning, setIsScanning] = useState(false); // Estado para saber si está escaneando
   const { servicios, getServiciosByEmpresaId, loading, error: serviciosError } = useServiciosStore((state) => ({
     servicios: state.servicios,
     getServiciosByEmpresaId: state.getServiciosByEmpresaId,
@@ -81,7 +80,7 @@ export const ScanQr = () => {
       maxUsageCount: parsedData.mUC || 0,
       usageCount: parsedData.uC || 0,
       isUsed: parsedData.isUsed || false,
-      updates: parsedData.updates || [], // Asegúrate de que se incluyan las actualizaciones
+      updates: parsedData.updates || [], // Asegurarse de que se incluyan las actualizaciones
     };
 
     console.log('Datos parseados:', fullData);
@@ -91,17 +90,14 @@ export const ScanQr = () => {
   // Función para iniciar el escaneo
   const startScan = () => {
     if (scannerRef.current && !scannerRef.current.isScanning) {
-      setError(null); // Limpiar el error al iniciar un nuevo escaneo
-      setIsScanning(true); // Indicar que se está escaneando
       scannerRef.current.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 300 },
+        { fps: 12, qrbox: 300 },
         handleScan,
         handleError
       ).catch(err => {
         console.error('Failed to start scanning.', err);
         setError(err);
-        setIsScanning(false); // Indicar que el escaneo ha fallado
       });
     }
   };
@@ -116,7 +112,6 @@ export const ScanQr = () => {
       // Obtén los datos del QR desde el backend
       const qrFromDb = await getQrById(parsedData.id);
       if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
-        stopScan(); // Detener el escaneo inmediatamente si el QR ya está usado
         Swal.fire({
           title: 'QR no usable',
           text: 'El QR ya no puede ser usado.',
@@ -162,7 +157,6 @@ export const ScanQr = () => {
   const stopScan = () => {
     if (scannerRef.current && scannerRef.current.isScanning) {
       scannerRef.current.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
-      setIsScanning(false); // Indicar que el escaneo ha sido detenido
     }
   };
 
@@ -179,7 +173,6 @@ export const ScanQr = () => {
 
           const qrFromDb = await getQrById(parsedData.id);
           if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
-            stopScan(); // Detener el escaneo inmediatamente si el QR ya está usado
             Swal.fire({
               title: 'QR no usable',
               text: 'El QR ya no puede ser usado.',
@@ -274,35 +267,25 @@ export const ScanQr = () => {
       <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md">
       </Box>
       {isSmallScreen && (
-        <Box display="flex" justifyContent="center" alignItems="center" mb={4} gap={2}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={startScan}
-            className="mb-6"
-          >
-            Iniciar Escaneo
-          </Button>
-          {isScanning && (
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={stopScan}
-              className="mb-6"
-            >
-              Detener Escaneo
-            </Button>
-          )}
-        </Box>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={startScan}
+          className="mb-6 "
+        >
+          Iniciar Escaneo
+        </Button>
       )}
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={() => fileInputRef.current.click()}
-        className="mb-2 mt-2"
-      >
-        Subir Archivo
-      </Button>
+      {!isSmallScreen && (
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => fileInputRef.current.click()}
+          className="mb-2 mt-2"
+        >
+          Subir Archivo
+        </Button>
+      )}
       <input
         type="file"
         accept="image/*"
