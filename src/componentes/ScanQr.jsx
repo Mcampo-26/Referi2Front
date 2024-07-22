@@ -152,12 +152,11 @@ export const ScanQr = () => {
   const handleError = (err) => {
     if (err.name === 'NotFoundException') {
       console.warn('QR code not found. Retrying...');
-      stopScan(); // Detener el escaneo automáticamente si no se encuentra un QR
     } else {
       console.error('Error during scan:', err);
       setError(err);
-      stopScan(); // Detener el escaneo si hay cualquier otro error
     }
+    stopScan(); // Detener el escaneo automáticamente si no se encuentra un QR o hay cualquier otro error
   };
 
   // Función para detener el escaneo
