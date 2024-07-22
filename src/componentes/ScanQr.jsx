@@ -16,6 +16,7 @@ export const ScanQr = () => {
   const [selectedService, setSelectedService] = useState('');
   const [details, setDetails] = useState('');
   const [fadeOut, setFadeOut] = useState(false); // Estado para la transición
+  const [isScanning, setIsScanning] = useState(false); // Estado para saber si está escaneando
   const { servicios, getServiciosByEmpresaId, loading, error: serviciosError } = useServiciosStore((state) => ({
     servicios: state.servicios,
     getServiciosByEmpresaId: state.getServiciosByEmpresaId,
@@ -80,7 +81,7 @@ export const ScanQr = () => {
       maxUsageCount: parsedData.mUC || 0,
       usageCount: parsedData.uC || 0,
       isUsed: parsedData.isUsed || false,
-      updates: parsedData.updates || [], // Asegurarse de que se incluyan las actualizaciones
+      updates: parsedData.updates || [], // Asegúrate de que se incluyan las actualizaciones
     };
 
     console.log('Datos parseados:', fullData);
@@ -90,14 +91,17 @@ export const ScanQr = () => {
   // Función para iniciar el escaneo
   const startScan = () => {
     if (scannerRef.current && !scannerRef.current.isScanning) {
+      setError(null); // Limpiar el error al iniciar un nuevo escaneo
+      setIsScanning(true); // Indicar que se está escaneando
       scannerRef.current.start(
         { facingMode: "environment" },
-        { fps: 12, qrbox: 300 },
+        { fps: 10, qrbox: 300 },
         handleScan,
         handleError
       ).catch(err => {
         console.error('Failed to start scanning.', err);
         setError(err);
+        setIsScanning(false); // Indicar que el escaneo ha fallado
       });
     }
   };
@@ -105,6 +109,7 @@ export const ScanQr = () => {
   // Función para manejar el resultado del escaneo
   const handleScan = async (data) => {
     if (data) {
+      setError(null); // Limpiar cualquier error previo
       console.log('Datos escaneados crudos:', data);
       const parsedData = parseData(data);
       console.log('Datos escaneados:', parsedData);
@@ -112,6 +117,7 @@ export const ScanQr = () => {
       // Obtén los datos del QR desde el backend
       const qrFromDb = await getQrById(parsedData.id);
       if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
+        stopScan(); // Detener el escaneo inmediatamente si el QR ya está usado
         Swal.fire({
           title: 'QR no usable',
           text: 'El QR ya no puede ser usado.',
@@ -157,6 +163,7 @@ export const ScanQr = () => {
   const stopScan = () => {
     if (scannerRef.current && scannerRef.current.isScanning) {
       scannerRef.current.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
+      setIsScanning(false); // Indicar que el escaneo ha sido detenido
     }
   };
 
@@ -168,11 +175,13 @@ export const ScanQr = () => {
 
       scannerRef.current.scanFile(file, true)
         .then(async (decodedText) => {
+          setError(null); // Limpiar cualquier error previo
           console.log('Texto decodificado del QR:', decodedText);
           const parsedData = parseData(decodedText);
 
           const qrFromDb = await getQrById(parsedData.id);
           if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
+            stopScan(); // Detener el escaneo inmediatamente si el QR ya está usado
             Swal.fire({
               title: 'QR no usable',
               text: 'El QR ya no puede ser usado.',
@@ -255,26 +264,38 @@ export const ScanQr = () => {
   return (
     <Container maxWidth="md" className="flex flex-col items-center justify-center mt-20" sx={{ paddingBottom: '40px', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
       {isSmallScreen && (
-        <Typography variant="h4" className="text-center mb-4">
+        <Typography variant="h4" className="text-center mb={4}">
           Escanear QR Code
         </Typography>
       )}
       {!isSmallScreen && (
-        <Typography variant="h4" className="text-center mb-4">
+        <Typography variant="h4" className="text-center mb={4}">
           Imagen de QR Code
         </Typography>
       )}
       <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md">
       </Box>
       {isSmallScreen && (
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={startScan}
-          className="mb-6 "
-        >
-          Iniciar Escaneo
-        </Button>
+        <Box display="flex" justifyContent="center" alignItems="center" mb={4} gap={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={startScan}
+            className="mb-6"
+          >
+            Iniciar Escaneo
+          </Button>
+          {isScanning && (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={stopScan}
+              className="mb-6"
+            >
+              Detener Escaneo
+            </Button>
+          )}
+        </Box>
       )}
       {!isSmallScreen && (
         <Button
@@ -429,3 +450,4 @@ export const ScanQr = () => {
     </Container>
   );
 };
+
