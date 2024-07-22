@@ -92,7 +92,7 @@ export const ScanQr = () => {
     if (scannerRef.current && !scannerRef.current.isScanning) {
       scannerRef.current.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 300 },
+        { fps: 15, qrbox: 300 },
         handleScan,
         handleError
       ).catch(err => {
