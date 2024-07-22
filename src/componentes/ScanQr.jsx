@@ -93,7 +93,7 @@ export const ScanQr = () => {
       setError(null); // Limpiar el error al iniciar un nuevo escaneo
       scannerRef.current.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 450 },
+        { fps: 10, qrbox: 300 },
         handleScan,
         handleError
       ).catch(err => {
