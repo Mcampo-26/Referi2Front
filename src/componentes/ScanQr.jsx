@@ -90,9 +90,10 @@ export const ScanQr = () => {
   // Función para iniciar el escaneo
   const startScan = () => {
     if (scannerRef.current && !scannerRef.current.isScanning) {
+      setError(null); // Limpiar el error al iniciar un nuevo escaneo
       scannerRef.current.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
+        { fps: 10, qrbox: 450 },
         handleScan,
         handleError
       ).catch(err => {
@@ -101,48 +102,51 @@ export const ScanQr = () => {
       });
     }
   };
-
+  
   // Función para manejar el resultado del escaneo
   const handleScan = async (data) => {
     if (data) {
       console.log('Datos escaneados crudos:', data);
       const parsedData = parseData(data);
       console.log('Datos escaneados:', parsedData);
-
+  
       // Obtén los datos del QR desde el backend
       const qrFromDb = await getQrById(parsedData.id);
-      if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
-        Swal.fire({
-          title: 'QR no usable',
-          text: 'El QR ya no puede ser usado.',
-          icon: 'warning',
-          confirmButtonText: 'Aceptar'
+      if (qrFromDb) {
+        if (qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
+          stopScan(); // Detener el escaneo inmediatamente si el QR ya está usado
+          Swal.fire({
+            title: 'QR no usable',
+            text: 'El QR ya no puede ser usado.',
+            icon: 'warning',
+            confirmButtonText: 'Aceptar'
+          });
+          return;
+        }
+  
+        // Actualiza los datos escaneados con información del backend
+        setScannedData({
+          ...parsedData,
+          id: parsedData._id || parsedData.id,
+          empresaId: parsedData.empresaId,
+          usageCount: qrFromDb.usageCount, // Actualizar con los datos del backend
+          maxUsageCount: qrFromDb.maxUsageCount, // Actualizar con los datos del backend
+          updates: qrFromDb.updates || [], // Asegurarse de que se incluyan las actualizaciones
         });
-        return;
+  
+        // Obtén los servicios por empresa
+        if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
+          console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
+          await getServiciosByEmpresaId(parsedData.empresaId._id);
+        } else {
+          console.error('Empresa ID no válido:', parsedData.empresaId._id);
+        }
+  
+        stopScan();
       }
-
-      // Actualiza los datos escaneados con información del backend
-      setScannedData({
-        ...parsedData,
-        id: parsedData._id || parsedData.id,
-        empresaId: parsedData.empresaId,
-        usageCount: qrFromDb.usageCount, // Actualizar con los datos del backend
-        maxUsageCount: qrFromDb.maxUsageCount, // Actualizar con los datos del backend
-        updates: qrFromDb.updates || [], // Asegurarse de que se incluyan las actualizaciones
-      });
-
-      // Obtén los servicios por empresa
-      if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
-        console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
-        await getServiciosByEmpresaId(parsedData.empresaId._id);
-      } else {
-        console.error('Empresa ID no válido:', parsedData.empresaId._id);
-      }
-
-      stopScan();
     }
   };
-
+  
   // Manejo de errores en el escaneo
   const handleError = (err) => {
     if (err.name === 'NotFoundException') {
@@ -152,14 +156,13 @@ export const ScanQr = () => {
       setError(err);
     }
   };
-
+  
   // Función para detener el escaneo
   const stopScan = () => {
     if (scannerRef.current && scannerRef.current.isScanning) {
       scannerRef.current.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
     }
   };
-
   // Manejo de selección de archivo para escanear QR desde una imagen
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
