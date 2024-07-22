@@ -88,16 +88,19 @@ export const ScanQr = () => {
   };
 
   // Función para iniciar el escaneo
-  const startScan = () => {
+   const startScan = () => {
     if (scannerRef.current && !scannerRef.current.isScanning) {
+      setError(null); // Limpiar el error al iniciar un nuevo escaneo
+      setIsScanning(true); // Indicar que se está escaneando
       scannerRef.current.start(
         { facingMode: "environment" },
-        { fps: 15, qrbox: 300 },
+        { fps: 10, qrbox: 300 },
         handleScan,
         handleError
       ).catch(err => {
         console.error('Failed to start scanning.', err);
         setError(err);
+        setIsScanning(false); // Indicar que el escaneo ha fallado
       });
     }
   };
@@ -112,6 +115,7 @@ export const ScanQr = () => {
       // Obtén los datos del QR desde el backend
       const qrFromDb = await getQrById(parsedData.id);
       if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
+        stopScan(); // Detener el escaneo inmediatamente si el QR ya está usado
         Swal.fire({
           title: 'QR no usable',
           text: 'El QR ya no puede ser usado.',
@@ -147,9 +151,11 @@ export const ScanQr = () => {
   const handleError = (err) => {
     if (err.name === 'NotFoundException') {
       console.warn('QR code not found. Retrying...');
+      stopScan(); // Detener el escaneo automáticamente si no se encuentra un QR
     } else {
       console.error('Error during scan:', err);
       setError(err);
+      stopScan(); // Detener el escaneo si hay cualquier otro error
     }
   };
 
@@ -157,6 +163,7 @@ export const ScanQr = () => {
   const stopScan = () => {
     if (scannerRef.current && scannerRef.current.isScanning) {
       scannerRef.current.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
+      setIsScanning(false); // Indicar que el escaneo ha sido detenido
     }
   };
 
