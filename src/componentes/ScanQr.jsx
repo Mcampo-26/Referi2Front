@@ -95,7 +95,7 @@ export const ScanQr = () => {
       setIsScanning(true); // Indicar que se está escaneando
       scannerRef.current.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 300 },
+        { fps: 13, qrbox: 300 },
         handleScan,
         handleError
       ).catch(err => {
@@ -450,4 +450,3 @@ export const ScanQr = () => {
     </Container>
   );
 };
-
