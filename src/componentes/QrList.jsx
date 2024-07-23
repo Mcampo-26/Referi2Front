@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faCheckCircle, faCircle, faChevronDown, faChevronUp, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import 'tailwindcss/tailwind.css'; // Asegúrate de tener Tailwind CSS configurado correctamente
+import './Css/QrList.css'; // Asegúrate de tener Tailwind CSS configurado correctamente
 
 const MySwal = withReactContent(Swal);
 
@@ -147,7 +147,7 @@ export const QrList = () => {
   return (
     <Container>
       <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
-        <Typography variant="h4" mb={4} className="text-center">Mis QR Codes</Typography>
+        <Typography variant="h4" mb={4} mt={4} className="text-center">Mis QR Codes</Typography>
       </Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} mt={2} flexWrap="wrap">
         <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
@@ -194,11 +194,11 @@ export const QrList = () => {
                     N°
                   </Typography>
                 </TableCell>
-                <StyledTableCell onClick={() => handleSort('empresaId.name')} orderBy={orderBy} column="empresaId.name" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
-                  Empresa
-                </StyledTableCell>
                 <StyledTableCell onClick={() => handleSort('assignedTo.nombre')} orderBy={orderBy} column="assignedTo.nombre" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   Usuario Asignado
+                </StyledTableCell>
+                <StyledTableCell onClick={() => handleSort('empresaId.name')} orderBy={orderBy} column="empresaId.name" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
+                  Empresa
                 </StyledTableCell>
                 <StyledTableCell onClick={() => handleSort('nombre')} orderBy={orderBy} column="nombre" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   Nombre
@@ -209,12 +209,7 @@ export const QrList = () => {
                 <StyledTableCell onClick={() => handleSort('mail')} orderBy={orderBy} column="mail" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   Correo
                 </StyledTableCell>
-                <StyledTableCell onClick={() => handleSort('startTime')} orderBy={orderBy} column="startTime" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
-                  Hora de Inicio
-                </StyledTableCell>
-                <StyledTableCell onClick={() => handleSort('endTime')} orderBy={orderBy} column="endTime" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
-                  Hora de Fin
-                </StyledTableCell>
+           
                 <TableCell className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
                     Acciones
@@ -237,13 +232,12 @@ export const QrList = () => {
                 <React.Fragment key={qr._id}>
                   <TableRow className={`${theme.palette.mode === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
                     <TableCell>{index + 1}</TableCell>
-                    <TableCell>{qr.empresaId ? qr.empresaId.name : 'N/A'}</TableCell>
                     <TableCell>{qr.assignedTo ? qr.assignedTo.nombre : 'N/A'}</TableCell>
+                    <TableCell>{qr.empresaId ? qr.empresaId.name : 'N/A'}</TableCell>
                     <TableCell>{qr.nombre}</TableCell>
                     <TableCell>{qr.telefono}</TableCell>
                     <TableCell>{qr.mail}</TableCell>
-                    <TableCell>{qr.startTime}</TableCell>
-                    <TableCell>{qr.endTime}</TableCell>
+                    
                     <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
                       {qr.base64Image && (
                         <Avatar 
@@ -269,13 +263,15 @@ export const QrList = () => {
                         </IconButton>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell align="center"
+                    
+                    >
                       <FontAwesomeIcon
                         icon={qr.isUsed ? faCheckCircle : faCircle}
                         color={qr.isUsed ? 'red' : 'green'}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell align="center" >
                       {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
                         <IconButton
                           color="secondary"
@@ -292,7 +288,7 @@ export const QrList = () => {
                         <Collapse in={openRow === qr._id} timeout="auto" unmountOnExit>
                           <Box margin={1} className={`p-4 border ${theme.palette.mode === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'} rounded-lg shadow-inner`}>
                             <Typography variant="h6" gutterBottom component="div">
-                              Actualizaciones
+                             Detalle de Usos 
                             </Typography>
                             <Table size="small" aria-label="updates">
                               <TableHead>

@@ -133,7 +133,7 @@ export const QrMain = () => {
       <StyledBox>
         <Card elevation={3} className="p-5 w-full max-w-screen-lg">
           <CardContent>
-            <Typography variant="h4" className="text-center mb-4">
+            <Typography variant="h4"  className="text-center mb-4 "style={{ marginTop: '100px' }}>
               Crear QR Code
             </Typography>
             <Grid container spacing={4} mt={4}>
