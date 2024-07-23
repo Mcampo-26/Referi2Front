@@ -1,0 +1,11 @@
+.correo-header {
+    padding-left: 16px;
+    /* Ajusta este valor según sea necesario */
+    padding-right: 16px;
+    /* Ajusta este valor según sea necesario */
+    text-align: center;
+    /* Asegúrate de que el texto esté centrado */
+}
+
+
+/* Ajusta si necesitas menos espacio alrededor del icono */
