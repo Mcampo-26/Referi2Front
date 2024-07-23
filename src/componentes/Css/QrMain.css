@@ -1,0 +1,33 @@
+.custom-margin {
+    margin-top: 4px !important;
+    /* ajusta este valor según tus necesidades */
+    margin-bottom: 4px !important;
+    /* ajusta este valor según tus necesidades */
+}
+
+.hidden-label .MuiInputLabel-root {
+    display: none;
+}
+
+
+/* Asegúrate de que el placeholder sea visible y tenga el estilo deseado */
+
+.hidden-label input::placeholder {
+    color: rgb(234, 234, 234);
+    /* Ajusta el color según tus necesidades */
+    opacity: 1;
+    /* Asegúrate de que el placeholder sea visible */
+}
+
+.custom-margin input::placeholder {
+    color: inherit;
+    opacity: 0.6;
+    /* Ajusta la opacidad según sea necesario */
+}
+
+
+/* Asegúrate de que el color del texto del input sea el mismo que los demás */
+
+.custom-margin input {
+    color: inherit;
+}

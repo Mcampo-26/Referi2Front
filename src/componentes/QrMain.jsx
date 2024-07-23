@@ -1,4 +1,3 @@
-// QrMain.js
 import React, { useState, useEffect } from 'react';
 import {
   Button, TextField, Grid, Container, Typography, Card, CardContent,
@@ -11,6 +10,7 @@ import { WhatsApp } from '@mui/icons-material';
 import { useTheme, ThemeProvider, CssBaseline, useMediaQuery } from '@mui/material';
 import { styled } from '@mui/system';
 import Swal from 'sweetalert2';
+import './Css/QrMain.css';
 
 const StyledBox = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
@@ -34,7 +34,7 @@ export const QrMain = () => {
   const [date, setDate] = useState('');
   const [base64Image, setBase64Image] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
-  const [maxUsageCount, setMaxUsageCount] = useState(''); // Nuevo estado para maxUsageCount
+  const [maxUsageCount, setMaxUsageCount] = useState('');
 
   const createQr = useQrStore((state) => state.createQr);
   const { empresas, getAllEmpresas } = useEmpresasStore();
@@ -53,7 +53,7 @@ export const QrMain = () => {
   }, [usuarios]);
 
   const validateFields = () => {
-    if (!value || !empresaId || !nombre || !telefono || !mail || !startTime || !endTime || !date || !assignedTo || !maxUsageCount) { // Validar maxUsageCount
+    if (!value || !empresaId || !nombre || !telefono || !mail || !startTime || !endTime || !date || !assignedTo || !maxUsageCount) {
       Swal.fire('Error', 'Por favor, complete todos los campos', 'error');
       return false;
     }
@@ -103,13 +103,13 @@ export const QrMain = () => {
       startTime,
       endTime,
       date,
-      maxUsageCount: parseInt(maxUsageCount, 10) // Incluir maxUsageCount en los datos del QR
+      maxUsageCount: parseInt(maxUsageCount, 10)
     };
 
     console.log("Datos enviados para generar QR:", qrData);
 
     try {
-      const newQr = await createQr(qrData); // Enviar el objeto directamente
+      const newQr = await createQr(qrData);
       console.log("QR creado:", newQr);
       if (newQr && newQr.base64Image) {
         setBase64Image(newQr.base64Image);
@@ -130,16 +130,16 @@ export const QrMain = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <StyledBox>
+      <StyledBox mt={-2}>
         <Card elevation={3} className="p-5 w-full max-w-screen-lg">
           <CardContent>
-            <Typography variant="h4"  className="text-center mb-4 "style={{ marginTop: '100px' }}>
+            <Typography mt={-1} variant="h4" className="text-center">
               Crear QR Code
             </Typography>
             <Grid container spacing={4} mt={4}>
               <Grid item xs={12} md={6}>
-                <Box className="p-4 rounded-md shadow-md">
-                  <FormControl fullWidth margin="normal" variant="outlined">
+                <Box mt={-5} className="p-4 rounded-md shadow-md">
+                  <FormControl fullWidth variant="outlined" className="custom-margin">
                     <InputLabel>Empresa</InputLabel>
                     <Select
                       value={empresaId}
@@ -164,7 +164,7 @@ export const QrMain = () => {
                       }
                     }}
                     fullWidth
-                    margin="normal"
+                    className="custom-margin"
                     InputProps={{
                       endAdornment: <InputAdornment position="end">%</InputAdornment>
                     }}
@@ -175,7 +175,7 @@ export const QrMain = () => {
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
                     fullWidth
-                    margin="normal"
+                    className="custom-margin"
                     inputProps={{ maxLength: 20 }}
                   />
                   <TextField
@@ -188,7 +188,7 @@ export const QrMain = () => {
                       }
                     }}
                     fullWidth
-                    margin="normal"
+                    className="custom-margin"
                   />
                   <TextField
                     label="Correo"
@@ -196,7 +196,7 @@ export const QrMain = () => {
                     value={mail}
                     onChange={(e) => setMail(e.target.value)}
                     fullWidth
-                    margin="normal"
+                    className="custom-margin"
                   />
                   <TextField
                     label="Hora de inicio (HH:MM)"
@@ -204,7 +204,7 @@ export const QrMain = () => {
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
                     fullWidth
-                    margin="normal"
+                    className="custom-margin"
                   />
                   <TextField
                     label="Hora de fin (HH:MM)"
@@ -212,18 +212,20 @@ export const QrMain = () => {
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
                     fullWidth
-                    margin="normal"
                   />
                   <TextField
-                    label="Fecha"
-                    type="date"
+                    label=""
+                    type="text"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                     fullWidth
-                    margin="normal"
+                    className="custom-margin"
+                    placeholder="Fecha"
                     InputLabelProps={{
                       shrink: true,
                     }}
+                    onFocus={(e) => e.target.type = 'date'}
+                    onBlur={(e) => e.target.type = 'text'}
                   />
                   <TextField
                     label="Cantidad de usos"
@@ -236,9 +238,9 @@ export const QrMain = () => {
                       }
                     }}
                     fullWidth
-                    margin="normal"
+                    className="custom-margin"
                   />
-                  <FormControl fullWidth margin="normal" variant="outlined">
+                  <FormControl fullWidth variant="outlined" className="custom-margin">
                     <InputLabel>Asignar a usuario</InputLabel>
                     <Select
                       value={assignedTo}
@@ -283,8 +285,8 @@ export const QrMain = () => {
                       alt="Generated QR Code"
                       className="w-full h-full max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg"
                       style={{
-                        width: '350%',
-                        height: '80%',
+                        width: '300%',
+                        height: '50%',
                         maxWidth: '450px',
                       }}
                     />
