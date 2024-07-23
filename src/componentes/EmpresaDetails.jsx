@@ -188,7 +188,7 @@ export const EmpresaDetails = () => {
   return (
     <Container>
       <Box display="flex" flexDirection="column" alignItems="center" mt={8}>
-        <Typography variant="h3" component="h1" textAlign="center" gutterBottom>
+        <Typography variant="h3" mt={4} mb={6}component="h1" textAlign="center" gutterBottom>
           Detalles de la Empresa
         </Typography>
         <Grid container spacing={4}>
