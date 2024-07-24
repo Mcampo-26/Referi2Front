@@ -122,9 +122,31 @@ export const QrMain = () => {
   };
 
   const handleWhatsAppShare = () => {
-    const message = `Hola, aquí tienes tu código QR:\n\n${window.location.origin}/qr/${base64Image}`;
-    const formattedNumber = telefono.replace(/\D/g, '');
-    window.open(`https://wa.me/${formattedNumber}?text=${encodeURIComponent(message)}`, '_blank');
+    if (!base64Image) {
+      alert('No hay código QR para compartir.');
+      return;
+    }
+
+    const byteCharacters = atob(base64Image);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
+    const file = new File([blob], 'qr-code.png', { type: 'image/png' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({
+        files: [file],
+        title: 'Código QR',
+        text: 'Aquí tienes el código QR',
+      })
+      .then(() => console.log('Compartido con éxito'))
+      .catch((error) => console.log('Error al compartir', error));
+    } else {
+      alert('Tu navegador no soporta compartir archivos.');
+    }
   };
 
   return (
