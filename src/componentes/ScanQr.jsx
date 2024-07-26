@@ -89,35 +89,26 @@ export const ScanQr = () => {
   };
 
   // Función para iniciar el escaneo
- const startScan = () => {
-  if (scannerRef.current && !scannerRef.current.isScanning) {
-    setError(null); // Limpiar el error al iniciar un nuevo escaneo
-    setIsScanning(true); // Indicar que se está escaneando
-    scannerRef.current.start(
-      { facingMode: "environment" },
-      {
-        fps: 10, // Reducir FPS puede ayudar a estabilidad
-        qrbox: 250,
-        disableFlip: true // Desactiva el parpadeo al girar la cámara
-      },
-      handleScan,
-      handleError
-    ).catch(err => {
-      console.error('Failed to start scanning.', err);
-      setError(err);
-      setIsScanning(false); // Indicar que el escaneo ha fallado
-    });
-  }
-};
-const handleError = (err) => {
-  if (err.name === 'NotFoundException') {
-    console.warn('QR code not found. Retrying...');
-    // Continúa escaneando en lugar de detenerse
-  } else {
-    console.error('Error during scan:', err);
-    setError(err);
-  }
-};
+  const startScan = () => {
+    if (scannerRef.current && !scannerRef.current.isScanning) {
+      setError(null); // Limpiar el error al iniciar un nuevo escaneo
+      setIsScanning(true); // Indicar que se está escaneando
+      scannerRef.current.start(
+        { facingMode: "environment" },
+        {
+          fps: 10, // Reducir FPS puede ayudar a estabilidad
+          qrbox: 250,
+          disableFlip: true // Desactiva el parpadeo al girar la cámara
+        },
+        handleScan,
+        handleError
+      ).catch(err => {
+        console.error('Failed to start scanning.', err);
+        setError(err);
+        setIsScanning(false); // Indicar que el escaneo ha fallado
+      });
+    }
+  };
 
   // Función para manejar el resultado del escaneo
   const handleScan = async (data) => {
@@ -166,6 +157,7 @@ const handleError = (err) => {
   const handleError = (err) => {
     if (err.name === 'NotFoundException') {
       console.warn('QR code not found. Retrying...');
+      // Continúa escaneando en lugar de detenerse
     } else {
       console.error('Error during scan:', err);
       setError(err);
@@ -228,28 +220,28 @@ const handleError = (err) => {
       console.log("No QR code ID found");
       return;
     }
-  
+
     const qrData = {
       service: selectedService,
       details,
       updatedAt: new Date().toISOString(), // Añadir la fecha de actualización
     };
-  
+
     console.log('Datos a enviar:', qrData);
     console.log('QR ID:', scannedData.id);
-  
+
     try {
       const response = await updateQr(scannedData.id, qrData);
       console.log("Response from backend:", response);
       const updatedQr = response.qr;
       console.log("QR actualizado con éxito:", updatedQr);
-  
+
       if (!updatedQr) {
         throw new Error("QR data is undefined");
       }
-  
+
       setFadeOut(true); // Aplica la clase fade-out
-  
+
       Swal.fire({
         title: 'QR actualizado',
         text: 'El QR ha sido actualizado correctamente.',
@@ -335,7 +327,7 @@ const handleError = (err) => {
         onChange={handleFileChange}
         style={{ display: 'none' }}
       />
-      
+
       {scannedData && (
         <Fade in={!fadeOut} timeout={100}>
           <Box
