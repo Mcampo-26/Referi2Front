@@ -95,7 +95,7 @@ export const ScanQr = () => {
     scannerRef.current.start(
       { facingMode: "environment" },
       {
-        fps: 5, // Aumenta FPS para mejorar la calidad del escaneo
+        fps: 45, // Aumenta FPS para mejorar la calidad del escaneo
         qrbox: { width: 300, height: 300 }, // Aumenta el tamaño del área de escaneo
         disableFlip: true // Desactiva el parpadeo al girar la cámara
       },
