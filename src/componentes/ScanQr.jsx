@@ -88,27 +88,26 @@ export const ScanQr = () => {
     return fullData;
   };
 
-  // Función para iniciar el escaneo
   const startScan = () => {
-    if (scannerRef.current && !scannerRef.current.isScanning) {
-      setError(null); // Limpiar el error al iniciar un nuevo escaneo
-      setIsScanning(true); // Indicar que se está escaneando
-      scannerRef.current.start(
-        { facingMode: "environment" },
-        {
-          fps: 10, // Reducir FPS puede ayudar a estabilidad
-          qrbox: 250,
-          disableFlip: true // Desactiva el parpadeo al girar la cámara
-        },
-        handleScan,
-        handleError
-      ).catch(err => {
-        console.error('Failed to start scanning.', err);
-        setError(err);
-        setIsScanning(false); // Indicar que el escaneo ha fallado
-      });
-    }
-  };
+  if (scannerRef.current && !scannerRef.current.isScanning) {
+    setError(null); // Limpiar el error al iniciar un nuevo escaneo
+    setIsScanning(true); // Indicar que se está escaneando
+    scannerRef.current.start(
+      { facingMode: "environment" },
+      {
+        fps: 20, // Aumenta FPS para mejorar la calidad del escaneo
+        qrbox: { width: 300, height: 300 }, // Aumenta el tamaño del área de escaneo
+        disableFlip: true // Desactiva el parpadeo al girar la cámara
+      },
+      handleScan,
+      handleError
+    ).catch(err => {
+      console.error('Failed to start scanning.', err);
+      setError(err);
+
+    });
+  }
+};
 
   // Función para manejar el resultado del escaneo
   const handleScan = async (data) => {
