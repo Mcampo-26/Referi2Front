@@ -96,7 +96,7 @@ export const ScanQr = () => {
       { facingMode: "environment" },
       {
         fps: 50, // Aumenta FPS para mejorar la calidad del escaneo
-        qrbox: { width: 400, height: 400 }, // Aumenta el tamaño del área de escaneo
+        qrbox: { width: 300, height: 300 }, // Aumenta el tamaño del área de escaneo
         disableFlip: true // Desactiva el parpadeo al girar la cámara
       },
       handleScan,
