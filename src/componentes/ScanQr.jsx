@@ -165,15 +165,7 @@ const handleError = (err) => {
   };
 
   // Manejo de errores en el escaneo
-  const handleError = (err) => {
-    if (err.name === 'NotFoundException') {
-      console.warn('QR code not found. Retrying...');
-      // Continúa escaneando en lugar de detenerse
-    } else {
-      console.error('Error during scan:', err);
-      setError(err);
-    }
-  };
+ 
 
   // Función para detener el escaneo
   const stopScan = () => {
