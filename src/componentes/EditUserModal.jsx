@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import useUsuariosStore from "../store/useUsuariosStore";
 import useRolesStore from "../store/useRolesStore";
+import useEmpresasStore from "../store/useEmpresaStore";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import {
@@ -10,7 +11,10 @@ import {
   TextField,
   Button,
   MenuItem,
-  IconButton
+  IconButton,
+  FormControl,
+  InputLabel,
+  Select
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -31,11 +35,29 @@ const style = {
 export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
   const { updateUsuario, getUsuarios } = useUsuariosStore();
   const { roles, getAllRoles } = useRolesStore();
-  const [updatedUser, setUpdatedUser] = useState({ ...editedUser });
+  const { empresas, getAllEmpresas } = useEmpresasStore();
+  const [updatedUser, setUpdatedUser] = useState({
+    nombre: '',
+    email: '',
+    role: '',
+    empresa: '',
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      getAllRoles();
+      getAllEmpresas();
+    }
+  }, [isOpen, getAllRoles, getAllEmpresas]);
 
   useEffect(() => {
     if (editedUser) {
-      setUpdatedUser({ ...editedUser });
+      setUpdatedUser({
+        nombre: editedUser.nombre || '',
+        email: editedUser.email || '',
+        role: editedUser.role ? editedUser.role._id : '',
+        empresa: editedUser.empresa ? editedUser.empresa._id : '',
+      });
     }
   }, [editedUser]);
 
@@ -50,7 +72,8 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
   const validateInputs = () => {
     if (!updatedUser.nombre.trim()) return "El nombre del usuario es requerido.";
     if (!updatedUser.email.trim()) return "El correo electrónico es requerido.";
-    if (!updatedUser.role.trim()) return "El rol del usuario es requerido.";
+    if (!updatedUser.role) return "El rol del usuario es requerido.";
+    if (!updatedUser.empresa) return "La empresa es requerida.";
     return null;
   };
 
@@ -80,8 +103,8 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
         });
 
         // Solo enviar los campos necesarios
-        const { role } = updatedUser;
-        const updatedFields = { role };
+        const { role, empresa, nombre, email } = updatedUser;
+        const updatedFields = { role, empresa, nombre, email };
 
         console.log('Datos enviados para actualizar usuario:', updatedFields);
 
@@ -103,8 +126,9 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
         });
         console.error("Error al actualizar el usuario:", error);
       }
-    }, 500); // Retraso de 100ms antes de mostrar el SweetAlert
+    }, 500); // Retraso de 500ms antes de mostrar el SweetAlert
   };
+
   return (
     <Modal
       open={isOpen}
@@ -129,7 +153,7 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
             margin="normal"
             label="Nombre"
             name="nombre"
-            value={updatedUser.nombre || ""}
+            value={updatedUser.nombre}
             onChange={handleChange}
             required
           />
@@ -139,27 +163,41 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
             label="Email"
             name="email"
             type="email"
-            value={updatedUser.email || ""}
+            value={updatedUser.email}
             onChange={handleChange}
             required
             disabled={editedUser.email === "admin@admin.com"}
           />
-          <TextField
-            fullWidth
-            margin="normal"
-            select
-            label="Rol"
-            name="role"
-            value={updatedUser.role || ""}
-            onChange={handleChange}
-            required
-          >
-            {roles.map((role) => (
-              <MenuItem key={role._id} value={role._id}>
-                {role.name}
-              </MenuItem>
-            ))}
-          </TextField>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Rol</InputLabel>
+            <Select
+              name="role"
+              value={updatedUser.role}
+              onChange={handleChange}
+              required
+            >
+              {roles.map((role) => (
+                <MenuItem key={role._id} value={role._id}>
+                  {role.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Empresa</InputLabel>
+            <Select
+              name="empresa"
+              value={updatedUser.empresa}
+              onChange={handleChange}
+              required
+            >
+              {empresas.map((empresa) => (
+                <MenuItem key={empresa._id} value={empresa._id}>
+                  {empresa.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <Box mt={2} display="flex" justifyContent="center">
             <Button
               type="submit"

@@ -2,12 +2,10 @@ import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { EditUserModal } from "./EditUserModal";
-import { create } from 'zustand';
 import useUsuariosStore from "../store/useUsuariosStore";
 import useRolesStore from "../store/useRolesStore";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
-import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -22,8 +20,7 @@ import {
   Paper,
   IconButton,
   CircularProgress,
-  Box,
-  useTheme
+  Box
 } from '@mui/material';
 
 const MySwal = withReactContent(Swal);
@@ -39,24 +36,17 @@ const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection })
 };
 
 export const UserList = () => {
-  const theme = useTheme();
   const [orderBy, setOrderBy] = useState('nombre');
   const [orderDirection, setOrderDirection] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editedUser, setEditedUser] = useState(null);
   const { getUsuarios, usuarios, loading: loadingUsuarios, deleteUsuario, totalRecords, totalPages, currentPage } = useUsuariosStore();
-  const { getAllRoles, roles, loading: loadingRoles } = useRolesStore();
-  const navigate = useNavigate();
-  const recordsPerPage = 10;
-
+  const { getAllRoles } = useRolesStore();
+  
   useEffect(() => {
-    getUsuarios(currentPage, recordsPerPage);
-  }, [currentPage, recordsPerPage, getUsuarios]);
-
-  useEffect(() => {
-    getAllRoles();
-  }, [getAllRoles]);
+    getUsuarios(currentPage);
+  }, [currentPage, getUsuarios]);
 
   const handleSort = (column) => {
     if (column === orderBy) {
@@ -96,7 +86,7 @@ export const UserList = () => {
               confirmButtonColor: "#3085d6",
               confirmButtonText: "Ok",
             });
-            getUsuarios(currentPage, recordsPerPage); // Refrescar la lista de usuarios
+            getUsuarios(currentPage); // Refrescar la lista de usuarios
           })
           .catch((error) => {
             Swal.fire({
@@ -135,13 +125,13 @@ export const UserList = () => {
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
-      getUsuarios(currentPage - 1, recordsPerPage);
+      getUsuarios(currentPage - 1);
     }
   };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
-      getUsuarios(currentPage + 1, recordsPerPage);
+      getUsuarios(currentPage + 1);
     }
   };
 
@@ -164,7 +154,7 @@ export const UserList = () => {
     return 0;
   });
 
-  if (loadingUsuarios || loadingRoles) {
+  if (loadingUsuarios) {
     return <CircularProgress />;
   }
 
@@ -228,6 +218,9 @@ export const UserList = () => {
                 <StyledTableCell onClick={() => handleSort('email')} orderBy={orderBy} column="email" orderDirection={orderDirection}>
                   Email
                 </StyledTableCell>
+                <StyledTableCell onClick={() => handleSort('empresa')} orderBy={orderBy} column="empresa" orderDirection={orderDirection}>
+                  Empresa
+                </StyledTableCell>
                 <StyledTableCell onClick={() => handleSort('role')} orderBy={orderBy} column="role" orderDirection={orderDirection}>
                   Rol
                 </StyledTableCell>
@@ -243,6 +236,7 @@ export const UserList = () => {
                 <TableRow key={usuario._id}>
                   <TableCell>{usuario.nombre || "Nombre no disponible"}</TableCell>
                   <TableCell>{usuario.email || "Email no disponible"}</TableCell>
+                  <TableCell>{usuario.empresa?.name || "Empresa no disponible"}</TableCell>
                   <TableCell>{usuario.role?.name || "Rol no disponible"}</TableCell>
                   <TableCell>
                     <IconButton
@@ -271,7 +265,7 @@ export const UserList = () => {
 
       <div className="flex justify-between items-center mt-4">
         <Typography>
-          Mostrando registros del {(currentPage - 1) * recordsPerPage + 1} al {Math.min(currentPage * recordsPerPage, totalRecords)} de un total de {totalRecords} registros
+          Mostrando registros del {(currentPage - 1) * 10 + 1} al {Math.min(currentPage * 10, usuarios.length)} de un total de {usuarios.length} registros
         </Typography>
         <div>
           <Button variant="outlined" className="mr-2" onClick={handlePreviousPage} disabled={currentPage === 1}>Anterior</Button>
