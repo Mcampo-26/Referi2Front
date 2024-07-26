@@ -88,15 +88,15 @@ export const ScanQr = () => {
     return fullData;
   };
 
-  const startScan = () => {
+ const startScan = () => {
   if (scannerRef.current && !scannerRef.current.isScanning) {
     setError(null); // Limpiar el error al iniciar un nuevo escaneo
     setIsScanning(true); // Indicar que se está escaneando
     scannerRef.current.start(
       { facingMode: "environment" },
       {
-        fps: 30, // Aumenta FPS para mejorar la calidad del escaneo
-        qrbox: { width: 320, height: 320 }, // Aumenta el tamaño del área de escaneo
+        fps: 20, // Aumenta FPS para mejorar la calidad del escaneo
+        qrbox: { width: 350, height: 350 }, // Aumenta el tamaño del área de escaneo
         disableFlip: true // Desactiva el parpadeo al girar la cámara
       },
       handleScan,
@@ -104,10 +104,22 @@ export const ScanQr = () => {
     ).catch(err => {
       console.error('Failed to start scanning.', err);
       setError(err);
-
+      setIsScanning(false); // Indicar que el escaneo ha fallado
     });
   }
 };
+
+// Manejo de errores en el escaneo
+const handleError = (err) => {
+  if (err.name === 'NotFoundException') {
+    console.warn('QR code not found. Retrying...');
+    // Continúa escaneando en lugar de detenerse, sin mostrar error
+  } else {
+    console.error('Error during scan:', err);
+    setError(err);
+  }
+};
+
 
   // Función para manejar el resultado del escaneo
   const handleScan = async (data) => {
