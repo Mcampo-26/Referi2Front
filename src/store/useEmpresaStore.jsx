@@ -11,7 +11,7 @@ const useEmpresasStore = create((set) => ({
   getAllEmpresas: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.get(`${URL}/Empresa/all`);
+      const response = await axios.get(`${URL}/empresa/all`);
       set({
         empresas: response.data,
         loading: false,
@@ -25,7 +25,7 @@ const useEmpresasStore = create((set) => ({
   getEmpresaById: async (id) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.get(`${URL}/Empresa/${id}`);
+      const response = await axios.get(`${URL}/empresa/${id}`);
       set({
         empresa: response.data,
         loading: false,
@@ -39,7 +39,7 @@ const useEmpresasStore = create((set) => ({
   createEmpresa: async (empresa) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post(`${URL}/Empresa/create`, empresa);
+      const response = await axios.post(`${URL}/empresa/create`, empresa);
       const nuevaEmpresa = response.data;
       set((state) => ({
         empresas: [...state.empresas, nuevaEmpresa],
@@ -55,7 +55,7 @@ const useEmpresasStore = create((set) => ({
   deleteEmpresa: async (id) => {
     set({ loading: true, error: null });
     try {
-      await axios.delete(`${URL}/Empresa/delete/${id}`);
+      await axios.delete(`${URL}/empresa/delete/${id}`);
       set((state) => ({
         empresas: state.empresas.filter((empresa) => empresa._id !== id),
         loading: false,
@@ -69,7 +69,7 @@ const useEmpresasStore = create((set) => ({
   updateEmpresa: async ({ empresaId, updatedEmpresa }) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.put(`${URL}/Empresa/update/${empresaId}`, updatedEmpresa);
+      const response = await axios.put(`${URL}/empresa/update/${empresaId}`, updatedEmpresa);
       const updatedEmpresaData = response.data;
       set((state) => ({
         empresas: state.empresas.map((empresa) =>

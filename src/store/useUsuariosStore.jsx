@@ -143,6 +143,19 @@ export const useUsuariosStore = create((set, get) => ({
     localStorage.removeItem('userId');
     set({ usuario: null, userId: null, isAuthenticated: false, role: null });
   },
+  getUsuariosByEmpresa: async (empresaId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axios.get(`${URL}/usuarios/empresa/${empresaId}`);
+      set({
+        usuarios: response.data,
+        loading: false,
+      });
+    } catch (error) {
+      console.error('Error al obtener usuarios por empresa:', error.response || error.message);
+      set({ loading: false, error: 'Error al obtener usuarios por empresa' });
+    }
+  },
 }));
 
 export default useUsuariosStore;

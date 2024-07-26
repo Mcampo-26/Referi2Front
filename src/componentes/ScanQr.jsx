@@ -5,7 +5,7 @@ import { useTheme } from '@mui/material/styles';
 import useQrStore from '../store/UseQrStore';
 import useServiciosStore from '../store/useServiciosStore';
 import Swal from 'sweetalert2';
-import 'tailwindcss/tailwind.css';
+import qrHome from '../assets/qrHome.jpg';
 import './Css/Scan.css'; // Asegúrate de que el archivo CSS principal esté importado
 
 export const ScanQr = () => {
@@ -265,28 +265,34 @@ export const ScanQr = () => {
   return (
     <Container maxWidth="md" className="flex flex-col items-center justify-center mt-20" sx={{ paddingBottom: '40px', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
       {isSmallScreen && (
-        <Typography variant="h4" className="text-center mb={4}">
-          Escanear QR Code
-        </Typography>
+         <Container>
+        <Box className="flex justify-center mb-4" onClick={startScan}>
+  <img src={qrHome} alt="Código QR" className="w-60 h-60 md:w-64 md:h-64 rounded-lg shadow-md" style={{ cursor: 'pointer' }} />
+</Box>
+         <Box display="flex" justifyContent="center" alignItems="center">
+  <Typography variant="h5" className="mb-6" sx={{ color: theme.palette.text.secondary }}>
+    Escanear
+  </Typography>
+</Box>
+       </Container>
       )}
       {!isSmallScreen && (
-        <Typography variant="h4" className="text-center mb={4}">
-          Imagen de QR Code
-        </Typography>
+        <Container>
+        <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} />
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+        />
+          </Container>
       )}
       <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md">
       </Box>
       {isSmallScreen && (
         <Box display="flex" justifyContent="center" alignItems="center" mb={4} gap={2}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={startScan}
-            className="mb-6"
-          >
-            Iniciar Escaneo
-          </Button>
-          {isScanning && (
+                {isScanning && (
             <Button
               variant="contained"
               color="secondary"

@@ -267,8 +267,8 @@ export const Empresas = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell align="center">
-                  <Typography variant="h7" component="div" sx={{ fontWeight: 'bold' }}>
+                <TableCell align="center" >
+                  <Typography variant="h7" component="div" sx={{ fontWeight: 'bold' }} >
                     Nombre
                   </Typography>
                 </TableCell>
@@ -281,8 +281,8 @@ export const Empresas = () => {
             </TableHead>
             <TableBody>
               {filteredEmpresas.map((empresa, index) => (
-                <TableRow key={`${empresa._id}-${index}`} onClick={() => handleRowClick(empresa._id)} style={{ cursor: 'pointer' }}>
-                  <TableCell>{empresa.name}</TableCell>
+                <TableRow key={`${empresa._id}-${index}`}>
+                  <TableCell  onClick={() => handleRowClick(empresa._id)} style={{ cursor: 'pointer' }}>{empresa.name}</TableCell>
                   <TableCell align="right">
                     <FontAwesomeIcon
                       icon={faPenToSquare}

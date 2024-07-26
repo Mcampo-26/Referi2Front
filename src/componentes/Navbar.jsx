@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
@@ -14,31 +14,33 @@ import ListItemText from "@mui/material/ListItemText";
 import Drawer from "@mui/material/Drawer";
 import Brightness4 from "@mui/icons-material/Brightness4";
 import Brightness7 from "@mui/icons-material/Brightness7";
-import CloseIcon from '@mui/icons-material/Close';
+import CloseIcon from "@mui/icons-material/Close";
 import MenuItem from "@mui/material/MenuItem";
 import useUsuariosStore from "../store/useUsuariosStore";
 
 export const Navbar = ({ toggleDarkMode, darkMode }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { usuario, isAuthenticated, role, logoutUsuario } = useUsuariosStore((state) => ({
-    usuario: state.usuario,
-    isAuthenticated: state.isAuthenticated,
-    role: state.role,
-    logoutUsuario: state.logoutUsuario,
-  }));
+  const { usuario, isAuthenticated, role, logoutUsuario } = useUsuariosStore(
+    (state) => ({
+      usuario: state.usuario,
+      isAuthenticated: state.isAuthenticated,
+      role: state.role,
+      logoutUsuario: state.logoutUsuario,
+    })
+  );
   const navigate = useNavigate();
 
   const handleLogout = () => {
     closeMenu(); // Cierra el menú antes de mostrar el SweetAlert
     Swal.fire({
-      title: 'Cerrando sesión...',
+      title: "Cerrando sesión...",
       timer: 2000,
       didOpen: () => {
         Swal.showLoading();
-      }
+      },
     }).then(() => {
       logoutUsuario();
-      navigate('/');
+      navigate("/");
     });
   };
 
@@ -47,20 +49,13 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
       ? [
           { id: 1, text: "Inicio", to: "/" },
           { id: 8, text: "Crear", to: "/QrMain" },
-          { id: 2, text: "Escanear QR", to: "/Escanear" },
           { id: 4, text: "Mis QR", to: "/Referidos" },
           { id: 6, text: "Usuarios", to: "/Users" },
-
           { id: 10, text: "Empresas", to: "/Empresas" },
-        
-
-         { id: 9, text: 'Roles', to: '/roles' },
-
+          { id: 9, text: "Roles", to: "/roles" },
           { id: 5, text: "Cerrar Sesión", action: handleLogout },
         ]
       : [
-          { id: 8, text: "Crear", to: "/QrMain" },
-          { id: 2, text: "Escanear QR", to: "/Escanear" },
           { id: 4, text: "Mis QR", to: "/Referidos" },
           { id: 5, text: "Cerrar Sesión", action: handleLogout },
         ]
@@ -82,7 +77,10 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
   });
 
   const toggleDrawer = (open) => (event) => {
-    if (event.type === "keydown" && (event.key === "Tab" || event.key === "Shift")) {
+    if (
+      event.type === "keydown" &&
+      (event.key === "Tab" || event.key === "Shift")
+    ) {
       return;
     }
     setDrawerOpen(open);
@@ -104,7 +102,11 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
           >
             Referi2
           </Typography>
-          {isAuthenticated && <Typography variant="body1" sx={{ color: 'inherit' }}>Hola, {usuario.nombre}!</Typography>}
+          {isAuthenticated && (
+            <Typography variant="body1" sx={{ color: "inherit" }}>
+              Hola, {usuario.nombre}!
+            </Typography>
+          )}
 
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
             {navItems.map((item) =>
