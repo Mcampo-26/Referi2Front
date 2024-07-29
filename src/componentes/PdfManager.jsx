@@ -2,13 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import usePdfStore from '../store/UsePdfStore';
 import {
-  Box, Button, Container, TextField, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, useTheme
+  Box, Button, Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, useTheme
 } from "@mui/material";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faFilePdf } from "@fortawesome/free-solid-svg-icons";
+import jsPDF from "jspdf";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import jsPDF from "jspdf";
 
 const MySwal = withReactContent(Swal);
 
@@ -35,7 +33,7 @@ const PdfManager = () => {
     if (location.state && location.state.qr) {
       const { qr } = location.state;
       setTitle(qr.nombre);
-      setContent(`Empresa: ${qr.empresaId.name}\nUsuario Asignado: ${qr.assignedTo.nombre}\nDescuento: ${qr.value}%`);
+      setContent(`Empresa: ${qr.empresaId.name}\nUsuario Asignado: ${qr.assignedTo.nombre}`);
       setQrUpdates(qr.updates || []);
       setQrUsedAt(qr.usedAt); // Assuming `usedAt` is the field containing the usage time
     }
@@ -65,7 +63,7 @@ const PdfManager = () => {
     const subLineSpacing = 8;   // Space between sublines within each update
     const standardSpacing = 15; // Standard space for other sections
 
-    doc.text(`Title: ${title}`, 10, y);
+    doc.text(`Nombre: ${title}`, 10, y);
     y += standardSpacing;
     doc.text(`Empresa: ${content}`, 10, y);
     y += sectionSpacing; // Increased space after the first section
@@ -79,6 +77,8 @@ const PdfManager = () => {
       doc.text(`   Servicio: ${update.service?.name || 'N/A'}`, 10, y);
       y += subLineSpacing;
       doc.text(`   Detalles: ${update.details}`, 10, y);
+      y += subLineSpacing;
+      doc.text(`   Descuento: ${update.discount}%`, 10, y); // Include discount in the PDF
       y += standardSpacing; // Standard space after each update
     });
 
@@ -99,73 +99,40 @@ const PdfManager = () => {
         <Typography variant="h4" mb={4} className="text-center">Gestión de PDFs</Typography>
       </Box>
       <Box mb={4}>
-        <TextField
-          label="Título"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          fullWidth
-          margin="normal"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: theme.palette.mode === 'dark' ? 'white' : 'black',
-              },
-              '&:hover fieldset': {
-                borderColor: theme.palette.mode === 'dark' ? 'white' : 'black',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: theme.palette.mode === 'dark' ? 'white' : 'black',
-              },
-            },
-            '& .MuiInputBase-input': {
-              color: theme.palette.mode === 'dark' ? 'white' : 'black',
-            },
-            '& .MuiInputLabel-root': {
-              color: theme.palette.mode === 'dark' ? 'white' : 'black',
-            },
-          }}
-        />
-        <TextField
-          label="Contenido"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          fullWidth
-          margin="normal"
-          multiline
-          rows={4}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: theme.palette.mode === 'dark' ? 'white' : 'black',
-              },
-              '&:hover fieldset': {
-                borderColor: theme.palette.mode === 'dark' ? 'white' : 'black',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: theme.palette.mode === 'dark' ? 'white' : 'black',
-              },
-            },
-            '& .MuiInputBase-input': {
-              color: theme.palette.mode === 'dark' ? 'white' : 'black',
-            },
-            '& .MuiInputLabel-root': {
-              color: theme.palette.mode === 'dark' ? 'white' : 'black',
-            },
-          }}
-        />
+        <Typography variant="h6">Nombre: {title}</Typography>
+        <Typography variant="body1" style={{ whiteSpace: 'pre-line' }}>{content}</Typography>
         <Button
           variant="contained"
           color="secondary"
           onClick={generatePdf}
+          sx={{ mt: 2 }}
         >
           Generar PDF
         </Button>
       </Box>
       <TableContainer component={Paper} className={`shadow-lg rounded-lg overflow-hidden border ${theme.palette.mode === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
-        
-
-
-        
+        <Table>
+          <TableHead className={`${theme.palette.mode === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-200'}`}>
+            <TableRow>
+              <StyledTableCell>N°</StyledTableCell>
+              <StyledTableCell>Fecha</StyledTableCell>
+              <StyledTableCell>Servicio</StyledTableCell>
+              <StyledTableCell>Detalles</StyledTableCell>
+              <StyledTableCell>Descuento</StyledTableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {qrUpdates.map((update, index) => (
+              <TableRow key={index}>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>{new Date(update.updatedAt).toLocaleString()}</TableCell>
+                <TableCell>{update.service?.name || 'N/A'}</TableCell>
+                <TableCell>{update.details}</TableCell>
+                <TableCell>{update.discount}%</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </TableContainer>
     </Container>
   );

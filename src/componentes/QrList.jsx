@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faCheckCircle, faCircle, faChevronDown, faChevronUp, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import './Css/QrList.css'; // Asegúrate de tener Tailwind CSS configurado correctamente
+import './Css/QrList.css';
 
 const MySwal = withReactContent(Swal);
 
@@ -34,6 +34,7 @@ const UpdateRow = ({ update, index, theme }) => {
       <TableCell>{new Date(update.updatedAt).toLocaleString()}</TableCell>
       <TableCell>{update.service?.name || 'N/A'}</TableCell>
       <TableCell>{update.details}</TableCell>
+      <TableCell>{update.discount} %</TableCell> {/* Mostrar el descuento */}
     </TableRow>
   );
 };
@@ -42,13 +43,12 @@ export const QrList = () => {
   const theme = useTheme();
   const { qrs, getQrsByAssignedUser, deleteQr, loading, error } = useQrStore();
   const { userId } = useUsuariosStore();
-  const [orderBy, setOrderBy] = useState('value');
+  const [orderBy, setOrderBy] = useState('nombre');
   const [orderDirection, setOrderDirection] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
   const [openRow, setOpenRow] = useState(null);
   const navigate = useNavigate();
 
-  // Obtén los QR asignados al usuario al montar el componente
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
     if (storedUserId) {
@@ -57,7 +57,6 @@ export const QrList = () => {
     }
   }, [getQrsByAssignedUser]);
 
-  // Función para manejar la ordenación de las columnas
   const handleSort = (column) => {
     if (column === orderBy) {
       setOrderDirection(orderDirection === 'asc' ? 'desc' : 'asc');
@@ -67,7 +66,6 @@ export const QrList = () => {
     }
   };
 
-  // Función para manejar la eliminación de un QR
   const handleDelete = (id) => {
     MySwal.fire({
       title: "¿Estás seguro de que deseas eliminar este QR?",
@@ -101,35 +99,30 @@ export const QrList = () => {
     });
   };
 
-  // Función para manejar el click en un QR
   const handleQrClick = (id) => {
     navigate(`/QrDetails/${id}`);
   };
 
-  // Función para manejar la expansión de las filas de actualizaciones
   const handleRowClick = (id) => {
     setOpenRow(openRow === id ? null : id);
   };
 
-  // Función para generar un PDF del QR
   const handleGeneratePdf = (qr) => {
     navigate('/pdfs', { state: { qr } });
   };
 
-  // Filtrar y ordenar los QR según los términos de búsqueda y la ordenación
   const filteredQrs = qrs.filter((qr) =>
     qr &&
     (
-      qr.value.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      qr.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      qr.telefono.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      qr.mail.toLowerCase().includes(searchTerm.toLowerCase())
+      (qr.nombre && qr.nombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (qr.telefono && qr.telefono.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (qr.mail && qr.mail.toLowerCase().includes(searchTerm.toLowerCase()))
     )
   );
 
   const sortedQrs = filteredQrs.sort((a, b) => {
-    const aValue = a[orderBy];
-    const bValue = b[orderBy];
+    const aValue = a[orderBy] ? a[orderBy].toLowerCase() : '';
+    const bValue = b[orderBy] ? b[orderBy].toLowerCase() : '';
 
     if (aValue < bValue) return orderDirection === 'asc' ? -1 : 1;
     if (aValue > bValue) return orderDirection === 'asc' ? 1 : -1;
@@ -209,7 +202,6 @@ export const QrList = () => {
                 <StyledTableCell onClick={() => handleSort('mail')} orderBy={orderBy} column="mail" orderDirection={orderDirection} className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   Correo
                 </StyledTableCell>
-           
                 <TableCell className={`${theme.palette.mode === 'dark' ? 'text-white' : 'text-black'}`}>
                   <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
                     Acciones
@@ -237,7 +229,6 @@ export const QrList = () => {
                     <TableCell>{qr.nombre}</TableCell>
                     <TableCell>{qr.telefono}</TableCell>
                     <TableCell>{qr.mail}</TableCell>
-                    
                     <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
                       {qr.base64Image && (
                         <Avatar 
@@ -254,7 +245,7 @@ export const QrList = () => {
                       >
                         <FontAwesomeIcon icon={faTrash} />
                       </IconButton>
-                      {qr.isUsed && (
+                      {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
                         <IconButton
                           color="primary"
                           onClick={() => handleGeneratePdf(qr)}
@@ -263,23 +254,26 @@ export const QrList = () => {
                         </IconButton>
                       )}
                     </TableCell>
-                    <TableCell align="center"
-                    
-                    >
+                    <TableCell align="center">
                       <FontAwesomeIcon
                         icon={qr.isUsed ? faCheckCircle : faCircle}
                         color={qr.isUsed ? 'red' : 'green'}
                       />
                     </TableCell>
-                    <TableCell align="center" >
-                      {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
-                        <IconButton
-                          color="secondary"
-                          onClick={() => handleRowClick(qr._id)}
-                        >
-                          <FontAwesomeIcon icon={openRow === qr._id ? faChevronUp : faChevronDown} />
-                        </IconButton>
-                      )}
+                    <TableCell align="center">
+                      <Box display="flex" alignItems="center" justifyContent="center">
+                        {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
+                          <IconButton
+                            color="secondary"
+                            onClick={() => handleRowClick(qr._id)}
+                          >
+                            <FontAwesomeIcon icon={openRow === qr._id ? faChevronUp : faChevronDown} />
+                          </IconButton>
+                        )}
+                        <Typography variant="body2" component="div" sx={{ fontWeight: 'bold', ml: 1 }}>
+                          {qr.usageCount}/{qr.maxUsageCount}
+                        </Typography>
+                      </Box>
                     </TableCell>
                   </TableRow>
                   {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
@@ -288,7 +282,7 @@ export const QrList = () => {
                         <Collapse in={openRow === qr._id} timeout="auto" unmountOnExit>
                           <Box margin={1} className={`p-4 border ${theme.palette.mode === 'dark' ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'} rounded-lg shadow-inner`}>
                             <Typography variant="h6" gutterBottom component="div">
-                             Detalle de Usos 
+                              Detalle de Usos
                             </Typography>
                             <Table size="small" aria-label="updates">
                               <TableHead>
@@ -297,6 +291,7 @@ export const QrList = () => {
                                   <TableCell>Fecha</TableCell>
                                   <TableCell>Servicio</TableCell>
                                   <TableCell>Detalles</TableCell>
+                                  <TableCell>Descuento</TableCell> {/* Encabezado para el descuento */}
                                 </TableRow>
                               </TableHead>
                               <TableBody>

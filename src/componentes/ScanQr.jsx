@@ -15,6 +15,7 @@ export const ScanQr = () => {
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 768);
   const [selectedService, setSelectedService] = useState('');
   const [details, setDetails] = useState('');
+  const [discount, setDiscount] = useState('');
   const [fadeOut, setFadeOut] = useState(false); // Estado para la transición
   const [isScanning, setIsScanning] = useState(false); // Estado para saber si está escaneando
   const { servicios, getServiciosByEmpresaId, loading, error: serviciosError } = useServiciosStore((state) => ({
@@ -88,38 +89,24 @@ export const ScanQr = () => {
     return fullData;
   };
 
- const startScan = () => {
-  if (scannerRef.current && !scannerRef.current.isScanning) {
-    setError(null); // Limpiar el error al iniciar un nuevo escaneo
-    setIsScanning(true); // Indicar que se está escaneando
-    scannerRef.current.start(
-      { facingMode: "environment" },
-      {
-        fps: 3, // Aumenta FPS para mejorar la calidad del escaneo
-        qrbox: { width: 300, height: 300 }, // Aumenta el tamaño del área de escaneo
+  // Función para iniciar el escaneo
+  const startScan = () => {
+    if (scannerRef.current && !scannerRef.current.isScanning) {
+      setError(null); // Limpiar el error al iniciar un nuevo escaneo
+      setIsScanning(true); // Indicar que se está escaneando
+      scannerRef.current.start(
+        { facingMode: "environment" },
+        { fps: 20, qrbox: 280 },
 
-      },
-      handleScan,
-      handleError
-    ).catch(err => {
-      console.error('Failed to start scanning.', err);
-      setError(err);
-      setIsScanning(false); // Indicar que el escaneo ha fallado
-    });
-  }
-};
-
-// Manejo de errores en el escaneo
-const handleError = (err) => {
-  if (err.name === 'NotFoundException') {
-    console.warn('QR code not found. Retrying...');
-    // Continúa escaneando en lugar de detenerse, sin mostrar error
-  } else {
-    console.error('Error during scan:', err);
-    setError(err);
-  }
-};
-
+        handleScan,
+        handleError
+      ).catch(err => {
+        console.error('Failed to start scanning.', err);
+        setError(err);
+        setIsScanning(false); // Indicar que el escaneo ha fallado
+      });
+    }
+  };
 
   // Función para manejar el resultado del escaneo
   const handleScan = async (data) => {
@@ -165,7 +152,14 @@ const handleError = (err) => {
   };
 
   // Manejo de errores en el escaneo
- 
+  const handleError = (err) => {
+    if (err.name === 'NotFoundException') {
+      console.warn('QR code not found. Retrying...');
+    } else {
+      console.error('Error during scan:', err);
+      setError(err);
+    }
+  };
 
   // Función para detener el escaneo
   const stopScan = () => {
@@ -224,9 +218,20 @@ const handleError = (err) => {
       return;
     }
 
+    const discountValue = parseFloat(discount);
+    if (isNaN(discountValue) || discountValue <= 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Descuento inválido",
+        text: "Por favor, ingrese un descuento válido.",
+      });
+      return;
+    }
+
     const qrData = {
       service: selectedService,
       details,
+      discount: discountValue, // Añadir el descuento
       updatedAt: new Date().toISOString(), // Añadir la fecha de actualización
     };
 
@@ -254,6 +259,7 @@ const handleError = (err) => {
         setScannedData(null); // Resetea el estado de scannedData
         setSelectedService('');
         setDetails('');
+        setDiscount(''); // Resetea el estado de discount
         setFadeOut(false); // Elimina la clase fade-out después de ocultar los datos
       });
     } catch (error) {
@@ -272,36 +278,34 @@ const handleError = (err) => {
   return (
     <Container maxWidth="md" className="flex flex-col items-center justify-center mt-20" sx={{ paddingBottom: '40px', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
       {isSmallScreen && (
-        <Container>
-          <Box className="flex justify-center mb-4" onClick={startScan}>
-            {!isScanning && (
-              <img src={qrHome} alt="Código QR" className="w-60 h-60 md:w-64 md:h-64 rounded-lg shadow-md" style={{ cursor: 'pointer' }} />
-            )}
-          </Box>
-          <Box display="flex" justifyContent="center" alignItems="center">
-            <Typography variant="h5" className="mb-6" sx={{ color: theme.palette.text.secondary }}>
-              Escanear
-            </Typography>
-          </Box>
-        </Container>
+         <Container>
+        <Box className="flex justify-center mb-4" onClick={startScan}>
+  <img src={qrHome} alt="Código QR" className="w-60 h-60 md:w-64 md:h-64 rounded-lg shadow-md" style={{ cursor: 'pointer' }} />
+</Box>
+         <Box display="flex" justifyContent="center" alignItems="center">
+  <Typography variant="h5" className="mb-6" sx={{ color: theme.palette.text.secondary }}>
+    Escanear
+  </Typography>
+</Box>
+       </Container>
       )}
       {!isSmallScreen && (
         <Container>
-          <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} />
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            style={{ display: 'none' }}
-          />
-        </Container>
+        <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} />
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+        />
+          </Container>
       )}
       <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md">
       </Box>
       {isSmallScreen && (
         <Box display="flex" justifyContent="center" alignItems="center" mb={4} gap={2}>
-          {isScanning && (
+                {isScanning && (
             <Button
               variant="contained"
               color="secondary"
@@ -330,7 +334,7 @@ const handleError = (err) => {
         onChange={handleFileChange}
         style={{ display: 'none' }}
       />
-
+      
       {scannedData && (
         <Fade in={!fadeOut} timeout={100}>
           <Box
@@ -381,6 +385,16 @@ const handleError = (err) => {
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body1"><strong>Usos restantes:</strong> {usosRestantes >= 0 ? usosRestantes : 'N/A'}</Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Descuento (%)"
+                      variant="outlined"
+                      value={discount}
+                      onChange={(e) => setDiscount(e.target.value)}
+                      margin="normal"
+                    />
                   </Grid>
                 </Grid>
                 <FormControl fullWidth margin="normal" variant="outlined">
