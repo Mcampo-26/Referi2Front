@@ -15,6 +15,7 @@ export const ScanQr = () => {
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 768);
   const [selectedService, setSelectedService] = useState('');
   const [details, setDetails] = useState('');
+  const [discount, setDiscount] = useState('');
   const [fadeOut, setFadeOut] = useState(false); // Estado para la transición
   const [isScanning, setIsScanning] = useState(false); // Estado para saber si está escaneando
   const { servicios, getServiciosByEmpresaId, loading, error: serviciosError } = useServiciosStore((state) => ({
@@ -216,28 +217,39 @@ export const ScanQr = () => {
       console.log("No QR code ID found");
       return;
     }
-  
+
+    const discountValue = parseFloat(discount);
+    if (isNaN(discountValue) || discountValue <= 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Descuento inválido",
+        text: "Por favor, ingrese un descuento válido.",
+      });
+      return;
+    }
+
     const qrData = {
       service: selectedService,
       details,
+      discount: discountValue, // Añadir el descuento
       updatedAt: new Date().toISOString(), // Añadir la fecha de actualización
     };
-  
+
     console.log('Datos a enviar:', qrData);
     console.log('QR ID:', scannedData.id);
-  
+
     try {
       const response = await updateQr(scannedData.id, qrData);
       console.log("Response from backend:", response);
       const updatedQr = response.qr;
       console.log("QR actualizado con éxito:", updatedQr);
-  
+
       if (!updatedQr) {
         throw new Error("QR data is undefined");
       }
-  
+
       setFadeOut(true); // Aplica la clase fade-out
-  
+
       Swal.fire({
         title: 'QR actualizado',
         text: 'El QR ha sido actualizado correctamente.',
@@ -247,6 +259,7 @@ export const ScanQr = () => {
         setScannedData(null); // Resetea el estado de scannedData
         setSelectedService('');
         setDetails('');
+        setDiscount(''); // Resetea el estado de discount
         setFadeOut(false); // Elimina la clase fade-out después de ocultar los datos
       });
     } catch (error) {
@@ -372,6 +385,16 @@ export const ScanQr = () => {
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body1"><strong>Usos restantes:</strong> {usosRestantes >= 0 ? usosRestantes : 'N/A'}</Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Descuento (%)"
+                      variant="outlined"
+                      value={discount}
+                      onChange={(e) => setDiscount(e.target.value)}
+                      margin="normal"
+                    />
                   </Grid>
                 </Grid>
                 <FormControl fullWidth margin="normal" variant="outlined">

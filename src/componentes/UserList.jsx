@@ -236,7 +236,7 @@ export const UserList = () => {
                 <TableRow key={usuario._id}>
                   <TableCell>{usuario.nombre || "Nombre no disponible"}</TableCell>
                   <TableCell>{usuario.email || "Email no disponible"}</TableCell>
-                  <TableCell>{usuario.empresa?.name || "Empresa no disponible"}</TableCell>
+                  <TableCell>{usuario.empresa.name || "Empresa no disponible"}</TableCell>
                   <TableCell>{usuario.role?.name || "Rol no disponible"}</TableCell>
                   <TableCell>
                     <IconButton

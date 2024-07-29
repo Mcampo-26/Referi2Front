@@ -16,7 +16,7 @@ const StyledBox = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
   color: theme.palette.text.primary,
   transition: 'background-color 0.3s ease, color 0.3s ease',
-  height: '100vh',  // Ocupa toda la altura de la ventana del navegador
+  height: '100vh',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
@@ -24,17 +24,17 @@ const StyledBox = styled(Box)(({ theme }) => ({
 }));
 
 export const QrMain = () => {
-  const [value, setValue] = useState('');
   const [empresaId, setEmpresaId] = useState('');
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
   const [mail, setMail] = useState('');
+  const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [date, setDate] = useState('');
   const [base64Image, setBase64Image] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
   const [maxUsageCount, setMaxUsageCount] = useState('');
+  const [filteredUsuarios, setFilteredUsuarios] = useState([]);
 
   const createQr = useQrStore((state) => state.createQr);
   const { empresas, getAllEmpresas } = useEmpresasStore();
@@ -49,11 +49,13 @@ export const QrMain = () => {
   }, [getAllEmpresas, getUsuarios]);
 
   useEffect(() => {
-    console.log("Usuarios:", usuarios);
-  }, [usuarios]);
+    if (empresaId) {
+      setFilteredUsuarios(usuarios.filter(usuario => usuario.empresa && usuario.empresa._id === empresaId));
+    }
+  }, [empresaId, usuarios]);
 
   const validateFields = () => {
-    if (!value || !empresaId || !nombre || !telefono || !mail || !startTime || !endTime || !date || !assignedTo || !maxUsageCount) {
+    if (!empresaId || !nombre || !telefono || !mail || !date || !startTime || !endTime || !assignedTo || !maxUsageCount) {
       Swal.fire('Error', 'Por favor, complete todos los campos', 'error');
       return false;
     }
@@ -65,16 +67,16 @@ export const QrMain = () => {
       Swal.fire('Error', 'El teléfono debe tener entre 10 y 15 caracteres y solo debe contener números', 'error');
       return false;
     }
-    if (!/^\d{1,2}$/.test(value)) {
-      Swal.fire('Error', 'El descuento debe ser un número entre 0 y 99', 'error');
-      return false;
-    }
     if (!/\S+@\S+\.\S+/.test(mail)) {
       Swal.fire('Error', 'El correo no es válido', 'error');
       return false;
     }
     if (!/^\d+$/.test(maxUsageCount) || parseInt(maxUsageCount, 10) < 1) {
       Swal.fire('Error', 'La cantidad máxima de usos debe ser un número entero mayor que 0', 'error');
+      return false;
+    }
+    if (new Date(`${date}T${startTime}`) >= new Date(`${date}T${endTime}`)) {
+      Swal.fire('Error', 'La hora de inicio debe ser anterior a la hora de fin', 'error');
       return false;
     }
     return true;
@@ -96,13 +98,12 @@ export const QrMain = () => {
       userId,
       assignedTo: { _id: assignedTo, nombre: usuarios.find(u => u._id === assignedTo)?.nombre },
       empresaId: { _id: empresaId, name: empresa?.name || 'N/A' },
-      value,
       nombre,
       telefono,
       mail,
+      date,
       startTime,
       endTime,
-      date,
       maxUsageCount: parseInt(maxUsageCount, 10)
     };
 
@@ -175,22 +176,21 @@ export const QrMain = () => {
                       ))}
                     </Select>
                   </FormControl>
-                  <TextField
-                    label="Descuento"
-                    variant="outlined"
-                    placeholder="Descuento (%)"
-                    value={value}
-                    onChange={(e) => {
-                      if (/^\d{0,2}$/.test(e.target.value)) {
-                        setValue(e.target.value);
-                      }
-                    }}
-                    fullWidth
-                    className="custom-margin"
-                    InputProps={{
-                      endAdornment: <InputAdornment position="end">%</InputAdornment>
-                    }}
-                  />
+                  <FormControl fullWidth variant="outlined" className="custom-margin">
+                    <InputLabel>Asignar a usuario</InputLabel>
+                    <Select
+                      value={assignedTo}
+                      onChange={(e) => setAssignedTo(e.target.value)}
+                      label="Asignar a usuario"
+                      disabled={!empresaId}
+                    >
+                      {filteredUsuarios.map((usuario) => (
+                        <MenuItem key={usuario._id} value={usuario._id}>
+                          {usuario.nombre}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                   <TextField
                     label="Nombre"
                     variant="outlined"
@@ -220,35 +220,43 @@ export const QrMain = () => {
                     fullWidth
                     className="custom-margin"
                   />
-                  <TextField
-                    label="Hora de inicio (HH:MM)"
-                    variant="outlined"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    fullWidth
-                    className="custom-margin"
-                  />
-                  <TextField
-                    label="Hora de fin (HH:MM)"
-                    variant="outlined"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    fullWidth
-                  />
-                  <TextField
-                    label=""
-                    type="text"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    fullWidth
-                    className="custom-margin"
-                    placeholder="Fecha"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    onFocus={(e) => e.target.type = 'date'}
-                    onBlur={(e) => e.target.type = 'text'}
-                  />
+                  <Box display="flex" alignItems="center" className="custom-margin">
+                    <TextField
+                      label="Fecha"
+                      type="date"
+                      variant="outlined"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      fullWidth
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                    />
+                    <TextField
+                      label="Hora de inicio"
+                      type="time"
+                      variant="outlined"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      fullWidth
+                      className="ml-2"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                    />
+                    <TextField
+                      label="Hora de fin"
+                      type="time"
+                      variant="outlined"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      fullWidth
+                      className="ml-2"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                    />
+                  </Box>
                   <TextField
                     label="Cantidad de usos"
                     variant="outlined"
@@ -262,20 +270,6 @@ export const QrMain = () => {
                     fullWidth
                     className="custom-margin"
                   />
-                  <FormControl fullWidth variant="outlined" className="custom-margin">
-                    <InputLabel>Asignar a usuario</InputLabel>
-                    <Select
-                      value={assignedTo}
-                      onChange={(e) => setAssignedTo(e.target.value)}
-                      label="Asignar a usuario"
-                    >
-                      {usuarios.map((usuario) => (
-                        <MenuItem key={usuario._id} value={usuario._id}>
-                          {usuario.nombre}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
                   <Button
                     variant="contained"
                     color="primary"
