@@ -278,34 +278,36 @@ export const ScanQr = () => {
   return (
     <Container maxWidth="md" className="flex flex-col items-center justify-center mt-20" sx={{ paddingBottom: '40px', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
       {isSmallScreen && (
-         <Container>
-        <Box className="flex justify-center mb-4" onClick={startScan}>
-  <img src={qrHome} alt="Código QR" className="w-60 h-60 md:w-64 md:h-64 rounded-lg shadow-md" style={{ cursor: 'pointer' }} />
-</Box>
-         <Box display="flex" justifyContent="center" alignItems="center">
-  <Typography variant="h5" className="mb-6" sx={{ color: theme.palette.text.secondary }}>
-    Escanear
-  </Typography>
-</Box>
-       </Container>
+        <Container>
+          {!isScanning && (
+            <Box className="flex justify-center mb-4" onClick={startScan}>
+              <img src={qrHome} alt="Código QR" className="w-60 h-60 md:w-64 md:h-64 rounded-lg shadow-md" style={{ cursor: 'pointer' }} />
+            </Box>
+          )}
+          <Box display="flex" justifyContent="center" alignItems="center">
+            <Typography variant="h5" className="mb-6" sx={{ color: theme.palette.text.secondary }}>
+              Escanear
+            </Typography>
+          </Box>
+        </Container>
       )}
       {!isSmallScreen && (
         <Container>
-        <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} />
-        <input
-          type="file"
-          accept="image/*"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          style={{ display: 'none' }}
-        />
-          </Container>
+          <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} />
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+          />
+        </Container>
       )}
       <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md">
       </Box>
       {isSmallScreen && (
         <Box display="flex" justifyContent="center" alignItems="center" mb={4} gap={2}>
-                {isScanning && (
+          {isScanning && (
             <Button
               variant="contained"
               color="secondary"
@@ -322,7 +324,7 @@ export const ScanQr = () => {
           variant="contained"
           color="secondary"
           onClick={() => fileInputRef.current.click()}
-          className="mb-2 mt-2"
+          className="mb-2 mt={4}"
         >
           Subir Archivo
         </Button>
@@ -356,9 +358,7 @@ export const ScanQr = () => {
                   Información del QR:
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Descuento :</strong> {scannedData.value} %</Typography>
-                  </Grid>
+            
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body1"><strong>Nombre:</strong> {scannedData.nombre}</Typography>
                   </Grid>
