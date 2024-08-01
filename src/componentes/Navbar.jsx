@@ -52,16 +52,21 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
           { id: 4, text: "Mis QR", to: "/Referidos" },
           { id: 6, text: "Usuarios", to: "/Users" },
           { id: 10, text: "Empresas", to: "/Empresas" },
-          { id: 9, text: "Roles", to: "/roles" },
+          { id: 9, text: "Roles", to: "/roles" },        
+          { id: 11, text: "Reportes", to: "/reportes" },
+          { id: 12, text: "Contacto", to: "/contacto" },
           { id: 5, text: "Cerrar Sesión", action: handleLogout },
         ]
       : [
           { id: 4, text: "Mis QR", to: "/Referidos" },
+          { id: 11, text: "Reportes", to: "/reportes" },
+          { id: 12, text: "Contacto", to: "/contacto" },
           { id: 5, text: "Cerrar Sesión", action: handleLogout },
         ]
     : [
         { id: 6, text: "Iniciar Sesión", to: "/Login" },
         { id: 7, text: "Registrarse", to: "/Register" },
+        { id: 12, text: "Contacto", to: "/contacto" }
       ];
 
   const theme = createTheme({

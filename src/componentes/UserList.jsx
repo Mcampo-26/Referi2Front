@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import { EditUserModal } from "./EditUserModal";
 import useUsuariosStore from "../store/useUsuariosStore";
-import useRolesStore from "../store/useRolesStore";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -18,12 +16,10 @@ import {
   TableHead,
   TableRow,
   Paper,
-  IconButton,
   CircularProgress,
-  Box
+  Box,
+  useTheme
 } from '@mui/material';
-
-const MySwal = withReactContent(Swal);
 
 const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection }) => {
   return (
@@ -34,6 +30,7 @@ const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection })
     </TableCell>
   );
 };
+const MySwal = withReactContent(Swal);
 
 export const UserList = () => {
   const [orderBy, setOrderBy] = useState('nombre');
@@ -42,11 +39,14 @@ export const UserList = () => {
   const [showModal, setShowModal] = useState(false);
   const [editedUser, setEditedUser] = useState(null);
   const { getUsuarios, usuarios, loading: loadingUsuarios, deleteUsuario, totalRecords, totalPages, currentPage } = useUsuariosStore();
-  const { getAllRoles } = useRolesStore();
+  const theme = useTheme();
   
   useEffect(() => {
     getUsuarios(currentPage);
   }, [currentPage, getUsuarios]);
+
+  console.log('Usuarios:', usuarios);
+  console.log('Current Theme:', theme);
 
   const handleSort = (column) => {
     if (column === orderBy) {
@@ -125,13 +125,13 @@ export const UserList = () => {
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
-      getUsuarios(currentPage - 1);
+      currentPage(currentPage - 1);
     }
   };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
-      getUsuarios(currentPage + 1);
+      currentPage(currentPage + 1);
     }
   };
 
@@ -159,7 +159,7 @@ export const UserList = () => {
   }
 
   return (
-    <Container>
+    <Container maxWidth="md">
       <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
         <Typography variant="h4" mb={4}>Lista de Usuarios</Typography>
       </Box>
@@ -236,23 +236,19 @@ export const UserList = () => {
                 <TableRow key={usuario._id}>
                   <TableCell>{usuario.nombre || "Nombre no disponible"}</TableCell>
                   <TableCell>{usuario.email || "Email no disponible"}</TableCell>
-                  <TableCell>{usuario.empresa.name || "Empresa no disponible"}</TableCell>
+                  <TableCell>{usuario.empresa ? usuario.empresa.name : "Empresa no disponible"}</TableCell>
                   <TableCell>{usuario.role?.name || "Rol no disponible"}</TableCell>
                   <TableCell>
-                    <IconButton
-                      color="primary"
-                      onClick={usuario.email !== "admin@admin.com" ? () => handleEdit(usuario) : () => Swal.fire({ icon: 'warning', title: 'No permitido', text: 'No se puede editar al administrador.' })}
-                      style={usuario.email === "admin@admin.com" ? { color: 'gray' } : {}}
-                    >
-                      <FontAwesomeIcon icon={faPenToSquare} />
-                    </IconButton>
-                    <IconButton
-                      color="secondary"
-                      onClick={usuario.email !== "admin@admin.com" ? () => handleDelete(usuario._id, usuario.email) : () => Swal.fire({ icon: 'warning', title: 'No permitido', text: 'No se puede eliminar al administrador.' })}
-                      style={usuario.email === "admin@admin.com" ? { color: 'gray' } : {}}
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </IconButton>
+                    <FontAwesomeIcon
+                      icon={faPenToSquare}
+                      className="h-6 w-5 text-blue-400 hover:text-blue-700 cursor-pointer mr-4"
+                      onClick={() => handleEdit(usuario)}
+                    />
+                    <FontAwesomeIcon
+                      icon={faTrash}
+                      className="h-4 w-4 text-red-600 hover:text-red-800 cursor-pointer"
+                      onClick={() => handleDelete(usuario._id, usuario.email)}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -265,11 +261,38 @@ export const UserList = () => {
 
       <div className="flex justify-between items-center mt-4">
         <Typography>
-          Mostrando registros del {(currentPage - 1) * 10 + 1} al {Math.min(currentPage * 10, usuarios.length)} de un total de {usuarios.length} registros
+          Mostrando registros del {(currentPage - 1) * 10 + 1} al{" "}
+          {Math.min(currentPage * 10, usuarios.length)} de un total de{" "}
+          {usuarios.length} registros
         </Typography>
         <div>
-          <Button variant="outlined" className="mr-2" onClick={handlePreviousPage} disabled={currentPage === 1}>Anterior</Button>
-          <Button variant="outlined" onClick={handleNextPage} disabled={currentPage === totalPages}>Siguiente</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            className="mr-2"
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            sx={{
+              backgroundColor:
+                currentPage === 1
+                  ? theme.palette.grey[500]
+                  : theme.palette.primary.main,
+              color:
+                currentPage === 1
+                  ? theme.palette.grey[300]
+                  : theme.palette.primary.contrastText,
+            }}
+          >
+            Anterior
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+          >
+            Siguiente
+          </Button>
         </div>
       </div>
 
@@ -283,3 +306,4 @@ export const UserList = () => {
     </Container>
   );
 };
+
