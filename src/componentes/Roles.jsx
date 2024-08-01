@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import useRolesStore from '../store/useRolesStore';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
-import Swal from 'sweetalert2';
+import React, { useEffect, useState } from "react";
+import useRolesStore from "../store/useRolesStore";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
+import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import {
   Button,
@@ -13,6 +13,7 @@ import {
   DialogTitle,
   TextField,
   Table,
+  useTheme,
   TableBody,
   TableCell,
   TableContainer,
@@ -22,26 +23,36 @@ import {
   CircularProgress,
   Typography,
   Container,
-  Box
-} from '@mui/material';
+  Box,
+} from "@mui/material";
 
 const MySwal = withReactContent(Swal);
 
 export const Roles = () => {
-  const { roles, getAllRoles, loading, error, createRole, updateRole, deleteRole, totalPages } = useRolesStore();
+  const {
+    roles,
+    getAllRoles,
+    loading,
+    error,
+    createRole,
+    updateRole,
+    deleteRole,
+    totalPages,
+  } = useRolesStore();
   const [showModal, setShowModal] = useState(false);
-  const [newRoleName, setNewRoleName] = useState('');
+  const [newRoleName, setNewRoleName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editingRoleId, setEditingRoleId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const theme = useTheme();
 
   useEffect(() => {
     getAllRoles();
   }, [currentPage]);
 
   useEffect(() => {
-    console.log('Roles en el estado:', roles);
+    console.log("Roles en el estado:", roles);
   }, [roles]);
 
   const toggleModal = () => {
@@ -49,7 +60,7 @@ export const Roles = () => {
   };
 
   const handleCreate = () => {
-    setNewRoleName('');
+    setNewRoleName("");
     setIsEditing(false);
     setEditingRoleId(null);
     toggleModal();
@@ -98,7 +109,7 @@ export const Roles = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (newRoleName.trim() !== '') {
+    if (newRoleName.trim() !== "") {
       toggleModal(); // Cierra el modal antes de mostrar el SweetAlert
 
       setTimeout(async () => {
@@ -111,13 +122,16 @@ export const Roles = () => {
               Swal.showLoading();
             },
             customClass: {
-              popup: 'z-50' // Clase Tailwind para ajustar el z-index
+              popup: "z-50", // Clase Tailwind para ajustar el z-index
             },
-            backdrop: `rgba(0,0,0,0.4)`
+            backdrop: `rgba(0,0,0,0.4)`,
           });
 
           if (isEditing) {
-            await updateRole({ roleId: editingRoleId, updatedRole: { name: newRoleName } });
+            await updateRole({
+              roleId: editingRoleId,
+              updatedRole: { name: newRoleName },
+            });
           } else {
             await createRole({ name: newRoleName });
           }
@@ -129,11 +143,10 @@ export const Roles = () => {
             title: "Roles actualizados",
             text: "Los roles se han actualizado correctamente.",
             customClass: {
-              popup: 'z-50' // Clase Tailwind para ajustar el z-index
+              popup: "z-50", // Clase Tailwind para ajustar el z-index
             },
-            backdrop: `rgba(0,0,0,0.4)`
+            backdrop: `rgba(0,0,0,0.4)`,
           });
-
         } catch (error) {
           MySwal.close();
           MySwal.fire({
@@ -141,9 +154,9 @@ export const Roles = () => {
             title: "Error",
             text: "Hubo un error al actualizar los roles.",
             customClass: {
-              popup: 'z-50' // Clase Tailwind para ajustar el z-index
+              popup: "z-50", // Clase Tailwind para ajustar el z-index
             },
-            backdrop: `rgba(0,0,0,0.4)`
+            backdrop: `rgba(0,0,0,0.4)`,
           });
           console.error("Error al actualizar los roles:", error);
         }
@@ -154,9 +167,9 @@ export const Roles = () => {
         title: "Error",
         text: "El nombre del rol no puede estar vacío.",
         customClass: {
-          popup: 'z-50' // Clase Tailwind para ajustar el z-index
+          popup: "z-50", // Clase Tailwind para ajustar el z-index
         },
-        backdrop: `rgba(0,0,0,0.4)`
+        backdrop: `rgba(0,0,0,0.4)`,
       });
     }
   };
@@ -180,9 +193,18 @@ export const Roles = () => {
   return (
     <Container maxWidth="md">
       <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
-        <Typography variant="h4" mb={4}>Administración de roles</Typography>
+        <Typography variant="h4" mb={4}>
+          Administración de roles
+        </Typography>
       </Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} mt={2} flexWrap="wrap">
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={4}
+        mt={2}
+        flexWrap="wrap"
+      >
         <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
           <TextField
             variant="outlined"
@@ -190,28 +212,33 @@ export const Roles = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
-              width: { xs: '100%', sm: '300px' },
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  borderColor: 'white',
+              width: { xs: "100%", sm: "300px" },
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  borderColor: "white",
                 },
-                '&:hover fieldset': {
-                  borderColor: 'white',
+                "&:hover fieldset": {
+                  borderColor: "white",
                 },
-                '&.Mui-focused fieldset': {
-                  borderColor: 'white',
+                "&.Mui-focused fieldset": {
+                  borderColor: "white",
                 },
               },
-              '& .MuiInputBase-input': {
-                color: 'white',
+              "& .MuiInputBase-input": {
+                color: "white",
               },
-              '& .MuiInputLabel-root': {
-                color: 'white',
+              "& .MuiInputLabel-root": {
+                color: "white",
               },
             }}
           />
           {searchTerm && (
-            <Button variant="contained" color="secondary" onClick={() => setSearchTerm('')} sx={{ ml: 1 }}>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => setSearchTerm("")}
+              sx={{ ml: 1 }}
+            >
               Limpiar
             </Button>
           )}
@@ -222,10 +249,14 @@ export const Roles = () => {
       </Box>
 
       <Dialog open={showModal} onClose={toggleModal}>
-        <DialogTitle>{isEditing ? 'Editar Rol' : 'Agregar Nuevo Rol'}</DialogTitle>
+        <DialogTitle>
+          {isEditing ? "Editar Rol" : "Agregar Nuevo Rol"}
+        </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            {isEditing ? 'Edita el nombre del rol.' : 'Ingresa el nombre del nuevo rol.'}
+            {isEditing
+              ? "Edita el nombre del rol."
+              : "Ingresa el nombre del nuevo rol."}
           </DialogContentText>
           <TextField
             autoFocus
@@ -243,7 +274,7 @@ export const Roles = () => {
             Cerrar
           </Button>
           <Button onClick={handleSubmit} color="primary">
-            {isEditing ? 'Guardar Cambios' : 'Guardar'}
+            {isEditing ? "Guardar Cambios" : "Guardar"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -262,12 +293,20 @@ export const Roles = () => {
             <TableHead>
               <TableRow>
                 <TableCell align="center">
-                  <Typography variant="h7" component="div" sx={{ fontWeight: 'bold' }}>
+                  <Typography
+                    variant="h7"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
+                  >
                     Nombre
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
-                  <Typography variant="h7" component="div" sx={{ fontWeight: 'bold' }}>
+                  <Typography
+                    variant="h7"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
+                  >
                     Acciones
                   </Typography>
                 </TableCell>
@@ -301,11 +340,38 @@ export const Roles = () => {
       )}
       <div className="flex justify-between items-center mt-4">
         <Typography>
-          Mostrando registros del {(currentPage - 1) * 10 + 1} al {Math.min(currentPage * 10, roles.length)} de un total de {roles.length} registros
+          Mostrando registros del {(currentPage - 1) * 10 + 1} al{" "}
+          {Math.min(currentPage * 10, roles.length)} de un total de{" "}
+          {roles.length} registros
         </Typography>
         <div>
-          <Button variant="outlined" className="mr-2" onClick={handlePreviousPage} disabled={currentPage === 1}>Anterior</Button>
-          <Button variant="outlined" onClick={handleNextPage} disabled={currentPage === totalPages}>Siguiente</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            className="mr-2"
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            sx={{
+              backgroundColor:
+                currentPage === 1
+                  ? theme.palette.grey[500]
+                  : theme.palette.primary.main,
+              color:
+                currentPage === 1
+                  ? theme.palette.grey[300]
+                  : theme.palette.primary.contrastText,
+            }}
+          >
+            Anterior
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+          >
+            Siguiente
+          </Button>
         </div>
       </div>
     </Container>

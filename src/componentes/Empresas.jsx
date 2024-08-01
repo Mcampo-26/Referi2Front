@@ -16,6 +16,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  useTheme ,
   TableContainer,
   TableHead,
   TableRow,
@@ -28,6 +29,7 @@ import {
 
 const MySwal = withReactContent(Swal);
 
+
 export const Empresas = () => {
   const navigate = useNavigate();
   const { empresas, getAllEmpresas, loading, error, createEmpresa, updateEmpresa, deleteEmpresa, totalPages } = useEmpresasStore();
@@ -37,6 +39,7 @@ export const Empresas = () => {
   const [editingEmpresaId, setEditingEmpresaId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const theme = useTheme();
 
   useEffect(() => {
     getAllEmpresas();
@@ -305,15 +308,41 @@ export const Empresas = () => {
           Ningún dato disponible en esta tabla
         </Typography>
       )}
-      <div className="flex justify-between items-center mt-4">
-        <Typography>
-          Mostrando registros del {(currentPage - 1) * 10 + 1} al {Math.min(currentPage * 10, empresas.length)} de un total de {empresas.length} registros
-        </Typography>
-        <div>
-          <Button variant="outlined" className="mr-2" onClick={handlePreviousPage} disabled={currentPage === 1}>Anterior</Button>
-          <Button variant="outlined" onClick={handleNextPage} disabled={currentPage === totalPages}>Siguiente</Button>
-        </div>
-      </div>
+
+
+
+
+<div className="flex justify-between items-center mt-4">
+  <Typography>
+    Mostrando registros del {(currentPage - 1) * 10 + 1} al {Math.min(currentPage * 10, empresas.length)} de un total de {empresas.length} registros
+  </Typography>
+  <div>
+    <Button
+      variant="contained"
+      color="primary"
+      className="mr-2"
+      onClick={handlePreviousPage}
+      disabled={currentPage === 1}
+      sx={{
+        backgroundColor: currentPage === 1 ? theme.palette.grey[500] : theme.palette.primary.main,
+        color: currentPage === 1 ? theme.palette.grey[300] : theme.palette.primary.contrastText,
+      }}
+    >
+      Anterior
+    </Button>
+    <Button
+      variant="contained"
+      color="primary"
+      onClick={handleNextPage}
+      disabled={currentPage === totalPages}
+    >
+      Siguiente
+    </Button>
+  </div>
+</div>
+
+
+
     </Container>
   );
 };

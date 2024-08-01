@@ -17,6 +17,8 @@ import { Empresas } from "./componentes/Empresas";
 import { Servicios } from "./componentes/Servicios";
 import { EmpresaDetails } from "./componentes/EmpresaDetails";
 import PdfManager from "./componentes/PdfManager";
+import {Error404} from './pages/Error404'
+import {Contacto}from './pages/Contacto'
 
 const lightTheme = createTheme({
   palette: {
@@ -78,6 +80,8 @@ function App() {
           <Route path="/servicios" element={<Servicios />} />
           <Route path="/empresaDetails/:id" element={<EmpresaDetails />} />
           <Route path="/pdfs" element={<PdfManager />} />
+          <Route path="/reportes" element={<Error404 />} />
+          <Route path="/contacto" element={<Contacto />} />
         </Routes>
       </div>
     </ThemeProvider>
