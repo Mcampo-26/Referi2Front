@@ -14,9 +14,12 @@ export const Login = () => {
         navigate('/QrMain');
       } else if (role === 'Referidor') {
         navigate('/Referidos');
+      } else {
+        navigate('/Referidos'); // Redirección por defecto si no tiene rol
       }
     }
   }, [isAuthenticated, role, navigate]);
+  
 
   const handleSubmit = async (event) => {
     event.preventDefault();

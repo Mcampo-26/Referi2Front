@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import useUsuariosStore from '../store/useUsuariosStore';
+import useUsuariosStore from '../store/useUsuariosStore'; // Importa el store
 import Swal from 'sweetalert2';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -14,13 +14,19 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 
 export const Register = () => {
+  const location = useLocation();
+  const showEmpresa = location.state?.showEmpresa || false;
+  const preselectedEmpresa = location.state?.empresaName || '';
+
   const { createUsuario } = useUsuariosStore();
+
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
     password: '',
     confirmPassword: '',
     telefono: '',
+    empresa: preselectedEmpresa,
   });
   const navigate = useNavigate();
 
@@ -53,9 +59,21 @@ export const Register = () => {
       });
       return;
     }
-
+  
     try {
-      await createUsuario(formData);
+      const userData = {
+        nombre: formData.nombre,
+        email: formData.email,
+        password: formData.password,
+        telefono: formData.telefono,
+      };
+  
+      // Solo agrega la empresa si está presente
+      if (formData.empresa) {
+        userData.empresa = formData.empresa;
+      }
+  
+      await createUsuario(userData);
       Swal.fire({
         icon: 'success',
         title: 'Usuario creado exitosamente',
@@ -70,7 +88,7 @@ export const Register = () => {
       });
     }
   };
-
+  
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -101,6 +119,21 @@ export const Register = () => {
             Ingresa tus datos para registrarte.
           </Typography>
           <form onSubmit={handleSubmit} noValidate>
+            {showEmpresa && (
+              <TextField
+                variant="outlined"
+                margin="normal"
+                required
+                fullWidth
+                id="empresa"
+                label="Empresa"
+                name="empresa"
+                autoComplete="organization"
+                value={formData.empresa}
+                onChange={handleChange}
+                 disabled // Para que no se pueda cambiar
+              />
+            )}
             <TextField
               variant="outlined"
               margin="normal"

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 import withReactContent from "sweetalert2-react-content";
 import { EditUserModal } from './EditUserModal';
 import useUsuariosStore from "../store/useUsuariosStore";
@@ -42,16 +43,20 @@ export const UserList = () => {
   const [editedUser, setEditedUser] = useState(null);
 
   const { getUsuarios, getUsuariosByEmpresa, usuarios, loading: loadingUsuarios, deleteUsuario, totalRecords, totalPages, currentPage, usuario, role } = useUsuariosStore();
-
+  const navigate = useNavigate(); //
   const theme = useTheme();
 
   useEffect(() => {
     if (role === "SuperAdmin") {
+      // Si es SuperAdmin, obtener todos los usuarios
       getUsuarios(currentPage);
     } else if (role === "Admin" && usuario.empresa) {
-      getUsuariosByEmpresa(usuario.empresa);
+      // Si es Admin y tiene empresa, obtener solo los usuarios de esa empresa
+      const empresaId = usuario.empresa._id;
+      getUsuariosByEmpresa(empresaId);
     }
-  }, [role, usuario.empresa, currentPage, getUsuarios, getUsuariosByEmpresa]);
+  }, [role, usuario.empresa, getUsuarios, getUsuariosByEmpresa, currentPage]);
+  
 
   const handleSort = (column) => {
     if (column === orderBy) {
@@ -204,13 +209,25 @@ export const UserList = () => {
 </Box>
 
         <Button
-          variant="contained"
-          color="primary"
-          onClick={() => navigate('/register')}
-          sx={{ mt: { xs: 2, sm: 0 } }}
-        >
-          Nuevo Usuario
-        </Button>
+  variant="contained"
+  color="primary"
+  onClick={() => {
+    const empresaName = usuario.empresa?.name;
+    console.log('Usuario logueado:', usuario);
+    console.log('Empresa del usuario logueado:', empresaName); // Debería mostrar "Fast"
+    navigate('/register', { state: { showEmpresa: true, empresaName } });
+  }}
+  
+  
+  
+  
+  
+
+  sx={{ mt: { xs: 2, sm: 0 } }}
+>
+  Nuevo Usuario
+</Button>
+
       </Box>
 
       {sortedUsers.length ? (

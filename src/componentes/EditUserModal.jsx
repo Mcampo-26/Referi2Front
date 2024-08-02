@@ -54,7 +54,7 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
   useEffect(() => {
     if (editedUser) {
       setUpdatedUser({
-        _id: editedUser._id,  // Asegúrate de incluir el _id
+        _id: editedUser._id,
         nombre: editedUser.nombre || '',
         email: editedUser.email || '',
         role: editedUser.role ? editedUser.role._id : '',
@@ -104,14 +104,10 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
           },
         });
 
-        // Solo enviar los campos necesarios, incluyendo el _id
         const { _id, role, empresa, nombre, email } = updatedUser;
         const updatedFields = { role, empresa, nombre, email };
 
-        console.log('Datos enviados para actualizar usuario:', updatedFields);
-
         await updateUsuario(_id, updatedFields);
-        await getUsuarios();
 
         MySwal.close();
         MySwal.fire({
@@ -119,6 +115,7 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
           title: "Usuario actualizado",
           text: "El usuario se ha actualizado correctamente.",
         });
+        await getUsuarios();
       } catch (error) {
         MySwal.close();
         MySwal.fire({

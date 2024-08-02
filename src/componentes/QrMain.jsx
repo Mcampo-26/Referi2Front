@@ -25,7 +25,7 @@ const StyledBox = styled(Box)(({ theme }) => ({
 
 export const QrMain = () => {
   const [empresaId, setEmpresaId] = useState('');
-  const [nombreEmpresa, setNombreEmpresa] = useState(''); // Estado para almacenar el nombre de la empresa
+  const [nombreEmpresa, setNombreEmpresa] = useState('');
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
   const [mail, setMail] = useState('');
@@ -51,50 +51,53 @@ export const QrMain = () => {
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('md'));
 
   useEffect(() => {
-    console.log('Role del usuario:', role);
-    console.log('Datos del usuario logueado:', usuario);
-
-    // Evitar múltiples llamadas si los datos ya están cargados
-    if (empresas.length === 0) {
-      getAllEmpresas().catch(error => {
-        console.error('Error al obtener todas las empresas:', error);
-      });
-    }
-
-    if (role === 'Admin' && usuario.empresa) {
-      console.log('Empresa ID encontrada:', usuario.empresa);
-      setEmpresaId(usuario.empresa);  // Preselecciona la empresa del usuario
-
-      // Busca el nombre de la empresa en la lista de empresas
-      const empresaSeleccionada = empresas.find(e => e._id === usuario.empresa);
-      if (empresaSeleccionada) {
-        console.log('Nombre de la empresa encontrada:', empresaSeleccionada.name);
-        setNombreEmpresa(empresaSeleccionada.name); // Guarda el nombre de la empresa en el estado
+    const cargarDatos = async () => {
+      try {
+        if (empresas.length === 0) {
+          await getAllEmpresas();
+          console.log('Empresas cargadas:', empresas);
+        }
+    
+        if (role === 'Admin' && usuario.empresa) {
+          console.log('Usuario empresa ID:', usuario.empresa); // Verifica el ID de la empresa del usuario
+  
+          // Accede al _id de la empresa
+          const empresaSeleccionada = empresas.find(e => e._id === usuario.empresa._id);
+          console.log('Empresa seleccionada:', empresaSeleccionada); // Verifica si se encontró la empresa
+  
+          if (empresaSeleccionada) {
+            setEmpresaId(empresaSeleccionada._id);
+            setNombreEmpresa(empresaSeleccionada.name);
+  
+            await getUsuariosByEmpresa(empresaSeleccionada._id);
+          } else {
+            console.error('Empresa no encontrada para el usuario Admin.');
+          }
+        }
+      } catch (error) {
+        console.error('Error en cargarDatos:', error);
       }
-
-      getUsuariosByEmpresa(usuario.empresa).catch(error => {
-        console.error('Error al obtener usuarios por empresa:', error);
-      });
-    }
+    };
+  
+    cargarDatos();
   }, [role, usuario, getAllEmpresas, getUsuariosByEmpresa, empresas]);
-
+  
+  
   useEffect(() => {
-    console.log('Empresa seleccionada:', empresaId);
-
-    // Si el rol es "SuperAdmin" y selecciona una empresa, obtener los usuarios de esa empresa
     if (role === 'SuperAdmin' && empresaId) {
       getUsuariosByEmpresa(empresaId).catch(error => {
         console.error('Error al obtener usuarios por empresa:', error);
       });
     }
   }, [empresaId, role, getUsuariosByEmpresa]);
-
+  
   useEffect(() => {
     if (empresaId) {
       setFilteredUsuarios(usuarios.filter(usuario => usuario.empresa && usuario.empresa._id === empresaId));
     }
   }, [empresaId, usuarios]);
-
+  
+  
   const validateFields = () => {
     if (!empresaId || !nombre || !telefono || !mail || !date || !startTime || !endTime || !assignedTo || !maxUsageCount) {
       Swal.fire('Error', 'Por favor, complete todos los campos', 'error');
@@ -148,11 +151,8 @@ export const QrMain = () => {
       maxUsageCount: parseInt(maxUsageCount, 10)
     };
   
-    console.log("Datos enviados para generar QR:", qrData);
-  
     try {
       const newQr = await createQr(qrData);
-      console.log("QR creado:", newQr);
       if (newQr && newQr.base64Image) {
         setBase64Image(newQr.base64Image);
         Swal.fire('QR creado', 'QR creado exitosamente', 'success');
@@ -203,28 +203,28 @@ export const QrMain = () => {
             <Grid container spacing={4} mt={4}>
               <Grid item xs={12} md={6}>
                 <Box mt={-5} className="p-4 rounded-md shadow-md">
-                  <FormControl fullWidth variant="outlined" className="custom-margin">
-                    <InputLabel>Empresa</InputLabel>
-                    <Select
-                      value={empresaId || ''}
-                      onChange={(e) => setEmpresaId(e.target.value)}
-                      label="Empresa"
-                      disabled={role === "Admin"} // Deshabilitar si el rol es Admin
-                    >
-                      {role === "SuperAdmin" ? (
-                        empresas.map((empresa) => (
-                          <MenuItem key={empresa._id} value={empresa._id} sx={{ color: 'black' }}>
-                            {empresa.name}
-                          </MenuItem>
-                        ))
-                      ) : (
-                        // Esto es para que si es Admin, se muestre la empresa a la que pertenece
-                        <MenuItem key={empresaId} value={empresaId} sx={{ color: 'black' }}>
-                          {nombreEmpresa || "Empresa no encontrada"}
-                        </MenuItem>
-                      )}
-                    </Select>
-                  </FormControl>
+                <FormControl fullWidth variant="outlined" className="custom-margin">
+  <InputLabel>Empresa</InputLabel>
+  <Select
+    value={empresaId || ''}
+    onChange={(e) => setEmpresaId(e.target.value)}
+    label="Empresa"
+    disabled={role === "Admin"} // Deshabilitar si el rol es Admin
+  >
+    {role === "SuperAdmin" ? (
+      empresas.map((empresa) => (
+        <MenuItem key={empresa._id} value={empresa._id} sx={{ color: 'black' }}>
+          {empresa.name}
+        </MenuItem>
+      ))
+    ) : (
+      <MenuItem key={empresaId} value={empresaId} sx={{ color: 'black' }}>
+        {nombreEmpresa || "Empresa no encontrada"}
+      </MenuItem>
+    )}
+  </Select>
+</FormControl>
+
                   <FormControl fullWidth variant="outlined" className="custom-margin">
                     <InputLabel>Asignar a usuario</InputLabel>
                     <Select
