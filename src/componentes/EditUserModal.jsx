@@ -37,6 +37,7 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
   const { roles, getAllRoles } = useRolesStore();
   const { empresas, getAllEmpresas } = useEmpresasStore();
   const [updatedUser, setUpdatedUser] = useState({
+    _id: '',
     nombre: '',
     email: '',
     role: '',
@@ -53,6 +54,7 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
   useEffect(() => {
     if (editedUser) {
       setUpdatedUser({
+        _id: editedUser._id,  // Asegúrate de incluir el _id
         nombre: editedUser.nombre || '',
         email: editedUser.email || '',
         role: editedUser.role ? editedUser.role._id : '',
@@ -102,13 +104,13 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
           },
         });
 
-        // Solo enviar los campos necesarios
-        const { role, empresa, nombre, email } = updatedUser;
+        // Solo enviar los campos necesarios, incluyendo el _id
+        const { _id, role, empresa, nombre, email } = updatedUser;
         const updatedFields = { role, empresa, nombre, email };
 
         console.log('Datos enviados para actualizar usuario:', updatedFields);
 
-        await updateUsuario(updatedUser._id, updatedFields);
+        await updateUsuario(_id, updatedFields);
         await getUsuarios();
 
         MySwal.close();

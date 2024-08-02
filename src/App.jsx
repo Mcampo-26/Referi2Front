@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Navbar } from './componentes/Navbar';
 import './index.css';
 import { Home } from "./pages/Home";
@@ -17,8 +17,10 @@ import { Empresas } from "./componentes/Empresas";
 import { Servicios } from "./componentes/Servicios";
 import { EmpresaDetails } from "./componentes/EmpresaDetails";
 import PdfManager from "./componentes/PdfManager";
-import {Error404} from './pages/Error404'
-import {Contacto}from './pages/Contacto'
+import { Error404 } from './pages/Error404';
+import { Contacto } from './pages/Contacto';
+
+import useUsuariosStore from './store/useUsuariosStore';
 
 const lightTheme = createTheme({
   palette: {
@@ -46,6 +48,10 @@ const darkTheme = createTheme({
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
+  const { isAuthenticated, role } = useUsuariosStore((state) => ({
+    isAuthenticated: state.isAuthenticated,
+    role: state.role,
+  }));
 
   useEffect(() => {
     if (darkMode) {
@@ -69,7 +75,10 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/QrMain" element={<QrMain />} />
-          <Route path="/Escanear" element={<ScanPage />} />
+          <Route 
+            path="/Escanear" 
+            element={isAuthenticated && role === 'Admin' ? <ScanPage /> : <Navigate to="/" />} 
+          />
           <Route path="/Login" element={<Login />} />
           <Route path="/Register" element={<Register />} />
           <Route path="/Users" element={<Users />} />
@@ -82,6 +91,7 @@ function App() {
           <Route path="/pdfs" element={<PdfManager />} />
           <Route path="/reportes" element={<Error404 />} />
           <Route path="/contacto" element={<Contacto />} />
+
         </Routes>
       </div>
     </ThemeProvider>

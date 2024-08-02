@@ -16,7 +16,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  useTheme ,
   TableContainer,
   TableHead,
   TableRow,
@@ -29,7 +28,6 @@ import {
 
 const MySwal = withReactContent(Swal);
 
-
 export const Empresas = () => {
   const navigate = useNavigate();
   const { empresas, getAllEmpresas, loading, error, createEmpresa, updateEmpresa, deleteEmpresa, totalPages } = useEmpresasStore();
@@ -39,20 +37,30 @@ export const Empresas = () => {
   const [editingEmpresaId, setEditingEmpresaId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const theme = useTheme();
 
+  // Cargar las empresas cuando el componente se monta y cuando la página actual cambia
   useEffect(() => {
     getAllEmpresas();
   }, [currentPage]);
 
+  // Verificar los datos obtenidos
   useEffect(() => {
     console.log('Empresas en el estado:', empresas);
   }, [empresas]);
 
+  // Filtrar las empresas según el término de búsqueda
+  const filteredEmpresas = Array.isArray(empresas) 
+    ? empresas.filter((empresa) =>
+        empresa?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
+
+  // Alternar el modal para crear/editar una empresa
   const toggleModal = () => {
     setShowModal(!showModal);
   };
 
+  // Preparar el modal para crear una nueva empresa
   const handleCreate = () => {
     setNewEmpresaName('');
     setIsEditing(false);
@@ -60,6 +68,7 @@ export const Empresas = () => {
     toggleModal();
   };
 
+  // Preparar el modal para editar una empresa existente
   const handleEdit = (empresa) => {
     setNewEmpresaName(empresa.name);
     setIsEditing(true);
@@ -67,6 +76,7 @@ export const Empresas = () => {
     toggleModal();
   };
 
+  // Eliminar una empresa
   const handleDelete = (_id) => {
     MySwal.fire({
       title: "¿Estás seguro de que deseas eliminar esta empresa?",
@@ -101,6 +111,7 @@ export const Empresas = () => {
     });
   };
 
+  // Manejar la creación o actualización de una empresa
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (newEmpresaName.trim() !== '') {
@@ -127,7 +138,7 @@ export const Empresas = () => {
             await createEmpresa({ name: newEmpresaName });
           }
 
-          await getAllEmpresas();
+          await getAllEmpresas(); // Refrescar la lista de empresas
           MySwal.close();
           MySwal.fire({
             icon: "success",
@@ -166,6 +177,7 @@ export const Empresas = () => {
     }
   };
 
+  // Navegación de páginas
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -178,14 +190,12 @@ export const Empresas = () => {
     }
   };
 
-  const filteredEmpresas = empresas.filter((empresa) =>
-    empresa.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  // Redirigir a los detalles de la empresa
   const handleRowClick = (id) => {
     navigate(`/EmpresaDetails/${id}`);
   };
 
+  // Renderizado del componente
   return (
     <Container maxWidth="md">
       <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
@@ -270,8 +280,8 @@ export const Empresas = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell align="center" >
-                  <Typography variant="h7" component="div" sx={{ fontWeight: 'bold' }} >
+                <TableCell align="center">
+                  <Typography variant="h7" component="div" sx={{ fontWeight: 'bold' }}>
                     Nombre
                   </Typography>
                 </TableCell>
@@ -284,8 +294,8 @@ export const Empresas = () => {
             </TableHead>
             <TableBody>
               {filteredEmpresas.map((empresa, index) => (
-                <TableRow key={`${empresa._id}-${index}`}>
-                  <TableCell  onClick={() => handleRowClick(empresa._id)} style={{ cursor: 'pointer' }}>{empresa.name}</TableCell>
+                <TableRow key={`${empresa._id}-${index}`} onClick={() => handleRowClick(empresa._id)} style={{ cursor: 'pointer' }}>
+                  <TableCell>{empresa.name}</TableCell>
                   <TableCell align="right">
                     <FontAwesomeIcon
                       icon={faPenToSquare}
@@ -308,41 +318,15 @@ export const Empresas = () => {
           Ningún dato disponible en esta tabla
         </Typography>
       )}
-
-
-
-
-<div className="flex justify-between items-center mt-4">
-  <Typography>
-    Mostrando registros del {(currentPage - 1) * 10 + 1} al {Math.min(currentPage * 10, empresas.length)} de un total de {empresas.length} registros
-  </Typography>
-  <div>
-    <Button
-      variant="contained"
-      color="primary"
-      className="mr-2"
-      onClick={handlePreviousPage}
-      disabled={currentPage === 1}
-      sx={{
-        backgroundColor: currentPage === 1 ? theme.palette.grey[500] : theme.palette.primary.main,
-        color: currentPage === 1 ? theme.palette.grey[300] : theme.palette.primary.contrastText,
-      }}
-    >
-      Anterior
-    </Button>
-    <Button
-      variant="contained"
-      color="primary"
-      onClick={handleNextPage}
-      disabled={currentPage === totalPages}
-    >
-      Siguiente
-    </Button>
-  </div>
-</div>
-
-
-
+      <div className="flex justify-between items-center mt-4">
+        <Typography>
+          Mostrando registros del {(currentPage - 1) * 10 + 1} al {Math.min(currentPage * 10, empresas.length)} de un total de {empresas.length} registros
+        </Typography>
+        <div>
+          <Button variant="outlined" className="mr-2" onClick={handlePreviousPage} disabled={currentPage === 1}>Anterior</Button>
+          <Button variant="outlined" onClick={handleNextPage} disabled={currentPage === totalPages}>Siguiente</Button>
+        </div>
+      </div>
     </Container>
   );
 };

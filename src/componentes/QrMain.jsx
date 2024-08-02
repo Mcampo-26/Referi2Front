@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Button, TextField, Grid, Container, Typography, Card, CardContent,
-  Paper, Box, MenuItem, Select, InputLabel, FormControl, InputAdornment
+  Button, TextField, Grid, Typography, Card, CardContent,
+  Paper, Box, MenuItem, Select, InputLabel, FormControl
 } from '@mui/material';
 import { useQrStore } from '../store/UseQrStore';
 import useEmpresasStore from '../store/useEmpresaStore';
@@ -25,6 +25,7 @@ const StyledBox = styled(Box)(({ theme }) => ({
 
 export const QrMain = () => {
   const [empresaId, setEmpresaId] = useState('');
+  const [nombreEmpresa, setNombreEmpresa] = useState(''); // Estado para almacenar el nombre de la empresa
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
   const [mail, setMail] = useState('');
@@ -38,15 +39,55 @@ export const QrMain = () => {
 
   const createQr = useQrStore((state) => state.createQr);
   const { empresas, getAllEmpresas } = useEmpresasStore();
-  const { usuarios, getUsuarios } = useUsuariosStore();
+  const { usuario, role, getUsuariosByEmpresa, usuarios, loading } = useUsuariosStore((state) => ({
+    usuario: state.usuario,
+    role: state.role,
+    getUsuariosByEmpresa: state.getUsuariosByEmpresa,
+    usuarios: state.usuarios,
+    loading: state.loading,
+  }));
 
   const theme = useTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('md'));
 
   useEffect(() => {
-    getAllEmpresas();
-    getUsuarios();
-  }, [getAllEmpresas, getUsuarios]);
+    console.log('Role del usuario:', role);
+    console.log('Datos del usuario logueado:', usuario);
+
+    // Evitar múltiples llamadas si los datos ya están cargados
+    if (empresas.length === 0) {
+      getAllEmpresas().catch(error => {
+        console.error('Error al obtener todas las empresas:', error);
+      });
+    }
+
+    if (role === 'Admin' && usuario.empresa) {
+      console.log('Empresa ID encontrada:', usuario.empresa);
+      setEmpresaId(usuario.empresa);  // Preselecciona la empresa del usuario
+
+      // Busca el nombre de la empresa en la lista de empresas
+      const empresaSeleccionada = empresas.find(e => e._id === usuario.empresa);
+      if (empresaSeleccionada) {
+        console.log('Nombre de la empresa encontrada:', empresaSeleccionada.name);
+        setNombreEmpresa(empresaSeleccionada.name); // Guarda el nombre de la empresa en el estado
+      }
+
+      getUsuariosByEmpresa(usuario.empresa).catch(error => {
+        console.error('Error al obtener usuarios por empresa:', error);
+      });
+    }
+  }, [role, usuario, getAllEmpresas, getUsuariosByEmpresa, empresas]);
+
+  useEffect(() => {
+    console.log('Empresa seleccionada:', empresaId);
+
+    // Si el rol es "SuperAdmin" y selecciona una empresa, obtener los usuarios de esa empresa
+    if (role === 'SuperAdmin' && empresaId) {
+      getUsuariosByEmpresa(empresaId).catch(error => {
+        console.error('Error al obtener usuarios por empresa:', error);
+      });
+    }
+  }, [empresaId, role, getUsuariosByEmpresa]);
 
   useEffect(() => {
     if (empresaId) {
@@ -86,13 +127,13 @@ export const QrMain = () => {
     if (!validateFields()) {
       return;
     }
-
+  
     const userId = localStorage.getItem('userId');
     if (!userId) {
       console.error("User ID is missing");
       return;
     }
-
+  
     const empresa = empresas.find(e => e._id === empresaId);
     const qrData = {
       userId,
@@ -106,9 +147,9 @@ export const QrMain = () => {
       endTime,
       maxUsageCount: parseInt(maxUsageCount, 10)
     };
-
+  
     console.log("Datos enviados para generar QR:", qrData);
-
+  
     try {
       const newQr = await createQr(qrData);
       console.log("QR creado:", newQr);
@@ -121,7 +162,7 @@ export const QrMain = () => {
       Swal.fire('Error', 'Hubo un problema al crear el QR', 'error');
     }
   };
-
+  
   const handleWhatsAppShare = () => {
     if (!base64Image) {
       alert('No hay código QR para compartir.');
@@ -165,15 +206,23 @@ export const QrMain = () => {
                   <FormControl fullWidth variant="outlined" className="custom-margin">
                     <InputLabel>Empresa</InputLabel>
                     <Select
-                      value={empresaId}
+                      value={empresaId || ''}
                       onChange={(e) => setEmpresaId(e.target.value)}
                       label="Empresa"
+                      disabled={role === "Admin"} // Deshabilitar si el rol es Admin
                     >
-                      {empresas.map((empresa) => (
-                        <MenuItem key={empresa._id} value={empresa._id}>
-                          {empresa.name}
+                      {role === "SuperAdmin" ? (
+                        empresas.map((empresa) => (
+                          <MenuItem key={empresa._id} value={empresa._id} sx={{ color: 'black' }}>
+                            {empresa.name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        // Esto es para que si es Admin, se muestre la empresa a la que pertenece
+                        <MenuItem key={empresaId} value={empresaId} sx={{ color: 'black' }}>
+                          {nombreEmpresa || "Empresa no encontrada"}
                         </MenuItem>
-                      ))}
+                      )}
                     </Select>
                   </FormControl>
                   <FormControl fullWidth variant="outlined" className="custom-margin">
