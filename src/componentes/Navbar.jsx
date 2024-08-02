@@ -18,6 +18,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import MenuItem from "@mui/material/MenuItem";
 import useUsuariosStore from "../store/useUsuariosStore";
 
+
 export const Navbar = ({ toggleDarkMode, darkMode }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { usuario, isAuthenticated, role, logoutUsuario } = useUsuariosStore((state) => ({
@@ -25,6 +26,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
     isAuthenticated: state.isAuthenticated,
     role: state.role,
     logoutUsuario: state.logoutUsuario,
+    
   }));
   const navigate = useNavigate();
 
@@ -64,12 +66,16 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
       ]
     : role === "Referidor"
     ? [
-        { id: 2, text: "Escanear QR", to: "/Escanear" },
         { id: 4, text: "Mis QR", to: "/Referidos" },
         { id: 6, text: "Usuarios", to: "/Users" },
         { id: 5, text: "Cerrar Sesión", action: handleLogout },
       ]
-    : []
+    : role === "Vendedor"
+    ? [
+        { id: 4, text: "Mis QR", to: "/Referidos" },
+        { id: 5, text: "Cerrar Sesión", action: handleLogout },
+      ]
+    : [] // Manejo de caso donde role no coincide con ninguno
   : [
       { id: 6, text: "Iniciar Sesión", to: "/Login" },
       { id: 7, text: "Registrarse", to: "/Register" },
@@ -103,15 +109,17 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
       <AppBar position="sticky">
         <Toolbar sx={{ justifyContent: "space-between" }}>
         {isAuthenticated && (
-  <Typography 
-    variant="body1" 
-    sx={{ 
-      color: 'inherit', 
-      display: { xs: 'none', md: 'block' }, 
-      mr: 2 // Margen derecho para separar del título
-    }}>
-    Hola, {usuario.nombre}! eres {role} de 
-  </Typography>
+          <Typography 
+          variant="body1" 
+          sx={{ 
+            color: 'inherit', 
+            display: { xs: 'none', md: 'block' }, 
+            mr: 2 // Margen derecho para separar del título
+          }}>
+          Hola, {usuario.nombre}! {usuario.role?.name && `eres ${usuario.role.name} de`}
+        </Typography>
+        
+
 )}
 
 <Typography

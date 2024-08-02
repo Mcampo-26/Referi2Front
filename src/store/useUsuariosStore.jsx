@@ -19,6 +19,8 @@ export const useUsuariosStore = create((set, get) => ({
     try {
       const response = await axios.get(`${URL}/usuarios/get`, { params: { page, limit } });
       const { usuarios, total, totalPages, currentPage } = response.data;
+      console.log('Usuarios obtenidos:', usuarios); // Verifica que aquí estás obteniendo datos correctos
+  
       set({
         usuarios,
         totalRecords: total,
@@ -109,11 +111,17 @@ export const useUsuariosStore = create((set, get) => ({
         // Manejar el caso cuando el usuario no tiene rol
         const role = usuario.role ? usuario.role.name : null;
 
+        // Manejar el caso cuando el usuario tiene empresa
+        const empresaId = usuario.empresa ? usuario.empresa._id : null;
+        const empresaName = usuario.empresa ? usuario.empresa.name : null;
+
         set({
           usuario,
           userId: usuario._id,
           isAuthenticated: true,
           role: role, // Asignar el nombre del rol
+          empresaId: empresaId, // Asignar el ID de la empresa
+          empresaName: empresaName, // Asignar el nombre de la empresa
           loading: false
         });
 
@@ -123,6 +131,13 @@ export const useUsuariosStore = create((set, get) => ({
           localStorage.setItem('role', role);
         } else {
           localStorage.removeItem('role');
+        }
+        if (empresaId && empresaName) {
+          localStorage.setItem('empresaId', empresaId);
+          localStorage.setItem('empresaName', empresaName);
+        } else {
+          localStorage.removeItem('empresaId');
+          localStorage.removeItem('empresaName');
         }
         localStorage.setItem('userId', usuario._id);
         return true;
@@ -136,6 +151,7 @@ export const useUsuariosStore = create((set, get) => ({
     }
   },
 
+
   logoutUsuario: () => {
     localStorage.removeItem('usuario');
     localStorage.removeItem('isAuthenticated');
@@ -145,6 +161,14 @@ export const useUsuariosStore = create((set, get) => ({
   },
 
   getUsuariosByEmpresa: async (empresaId) => {
+    console.log('Empresa ID:', empresaId);  // Verifica que aquí estás obteniendo un ID válido
+    
+    if (!empresaId || typeof empresaId !== 'string' || empresaId.trim() === '') {
+      console.error('ID de empresa no válido');
+      set({ error: 'ID de empresa no válido', loading: false });
+      return;
+    }
+  
     set({ loading: true, error: null });
     try {
       const response = await axios.get(`${URL}/usuarios/empresa/${empresaId}`);
@@ -158,6 +182,8 @@ export const useUsuariosStore = create((set, get) => ({
       set({ loading: false, error: 'Error al obtener usuarios por empresa' });
     }
   },
+  
+  
   
 }));
 
