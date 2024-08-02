@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+import { EditUserModal } from './EditUserModal';
 import useUsuariosStore from "../store/useUsuariosStore";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
@@ -21,6 +22,8 @@ import {
   useTheme
 } from '@mui/material';
 
+const MySwal = withReactContent(Swal);
+
 const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection }) => {
   return (
     <TableCell onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
@@ -30,7 +33,6 @@ const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection })
     </TableCell>
   );
 };
-const MySwal = withReactContent(Swal);
 
 export const UserList = () => {
   const [orderBy, setOrderBy] = useState('nombre');
@@ -38,15 +40,18 @@ export const UserList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editedUser, setEditedUser] = useState(null);
-  const { getUsuarios, usuarios, loading: loadingUsuarios, deleteUsuario, totalRecords, totalPages, currentPage } = useUsuariosStore();
-  const theme = useTheme();
-  
-  useEffect(() => {
-    getUsuarios(currentPage);
-  }, [currentPage, getUsuarios]);
 
-  console.log('Usuarios:', usuarios);
-  console.log('Current Theme:', theme);
+  const { getUsuarios, getUsuariosByEmpresa, usuarios, loading: loadingUsuarios, deleteUsuario, totalRecords, totalPages, currentPage, usuario, role } = useUsuariosStore();
+
+  const theme = useTheme();
+
+  useEffect(() => {
+    if (role === "SuperAdmin") {
+      getUsuarios(currentPage);
+    } else if (role === "Admin" && usuario.empresa) {
+      getUsuariosByEmpresa(usuario.empresa);
+    }
+  }, [role, usuario.empresa, currentPage, getUsuarios, getUsuariosByEmpresa]);
 
   const handleSort = (column) => {
     if (column === orderBy) {
@@ -100,18 +105,9 @@ export const UserList = () => {
     });
   };
 
-  const handleEdit = (user) => {
-    if (user.email === "admin@admin.com") {
-      Swal.fire({
-        icon: 'warning',
-        title: 'No permitido',
-        text: 'No se puede editar al administrador.',
-      });
-      return;
-    }
-
-    setEditedUser(user);
-    setShowModal(true);
+  const handleEdit = (usuario) => {  
+    setEditedUser(usuario);  // Establece el usuario seleccionado
+    setShowModal(true);  // Abre el modal
   };
 
   const handleClear = () => {
@@ -119,8 +115,8 @@ export const UserList = () => {
   };
 
   const handleCloseEditModal = () => {
-    setEditedUser(null);
-    setShowModal(false);
+    setEditedUser(null);  // Limpia el estado de usuario editado
+    setShowModal(false);  // Cierra el modal
   };
 
   const handlePreviousPage = () => {
@@ -164,39 +160,49 @@ export const UserList = () => {
         <Typography variant="h4" mb={4}>Lista de Usuarios</Typography>
       </Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} mt={2} flexWrap="wrap">
-        <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
-          <TextField
-            variant="outlined"
-            placeholder="Buscar Usuarios..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{
-              width: { xs: '100%', sm: '300px' },
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  borderColor: 'white',
-                },
-                '&:hover fieldset': {
-                  borderColor: 'white',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: 'white',
-                },
-              },
-              '& .MuiInputBase-input': {
-                color: 'white',
-              },
-              '& .MuiInputLabel-root': {
-                color: 'white',
-              },
-            }}
-          />
-          {searchTerm && (
-            <Button variant="contained" color="secondary" onClick={handleClear} sx={{ ml: 1 }}>
-              Limpiar
-            </Button>
-          )}
-        </Box>
+      <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
+  <TextField
+    variant="outlined"
+    placeholder="Buscar Usuarios..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    sx={{
+      width: { xs: '100%', sm: '300px' },
+      '& .MuiOutlinedInput-root': {
+        '& fieldset': {
+          borderColor: 'black', // Borde negro para ambos temas
+        },
+        '&:hover fieldset': {
+          borderColor: 'black', // Borde negro al pasar el cursor
+        },
+        '&.Mui-focused fieldset': {
+          borderColor: 'black', // Borde negro al enfocarse
+        },
+      },
+      '& .MuiInputBase-input': {
+        color: 'black', // Texto negro para ambos temas
+      },
+      '& .MuiInputLabel-root': {
+        color: 'black', // Placeholder negro para ambos temas
+      },
+      '& .MuiInputBase-input::placeholder': {
+        color: 'black', // Placeholder negro para ambos temas
+        opacity: 1, // Asegura que el placeholder sea visible
+      },
+    }}
+  />
+  {searchTerm && (
+    <Button
+      variant="contained"
+      color="secondary"
+      onClick={handleClear}
+      sx={{ ml: 1 }}
+    >
+      Limpiar
+    </Button>
+  )}
+</Box>
+
         <Button
           variant="contained"
           color="primary"
@@ -232,26 +238,50 @@ export const UserList = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedUsers.map((usuario) => (
-                <TableRow key={usuario._id}>
-                  <TableCell>{usuario.nombre || "Nombre no disponible"}</TableCell>
-                  <TableCell>{usuario.email || "Email no disponible"}</TableCell>
-                  <TableCell>{usuario.empresa ? usuario.empresa.name : "Empresa no disponible"}</TableCell>
-                  <TableCell>{usuario.role?.name || "Rol no disponible"}</TableCell>
-                  <TableCell>
-                    <FontAwesomeIcon
-                      icon={faPenToSquare}
-                      className="h-6 w-5 text-blue-400 hover:text-blue-700 cursor-pointer mr-4"
-                      onClick={() => handleEdit(usuario)}
-                    />
-                    <FontAwesomeIcon
-                      icon={faTrash}
-                      className="h-4 w-4 text-red-600 hover:text-red-800 cursor-pointer"
-                      onClick={() => handleDelete(usuario._id, usuario.email)}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+              {sortedUsers.map((usuario) => {  // Iteramos sobre `usuarios`
+                const isAdmin = usuario.email === "admin@admin.com";
+                return (
+                  <TableRow key={usuario._id}>
+                    <TableCell>{usuario.nombre || "Nombre no disponible"}</TableCell>
+                    <TableCell>{usuario.email || "Email no disponible"}</TableCell>
+                    <TableCell>{usuario.empresa ? usuario.empresa.name : "Empresa no disponible"}</TableCell>
+                    <TableCell>{usuario.role?.name || "Rol no disponible"}</TableCell>
+                    <TableCell>
+                      <FontAwesomeIcon
+                        icon={faPenToSquare}
+                        className={`h-6 w-5 ${isAdmin ? 'text-gray-500' : 'text-blue-400 hover:text-blue-700 cursor-pointer'}`}
+                        onClick={() => {
+                          if (isAdmin) {
+                            Swal.fire({
+                              icon: 'warning',
+                              title: 'No permitido',
+                              text: 'No se puede editar al administrador.',
+                            });
+                          } else {
+                            handleEdit(usuario);  // Pasamos `usuario` a `handleEdit`
+                          }
+                        }}
+                      />
+                      <FontAwesomeIcon
+                        icon={faTrash}
+                        className={`h-4 w-4 ${isAdmin ? 'text-gray-500' : 'text-red-600 hover:text-red-800 cursor-pointer'}`}
+                        onClick={() => {
+                          if (isAdmin) {
+                            Swal.fire({
+                              icon: 'warning',
+                              title: 'No permitido',
+                              text: 'No se puede eliminar al administrador.',
+                            });
+                          } else {
+                            handleDelete(usuario._id, usuario.email);  // Usamos `_id` y `email` para eliminar
+                          }
+                        }}
+                        style={{ marginLeft: '10px' }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>
@@ -300,10 +330,9 @@ export const UserList = () => {
         <EditUserModal
           isOpen={showModal}
           handleClose={handleCloseEditModal}
-          editedUser={editedUser}
+          editedUser={editedUser}  // Pasa el usuario seleccionado al modal
         />
       )}
     </Container>
   );
 };
-

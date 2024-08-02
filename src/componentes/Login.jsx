@@ -6,19 +6,23 @@ export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-  const { loginUsuario, isAuthenticated, error } = useUsuariosStore();
+  const { loginUsuario, isAuthenticated, role } = useUsuariosStore();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/QrMain');
+      if (role === 'SuperAdmin' || role === 'Admin') {
+        navigate('/QrMain');
+      } else if (role === 'Referidor') {
+        navigate('/Referidos');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, role, navigate]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     const isSuccess = await loginUsuario(email, password);
     if (!isSuccess) {
-      alert(`Error en el inicio de sesión: ${error}`);
+      alert('Error en el inicio de sesión');
     }
   };
 

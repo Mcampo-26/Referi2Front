@@ -186,9 +186,11 @@ export const Roles = () => {
     }
   };
 
-  const filteredRoles = roles.filter((role) =>
-    role.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRoles = Array.isArray(roles) 
+    ? roles.filter((role) =>
+        role?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   return (
     <Container maxWidth="md">
@@ -287,7 +289,7 @@ export const Roles = () => {
         <Typography color="error" align="center">
           Error al cargar datos: {error}
         </Typography>
-      ) : filteredRoles && filteredRoles.length > 0 ? (
+      ) : filteredRoles.length > 0 ? (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>

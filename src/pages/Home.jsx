@@ -3,7 +3,9 @@ import { Box, Typography, Container, Paper, useTheme } from '@mui/material';
 import { styled } from '@mui/system';
 import qrHome from '../assets/qrHome.jpg';
 import { ScanQr } from '../componentes/ScanQr';
-
+import useUsuariosStore from '../store/useUsuariosStore';
+import {Login}from '../componentes/Login'
+import {Referidos} from '../pages/Referidos'
 const BackgroundContainer = styled(Container)(({ theme }) => ({
   minHeight: '100vh',
   display: 'flex',
@@ -17,9 +19,30 @@ const BackgroundContainer = styled(Container)(({ theme }) => ({
 
 export const Home = () => {
   const theme = useTheme();
+  const { isAuthenticated, role } = useUsuariosStore((state) => ({
+    isAuthenticated: state.isAuthenticated,
+    role: state.role,
+  }));
 
-  return (
-<ScanQr/>
-  );
+  // Verifica si el usuario está autenticado y si es Admin o SuperAdmin
+  if (isAuthenticated && (role === 'Admin' || role === 'SuperAdmin')) {
+    return (
+
+  
+         
+          <ScanQr />
+        
+    
+    );
+  } else if (isAuthenticated && role === 'Referidor') {
+    return (
+      <BackgroundContainer>
+       <Referidos/>
+      </BackgroundContainer>
+    );
+  } else {
+    return (
+   <Login/>
+    );
+  }
 };
-
