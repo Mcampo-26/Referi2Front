@@ -49,7 +49,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
     ? [
         { id: 1, text: "Inicio", to: "/" },
         { id: 8, text: "Crear", to: "/QrMain" },
-        { id: 2, text: "Escanear QR", to: "/Escanear" },
+       
         { id: 4, text: "Mis QR", to: "/Referidos" },
         { id: 6, text: "Usuarios", to: "/Users" },
         { id: 10, text: "Empresas", to: "/Empresas" },

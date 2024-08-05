@@ -24,7 +24,10 @@ export const Login = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const isSuccess = await loginUsuario(email, password);
-    if (!isSuccess) {
+    if (isSuccess) {
+      // Aquí puedes manejar una redirección después del login si es necesario
+      console.log('Inicio de sesión exitoso');
+    } else {
       alert('Error en el inicio de sesión');
     }
   };

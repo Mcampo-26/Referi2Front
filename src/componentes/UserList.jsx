@@ -42,21 +42,24 @@ export const UserList = () => {
   const [showModal, setShowModal] = useState(false);
   const [editedUser, setEditedUser] = useState(null);
 
-  const { getUsuarios, getUsuariosByEmpresa, usuarios, loading: loadingUsuarios, deleteUsuario, totalRecords, totalPages, currentPage, usuario, role } = useUsuariosStore();
-  const navigate = useNavigate(); //
+  // Obtén role, empresaId, y empresaName directamente de localStorage
+  const role = localStorage.getItem('role');
+  const empresaId = localStorage.getItem('empresaId');
+  const empresaName = localStorage.getItem('empresaName');
+
+  const { getUsuarios, getUsuariosByEmpresa, usuarios, loading: loadingUsuarios, deleteUsuario, totalRecords, totalPages, currentPage } = useUsuariosStore();
+  const navigate = useNavigate();
   const theme = useTheme();
 
   useEffect(() => {
     if (role === "SuperAdmin") {
       // Si es SuperAdmin, obtener todos los usuarios
       getUsuarios(currentPage);
-    } else if (role === "Admin" && usuario.empresa) {
+    } else if (role === "Admin" && empresaId) {
       // Si es Admin y tiene empresa, obtener solo los usuarios de esa empresa
-      const empresaId = usuario.empresa._id;
       getUsuariosByEmpresa(empresaId);
     }
-  }, [role, usuario.empresa, getUsuarios, getUsuariosByEmpresa, currentPage]);
-  
+  }, [role, empresaId, getUsuarios, getUsuariosByEmpresa, currentPage]);
 
   const handleSort = (column) => {
     if (column === orderBy) {
@@ -212,17 +215,9 @@ export const UserList = () => {
   variant="contained"
   color="primary"
   onClick={() => {
-    const empresaName = usuario.empresa?.name;
-    console.log('Usuario logueado:', usuario);
-    console.log('Empresa del usuario logueado:', empresaName); // Debería mostrar "Fast"
+    console.log('Empresa del usuario logueado:', empresaName); // Debería mostrar el nombre de la empresa
     navigate('/register', { state: { showEmpresa: true, empresaName } });
   }}
-  
-  
-  
-  
-  
-
   sx={{ mt: { xs: 2, sm: 0 } }}
 >
   Nuevo Usuario
