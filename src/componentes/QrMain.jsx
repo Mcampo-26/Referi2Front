@@ -3,7 +3,7 @@ import {
   Button, TextField, Grid, Typography, Card, CardContent,
   Paper, Box, MenuItem, Select, InputLabel, FormControl
 } from '@mui/material';
-import { useQrStore } from '../store/UseQrStore';
+import { useQrStore } from '../store/useQrStore';
 import useEmpresasStore from '../store/useEmpresaStore';
 import useUsuariosStore from '../store/useUsuariosStore';
 import { WhatsApp } from '@mui/icons-material';
@@ -206,11 +206,24 @@ export const QrMain = () => {
                 <FormControl fullWidth variant="outlined" className="custom-margin">
   <InputLabel>Empresa</InputLabel>
   <Select
-    value={empresaId || ''}
-    onChange={(e) => setEmpresaId(e.target.value)}
-    label="Empresa"
-    disabled={role === "Admin"} // Deshabilitar si el rol es Admin
-  >
+        labelId="empresa-select-label"
+        value={empresaId || ''}
+        onChange={(e) => setEmpresaId(e.target.value)}
+        label="Empresa"
+        disabled={role === "Admin"} // Deshabilitar si el rol es Admin
+        sx={{
+          color: theme.palette.mode === 'dark' ? '#fff' : '#111', // Mucho más oscuro en tema claro
+          '.MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.mode === 'dark' ? '#fff' : '#444', // Borde aún más oscuro en tema claro
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.main,
+          },
+          '.MuiSvgIcon-root': {
+            color: theme.palette.mode === 'dark' ? '#fff' : '#000', // Cambia el color del icono del selector según el tema
+          },
+        }}
+      >
     {role === "SuperAdmin" ? (
       empresas.map((empresa) => (
         <MenuItem key={empresa._id} value={empresa._id} sx={{ color: 'black' }}>

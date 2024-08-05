@@ -10,21 +10,46 @@ export const useQrStore = create((set) => ({
   totalRecords: 0,
   totalPages: 1,
   currentPage: 1,
+  empresa: null, // Añadir estado para la empresa
 
   getQrs: async (page = 1, limit = 10) => {
     set({ loading: true, error: null });
+    const userRole = localStorage.getItem('userRole');
+    const userId = localStorage.getItem('userId');
+
     try {
-      const response = await axios.get(`${URL}/Qr/get`, {
-        params: { page, limit }
-      });
-      const { qrs, total, totalPages, currentPage } = response.data;
-      set({
-        qrs,
-        totalRecords: total,
-        totalPages,
-        currentPage,
-        loading: false
-      });
+      if (userRole === 'SuperAdmin') {
+        const response = await axios.get(`${URL}/Qr/get`, {
+          params: { page, limit }
+        });
+        const { qrs, total, totalPages, currentPage } = response.data;
+        set({
+          qrs,
+          totalRecords: total,
+          totalPages,
+          currentPage,
+          loading: false
+        });
+      } else if (userRole === 'Admin' && userId) {
+        const { empresa } = useQrStore.getState(); // Obtener la empresa del estado
+        if (empresa) {
+          const response = await axios.get(`${URL}/Qr/empresa/${empresa._id}`, {
+            params: { page, limit }
+          });
+          const { qrs, total, totalPages, currentPage } = response.data;
+          set({
+            qrs,
+            totalRecords: total,
+            totalPages,
+            currentPage,
+            loading: false
+          });
+        } else {
+          set({ loading: false, error: 'No se encontró la empresa para el usuario' });
+        }
+      } else {
+        set({ loading: false, error: 'No autorizado para ver estos QR' });
+      }
     } catch (error) {
       console.error('Error al obtener QRs:', error.response || error.message);
       set({ loading: false, error: 'Error al obtener QRs' });
@@ -45,7 +70,17 @@ export const useQrStore = create((set) => ({
   getQrsByAssignedUser: async (userId) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.get(`${URL}/Qr/assigned/${userId}`);
+      const token = localStorage.getItem('token'); // Obtén el token del sessionStorage
+      if (!token) {
+        throw new Error('Token no disponible');
+      }
+  
+      const response = await axios.get(`${URL}/Qr/assigned/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}` // Incluye el token en los encabezados
+        }
+      });
+      
       set({ qrs: response.data, loading: false });
     } catch (error) {
       console.error('Error al obtener los QR Codes asignados:', error.response || error.message);
@@ -56,7 +91,18 @@ export const useQrStore = create((set) => ({
   getQrById: async (id) => {
     set({ loading: true, error: null, qr: null });
     try {
-      const response = await axios.get(`${URL}/Qr/${id}`);
+      const token = localStorage.getItem('token'); // Obtener el token del localStorage
+  
+      if (!token) {
+        throw new Error('No autorizado. Token no proporcionado.');
+      }
+  
+      const response = await axios.get(`${URL}/Qr/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+  
       set({ qr: response.data, loading: false });
       return response.data;
     } catch (error) {
@@ -65,7 +111,7 @@ export const useQrStore = create((set) => ({
       return null; // Asegúrate de devolver null en caso de error
     }
   },
-  
+
   createQr: async (qr) => {
     set({ loading: true, error: null });
     try {
@@ -104,7 +150,7 @@ export const useQrStore = create((set) => ({
       throw error;
     }
   },
-  
+
   deleteQr: async (id) => {
     set({ loading: true, error: null });
     try {

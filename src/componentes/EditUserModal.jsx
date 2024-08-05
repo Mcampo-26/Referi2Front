@@ -109,12 +109,17 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
 
         await updateUsuario(_id, updatedFields);
 
-        MySwal.close();
         MySwal.fire({
           icon: "success",
           title: "Usuario actualizado",
           text: "El usuario se ha actualizado correctamente.",
+          timer: 2000, // Tiempo en milisegundos (3000ms = 3 segundos)
+          showConfirmButton: false, // Oculta el botón de confirmación
+          allowOutsideClick: false, // Evita que el usuario cierre el modal haciendo clic fuera
+        }).then(() => {
+          MySwal.close(); // Cierra el modal cuando el temporizador termina
         });
+        
         await getUsuarios();
       } catch (error) {
         MySwal.close();

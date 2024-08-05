@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { Html5Qrcode } from "html5-qrcode";
 import { useTheme } from "@mui/material/styles";
-import useQrStore from "../store/UseQrStore";
+import useQrStore from "../store/useQrStore";
 import useServiciosStore from "../store/useServiciosStore";
 import Swal from "sweetalert2";
 import qrHome from "../assets/qrHome.jpg";
@@ -31,6 +31,7 @@ export const ScanQr = () => {
   const [discount, setDiscount] = useState("");
   const [fadeOut, setFadeOut] = useState(false); // Estado para la transición
   const [isScanning, setIsScanning] = useState(false); // Estado para saber si está escaneando
+  const userRole = localStorage.getItem('role'); 
   const {
     servicios,
     getServiciosByEmpresaId,
@@ -133,53 +134,70 @@ export const ScanQr = () => {
   // Función para manejar el resultado del escaneo
   const handleScan = async (data) => {
     if (data) {
-      setError(null); // Limpiar cualquier error previo
-      console.log("Datos escaneados crudos:", data);
-      const parsedData = parseData(data);
-      console.log("Datos escaneados:", parsedData);
-
-      // Obtén los datos del QR desde el backend
-      const qrFromDb = await getQrById(parsedData.id);
-      if (
-        qrFromDb &&
-        qrFromDb.isUsed &&
-        qrFromDb.usageCount >= qrFromDb.maxUsageCount
-      ) {
-        stopScan(); // Detener el escaneo inmediatamente si el QR ya está usado
-        Swal.fire({
-          title: "QR no usable",
-          text: "El QR ya no puede ser usado.",
-          icon: "warning",
-          confirmButtonText: "Aceptar",
+      try {
+        setError(null); // Limpiar cualquier error previo
+        console.log("Datos escaneados crudos:", data);
+        const parsedData = parseData(data);
+        console.log("Datos escaneados:", parsedData);
+  
+        // Obtén los datos del QR desde el backend
+        const qrFromDb = await getQrById(parsedData.id);
+        
+        if (!qrFromDb) {
+          stopScan(); // Detener el escaneo si no se encuentra el QR
+          Swal.fire({
+            title: "QR no encontrado",
+            text: "El QR no existe en la base de datos.",
+            icon: "error",
+            confirmButtonText: "Aceptar",
+          });
+          return;
+        }
+  
+        const userRole = localStorage.getItem('role'); // Obtener el rol del usuario desde localStorage
+  
+        // Si el usuario no es Superadmin, verificar si el QR está usado o excedido
+        if (userRole !== 'Superadmin' && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
+          stopScan(); // Detener el escaneo inmediatamente si el QR ya está usado
+          Swal.fire({
+            title: "QR no usable",
+            text: "El QR ya no puede ser usado.",
+            icon: "warning",
+            confirmButtonText: "Aceptar",
+          });
+          return;
+        }
+  
+        // Actualiza los datos escaneados con información del backend
+        setScannedData({
+          ...parsedData,
+          id: parsedData._id || parsedData.id,
+          empresaId: parsedData.empresaId,
+          usageCount: qrFromDb.usageCount, // Actualizar con los datos del backend
+          maxUsageCount: qrFromDb.maxUsageCount, // Actualizar con los datos del backend
+          updates: qrFromDb.updates || [], // Asegurarse de que se incluyan las actualizaciones
         });
-        return;
+  
+        // Obtén los servicios por empresa
+        if (parsedData.empresaId && parsedData.empresaId._id !== "N/A") {
+          console.log(
+            "Obteniendo servicios para empresaId:",
+            parsedData.empresaId._id
+          );
+          await getServiciosByEmpresaId(parsedData.empresaId._id);
+        } else {
+          console.error("Empresa ID no válido:", parsedData.empresaId._id);
+        }
+  
+      } catch (error) {
+        console.error("Error durante el escaneo:", error);
+        setError(error);
+      } finally {
+        stopScan();
       }
-
-      // Actualiza los datos escaneados con información del backend
-      setScannedData({
-        ...parsedData,
-        id: parsedData._id || parsedData.id,
-        empresaId: parsedData.empresaId,
-        usageCount: qrFromDb.usageCount, // Actualizar con los datos del backend
-        maxUsageCount: qrFromDb.maxUsageCount, // Actualizar con los datos del backend
-        updates: qrFromDb.updates || [], // Asegurarse de que se incluyan las actualizaciones
-      });
-
-      // Obtén los servicios por empresa
-      if (parsedData.empresaId && parsedData.empresaId._id !== "N/A") {
-        console.log(
-          "Obteniendo servicios para empresaId:",
-          parsedData.empresaId._id
-        );
-        await getServiciosByEmpresaId(parsedData.empresaId._id);
-      } else {
-        console.error("Empresa ID no válido:", parsedData.empresaId._id);
-      }
-
-      stopScan();
     }
   };
-
+  
   // Manejo de errores en el escaneo
   const handleError = (err) => {
     if (err.name === "NotFoundException") {
@@ -189,7 +207,7 @@ export const ScanQr = () => {
       setError(err);
     }
   };
-
+  
   // Función para detener el escaneo
   const stopScan = () => {
     if (scannerRef.current && scannerRef.current.isScanning) {
@@ -199,46 +217,42 @@ export const ScanQr = () => {
       setIsScanning(false); // Indicar que el escaneo ha sido detenido
     }
   };
-
+  
   // Manejo de selección de archivo para escanear QR desde una imagen
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
-      console.log("Archivo seleccionado:", file);
-
-      scannerRef.current
-        .scanFile(file, true)
-        .then(async (decodedText) => {
-          setError(null); // Limpiar cualquier error previo
-          console.log("Texto decodificado del QR:", decodedText);
-          const parsedData = parseData(decodedText);
-
-          const qrFromDb = await getQrById(parsedData.id);
-          if (
-            qrFromDb &&
-            qrFromDb.isUsed &&
-            qrFromDb.usageCount >= qrFromDb.maxUsageCount
-          ) {
-            stopScan(); // Detener el escaneo inmediatamente si el QR ya está usado
-            Swal.fire({
-              title: "QR no usable",
-              text: "El QR ya no puede ser usado.",
-              icon: "warning",
-              confirmButtonText: "Aceptar",
-            });
-            return;
-          }
-
-          handleScan(decodedText); // Llama a handleScan con los datos decodificados
-        })
-        .catch((err) => {
-          if (err.name === "NotFoundException") {
-            console.warn("QR code not found in file. Please try another file.");
-          } else {
-            console.error("Error scanning file:", err);
-            setError(err);
-          }
-        });
+      try {
+        console.log("Archivo seleccionado:", file);
+  
+        const decodedText = await scannerRef.current.scanFile(file, true);
+        setError(null); // Limpiar cualquier error previo
+        console.log("Texto decodificado del QR:", decodedText);
+        const parsedData = parseData(decodedText);
+  
+        const qrFromDb = await getQrById(parsedData.id);
+        const userRole = localStorage.getItem('role'); // Obtener el rol del usuario desde localStorage
+  
+        if (userRole !== 'Superadmin' && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
+          stopScan(); // Detener el escaneo inmediatamente si el QR ya está usado
+          Swal.fire({
+            title: "QR no usable",
+            text: "El QR ya no puede ser usado.",
+            icon: "warning",
+            confirmButtonText: "Aceptar",
+          });
+          return;
+        }
+  
+        handleScan(decodedText); // Llama a handleScan con los datos decodificados
+      } catch (err) {
+        if (err.name === "NotFoundException") {
+          console.warn("QR code not found in file. Please try another file.");
+        } else {
+          console.error("Error scanning file:", err);
+          setError(err);
+        }
+      }
     } else {
       console.log("No file selected");
     }
