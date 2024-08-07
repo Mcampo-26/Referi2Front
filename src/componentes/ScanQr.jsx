@@ -148,7 +148,7 @@ export const ScanQr = () => {
           if (!Swal.isVisible()) { // Verificar si SweetAlert ya está visible
             await Swal.fire({
               title: "QR no encontrado",
-              text: "El QR no existe en la base de datos.",
+              text: "no puede leer un qr de otra empresa ",
               icon: "error",
               confirmButtonText: "Aceptar",
             });
