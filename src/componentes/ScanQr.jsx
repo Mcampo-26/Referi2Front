@@ -144,7 +144,16 @@ export const ScanQr = () => {
         const qrFromDb = await getQrById(parsedData.id);
   
         if (!qrFromDb) {
-          throw new Error('QR no encontrado');
+          stopScan(); // Detener el escaneo
+          if (!Swal.isVisible()) { // Verificar si SweetAlert ya está visible
+            await Swal.fire({
+              title: "QR no encontrado",
+              text: "El QR no existe en la base de datos.",
+              icon: "error",
+              confirmButtonText: "Aceptar",
+            });
+          }
+          return;
         }
   
         const userRole = localStorage.getItem('role'); // Obtener el rol del usuario desde localStorage
@@ -152,12 +161,14 @@ export const ScanQr = () => {
         // Si el usuario no es Superadmin, verificar si el QR está usado o excedido
         if (userRole !== 'Superadmin' && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
           stopScan(); // Detener el escaneo inmediatamente si el QR ya está usado
-          Swal.fire({
-            title: "QR no usable",
-            text: "El QR ya no puede ser usado.",
-            icon: "warning",
-            confirmButtonText: "Aceptar",
-          });
+          if (!Swal.isVisible()) { // Verificar si SweetAlert ya está visible
+            await Swal.fire({
+              title: "QR no usable",
+              text: "El QR ya no puede ser usado.",
+              icon: "warning",
+              confirmButtonText: "Aceptar",
+            });
+          }
           return;
         }
   
@@ -188,7 +199,7 @@ export const ScanQr = () => {
         
         // Mostrar el mensaje de error solo una vez
         if (!Swal.isVisible()) { 
-          Swal.fire({
+          await Swal.fire({
             title: "Error",
             text: "No se puede usar un qr de otra empresa",
             icon: "error",
@@ -200,6 +211,7 @@ export const ScanQr = () => {
       }
     }
   };
+  
   
   
   
