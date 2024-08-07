@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useQrStore from '../store/UseQrStore';
+import useQrStore from '../store/useQrStore';
 import useUsuariosStore from '../store/useUsuariosStore';
 import {
   Box, Typography, CircularProgress, IconButton, Container, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Button, Collapse, useTheme

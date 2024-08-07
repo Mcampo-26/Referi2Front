@@ -1,6 +1,5 @@
 import create from 'zustand';
-import axios from 'axios';
-import { URL } from '../utilities/config';
+import axiosInstance from '../utilities/axiosInstance'; // Importa la instancia configurada
 
 export const useQrStore = create((set) => ({
   qrs: [],
@@ -19,7 +18,7 @@ export const useQrStore = create((set) => ({
 
     try {
       if (userRole === 'SuperAdmin') {
-        const response = await axios.get(`${URL}/Qr/get`, {
+        const response = await axiosInstance.get('/Qr/get', {
           params: { page, limit }
         });
         const { qrs, total, totalPages, currentPage } = response.data;
@@ -33,7 +32,7 @@ export const useQrStore = create((set) => ({
       } else if (userRole === 'Admin' && userId) {
         const { empresa } = useQrStore.getState(); // Obtener la empresa del estado
         if (empresa) {
-          const response = await axios.get(`${URL}/Qr/empresa/${empresa._id}`, {
+          const response = await axiosInstance.get(`/Qr/empresa/${empresa._id}`, {
             params: { page, limit }
           });
           const { qrs, total, totalPages, currentPage } = response.data;
@@ -59,7 +58,7 @@ export const useQrStore = create((set) => ({
   getQrsByUser: async (userId) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.get(`${URL}/Qr/user/${userId}`);
+      const response = await axiosInstance.get(`/Qr/user/${userId}`);
       set({ qrs: response.data, loading: false });
     } catch (error) {
       console.error('Error al obtener los QR Codes por usuario:', error.response || error.message);
@@ -70,17 +69,7 @@ export const useQrStore = create((set) => ({
   getQrsByAssignedUser: async (userId) => {
     set({ loading: true, error: null });
     try {
-      const token = localStorage.getItem('token'); // Obtén el token del sessionStorage
-      if (!token) {
-        throw new Error('Token no disponible');
-      }
-  
-      const response = await axios.get(`${URL}/Qr/assigned/${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}` // Incluye el token en los encabezados
-        }
-      });
-      
+      const response = await axiosInstance.get(`/Qr/assigned/${userId}`);
       set({ qrs: response.data, loading: false });
     } catch (error) {
       console.error('Error al obtener los QR Codes asignados:', error.response || error.message);
@@ -91,35 +80,20 @@ export const useQrStore = create((set) => ({
   getQrById: async (id) => {
     set({ loading: true, error: null, qr: null });
     try {
-      const token = localStorage.getItem('token'); // Obtener el token del localStorage
-  
-      if (!token) {
-        throw new Error('No autorizado. Token no proporcionado.');
-      }
-  
-      const response = await axios.get(`${URL}/Qr/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-  
+      const response = await axiosInstance.get(`/Qr/${id}`);
       set({ qr: response.data, loading: false });
       return response.data;
     } catch (error) {
       console.error('Error al obtener QR por ID:', error.response || error.message);
       set({ loading: false, error: 'Error al obtener QR por ID' });
-      return null; // Asegúrate de devolver null en caso de error
+      return null; // Devuelve null en caso de error
     }
   },
 
   createQr: async (qr) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post(`${URL}/Qr/create`, qr, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axiosInstance.post('/Qr/create', qr);
       const nuevoQr = response.data.newQr;
       set((state) => ({
         qrs: [...state.qrs, nuevoQr],
@@ -136,7 +110,7 @@ export const useQrStore = create((set) => ({
   updateQr: async (id, data) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.put(`${URL}/Qr/update/${id}`, data);
+      const response = await axiosInstance.put(`/Qr/update/${id}`, data);
       set((state) => ({
         qrs: state.qrs.map((qr) =>
           qr._id === id ? { ...qr, ...response.data.qr } : qr
@@ -154,7 +128,7 @@ export const useQrStore = create((set) => ({
   deleteQr: async (id) => {
     set({ loading: true, error: null });
     try {
-      await axios.delete(`${URL}/Qr/delete/${id}`);
+      await axiosInstance.delete(`/Qr/delete/${id}`);
       set((state) => ({
         qrs: state.qrs.filter((qr) => qr._id !== id),
         loading: false,
@@ -168,7 +142,7 @@ export const useQrStore = create((set) => ({
   useQr: async (id) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post(`${URL}/Qr/use/${id}`);
+      const response = await axiosInstance.post(`/Qr/use/${id}`);
       if (response.status === 200) {
         set((state) => ({
           qrs: state.qrs.map((qr) =>
@@ -187,11 +161,10 @@ export const useQrStore = create((set) => ({
     }
   },
 
-  // Nuevo método para generar y almacenar el PDF
   generatePdf: async (qrId) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post(`${URL}/Qr/generate-pdf/${qrId}`);
+      const response = await axiosInstance.post(`/Qr/generate-pdf/${qrId}`);
       set({ loading: false });
       return response.data;
     } catch (error) {
@@ -201,11 +174,10 @@ export const useQrStore = create((set) => ({
     }
   },
 
-  // Nuevo método para obtener el PDF
   getPdf: async (qrId) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.get(`${URL}/Qr/pdf/${qrId}`, {
+      const response = await axiosInstance.get(`/Qr/pdf/${qrId}`, {
         responseType: 'blob',
       });
       const pdfBlob = new Blob([response.data], { type: 'application/pdf' });

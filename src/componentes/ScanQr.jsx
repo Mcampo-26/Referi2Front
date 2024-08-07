@@ -231,6 +231,10 @@ export const ScanQr = () => {
         const parsedData = parseData(decodedText);
   
         const qrFromDb = await getQrById(parsedData.id);
+        if (!qrFromDb) {
+          throw new Error('QR no encontrado');
+        }
+  
         const userRole = localStorage.getItem('role'); // Obtener el rol del usuario desde localStorage
   
         if (userRole !== 'Superadmin' && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
@@ -246,17 +250,20 @@ export const ScanQr = () => {
   
         handleScan(decodedText); // Llama a handleScan con los datos decodificados
       } catch (err) {
-        if (err.name === "NotFoundException") {
-          console.warn("QR code not found in file. Please try another file.");
-        } else {
-          console.error("Error scanning file:", err);
-          setError(err);
-        }
+        console.error("Error scanning file:", err);
+        setError(err);
+        Swal.fire({
+          title: "Error ",
+          text: "No se puede usar un qr de otra empresa",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       }
     } else {
       console.log("No file selected");
     }
   };
+  
 
   // Función para actualizar el QR en el backend
   const handleUpdateQr = async () => {
