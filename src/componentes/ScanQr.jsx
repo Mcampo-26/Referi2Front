@@ -142,16 +142,9 @@ export const ScanQr = () => {
   
         // Obtén los datos del QR desde el backend
         const qrFromDb = await getQrById(parsedData.id);
-        
+  
         if (!qrFromDb) {
-          stopScan(); // Detener el escaneo si no se encuentra el QR
-          Swal.fire({
-            title: "QR no encontrado",
-            text: "El QR no existe en la base de datos.",
-            icon: "error",
-            confirmButtonText: "Aceptar",
-          });
-          return;
+          throw new Error('QR no encontrado');
         }
   
         const userRole = localStorage.getItem('role'); // Obtener el rol del usuario desde localStorage
@@ -192,11 +185,18 @@ export const ScanQr = () => {
       } catch (error) {
         console.error("Error durante el escaneo:", error);
         setError(error);
+        Swal.fire({
+          title: "Error",
+          text: "No se puede usar un qr de otra empresa",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
       } finally {
         stopScan();
       }
     }
   };
+  
   
   // Manejo de errores en el escaneo
   const handleError = (err) => {
