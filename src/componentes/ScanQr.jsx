@@ -377,7 +377,7 @@ export const ScanQr = () => {
             </Box>
           )}
           <Box display="flex" justifyContent="center" alignItems="center">
-            <Typography variant="h5" className="mb-6" sx={{ color: "white" }}>
+          <Typography variant="h5" className="mb-6" sx={{ color: "dark" }}>
               Escanear
             </Typography>
           </Box>
