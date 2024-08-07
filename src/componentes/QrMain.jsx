@@ -132,8 +132,10 @@ export const QrMain = () => {
     }
   
     const userId = localStorage.getItem('userId');
-    if (!userId) {
-      console.error("User ID is missing");
+    const token = localStorage.getItem('token'); // Asumiendo que el token está almacenado bajo la clave 'token'
+    
+    if (!userId || !token) {
+      console.error("User ID or token is missing");
       return;
     }
   
@@ -152,7 +154,12 @@ export const QrMain = () => {
     };
   
     try {
-      const newQr = await createQr(qrData);
+      const newQr = await createQr(qrData, {
+        headers: {
+          Authorization: `Bearer ${token}` // Incluir el token en los encabezados
+        }
+      });
+  
       if (newQr && newQr.base64Image) {
         setBase64Image(newQr.base64Image);
         Swal.fire('QR creado', 'QR creado exitosamente', 'success');
@@ -162,6 +169,7 @@ export const QrMain = () => {
       Swal.fire('Error', 'Hubo un problema al crear el QR', 'error');
     }
   };
+  
   
   const handleWhatsAppShare = () => {
     if (!base64Image) {
