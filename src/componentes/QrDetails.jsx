@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQrStore } from '../store/useQrStore';
 import useServiciosStore from '../store/useServiciosStore';
@@ -12,6 +12,7 @@ import {
   IconButton
 } from '@mui/material';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import qrMini from "../assets/qrMini.png";
 
 export const QrDetails = () => {
   const { id } = useParams();
@@ -27,18 +28,10 @@ export const QrDetails = () => {
     getAllServicios: state.getAllServicios,
   }));
 
-  const [selectedImage, setSelectedImage] = useState('');
-
   useEffect(() => {
     getQrById(id);
     getAllServicios(); // Obtener servicios al cargar el componente
   }, [id, getQrById, getAllServicios]);
-
-  useEffect(() => {
-    if (qr && qr.base64Image) {
-      setSelectedImage(`data:image/png;base64,${qr.base64Image}`);
-    }
-  }, [qr]);
 
   const getServiceName = (serviceId) => {
     const service = servicios.find((serv) => serv._id === serviceId);
@@ -76,7 +69,7 @@ export const QrDetails = () => {
         <Grid container spacing={4}>
           <Grid item xs={12} md={6}>
             <Paper elevation={3} sx={{ p: 2, borderRadius: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', transform: 'scale(0.9)', mt: 5 }}>
-              <img src={selectedImage}  alt="QR Code" style={{ width: '90%', height: 'auto', display: 'block', }} />
+              <img src={qrMini} alt="QR Code" style={{ width: '90%', height: 'auto', display: 'block' }} />
             </Paper>
           </Grid>
           <Grid item xs={12} md={6} mt={6}>

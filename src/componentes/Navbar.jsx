@@ -48,8 +48,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
   ? role === "SuperAdmin"
     ? [
         { id: 1, text: "Inicio", to: "/" },
-        { id: 8, text: "Crear", to: "/QrMain" },
-       
+        { id: 8, text: "Crear", to: "/QrMain" },       
         { id: 4, text: "Mis QR", to: "/Referidos" },
         { id: 6, text: "Usuarios", to: "/Users" },
         { id: 10, text: "Empresas", to: "/Empresas" },
@@ -64,7 +63,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
         { id: 6, text: "Usuarios", to: "/Users" },
         { id: 5, text: "Cerrar Sesión", action: handleLogout },
       ]
-    : role === "Referidor"
+    : role === "Ref"
     ? [
         { id: 4, text: "Mis QR", to: "/Referidos" },
         { id: 6, text: "Usuarios", to: "/Users" },
@@ -75,7 +74,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
         { id: 4, text: "Mis QR", to: "/Referidos" },
         { id: 5, text: "Cerrar Sesión", action: handleLogout },
       ]
-    : [] // Manejo de caso donde role no coincide con ninguno
+    : [{ id: 5, text: "Cerrar Sesión", action: handleLogout },] // Manejo de caso donde role no coincide con ninguno
   : [
       { id: 6, text: "Iniciar Sesión", to: "/Login" },
       { id: 7, text: "Registrarse", to: "/Register" },
