@@ -3,7 +3,7 @@ import {
   Button, TextField, Grid, Typography, Card, CardContent,
   Paper, Box, MenuItem, Select, InputLabel, FormControl
 } from '@mui/material';
-import { useQrStore } from '../store/useQrStore';
+import useQrStore from '../store/useQrStore'
 import useEmpresasStore from '../store/useEmpresaStore';
 import useUsuariosStore from '../store/useUsuariosStore';
 import { WhatsApp } from '@mui/icons-material';
