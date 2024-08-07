@@ -39,22 +39,7 @@ const PdfManager = () => {
     }
   }, [getPdfs, location.state]);
 
-  const handleDelete = (id) => {
-    MySwal.fire({
-      title: "¿Estás seguro?",
-      text: "¡No podrás revertir esto!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí, eliminarlo!"
-    }).then((result) => {
-      if (result.isConfirmed) {
-        deletePdf(id);
-        MySwal.fire("¡Eliminado!", "Tu archivo ha sido eliminado.", "success");
-      }
-    });
-  };
+
 
   const generatePdf = () => {
     const doc = new jsPDF();
@@ -96,7 +81,7 @@ const PdfManager = () => {
   return (
     <Container className={theme.palette.mode === 'dark' ? 'theme-dark' : 'theme-light'}>
       <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
-        <Typography variant="h4" mb={4} className="text-center">Gestión de PDFs</Typography>
+        <Typography variant="h4" mb={4} className="text-center">Gestión de Reportes</Typography>
       </Box>
       <Box mb={4}>
         <Typography variant="h6">Nombre: {title}</Typography>
