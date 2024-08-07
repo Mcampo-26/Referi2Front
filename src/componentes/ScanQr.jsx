@@ -185,17 +185,22 @@ export const ScanQr = () => {
       } catch (error) {
         console.error("Error durante el escaneo:", error);
         setError(error);
-        Swal.fire({
-          title: "Error",
-          text: "No se puede usar un qr de otra empresa",
-          icon: "error",
-          confirmButtonText: "Aceptar",
-        });
+        
+        // Mostrar el mensaje de error solo una vez
+        if (!Swal.isVisible()) { 
+          Swal.fire({
+            title: "Error",
+            text: "No se puede usar un qr de otra empresa",
+            icon: "error",
+            confirmButtonText: "Aceptar",
+          });
+        }
       } finally {
-        stopScan();
+        stopScan(); // Detener el escaneo al final del bloque try/catch
       }
     }
   };
+  
   
   
   // Manejo de errores en el escaneo
