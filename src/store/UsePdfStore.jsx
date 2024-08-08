@@ -1,5 +1,5 @@
 // store/usePdfStore.js
-import create from 'zustand';
+import {create} from 'zustand';
 import axios from 'axios';
 import { URL } from '../utilities/config'; // Asegúrate de que esta URL sea correcta
 

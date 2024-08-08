@@ -1,4 +1,4 @@
-import create from 'zustand';
+import {create} from 'zustand';
 import axiosInstance from '../utilities/axiosInstance'; // Importa la instancia configurada
 
 export const useQrStore = create((set) => ({

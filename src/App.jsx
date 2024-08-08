@@ -5,8 +5,7 @@ import './index.css';
 import { Home } from "./pages/Home";
 import { Referidos } from "./pages/Referidos";
 import { QrMain } from "./componentes/QrMain";
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { CssBaseline } from '@mui/material';
+import { createTheme, ThemeProvider, CssBaseline } from '@mui/material';
 import { ScanPage } from "./pages/ScanPage";
 import { Login } from "./componentes/Login";
 import { Register } from "./componentes/Register";
@@ -19,9 +18,9 @@ import { EmpresaDetails } from "./componentes/EmpresaDetails";
 import PdfManager from "./componentes/PdfManager";
 import { Error404 } from './pages/Error404';
 import { Contacto } from './pages/Contacto';
-
 import useUsuariosStore from './store/useUsuariosStore';
 
+// Aquí defines los temas
 const lightTheme = createTheme({
   palette: {
     mode: 'light',
@@ -30,6 +29,16 @@ const lightTheme = createTheme({
     },
     text: {
       primary: '#000000',
+    },
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: '#f5f5f5', // Fondo claro para el tema claro
+          color: '#000000',
+        },
+      },
     },
   },
 });
@@ -42,6 +51,16 @@ const darkTheme = createTheme({
     },
     text: {
       primary: '#ffffff',
+    },
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: '#303030', // Fondo oscuro para el tema oscuro
+          color: '#ffffff',
+        },
+      },
     },
   },
 });
@@ -91,7 +110,6 @@ function App() {
           <Route path="/pdfs" element={<PdfManager />} />
           <Route path="/reportes" element={<Error404 />} />
           <Route path="/contacto" element={<Contacto />} />
-
         </Routes>
       </div>
     </ThemeProvider>

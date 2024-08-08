@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQrStore } from '../store/useQrStore';
 import useServiciosStore from '../store/useServiciosStore';
@@ -28,10 +28,22 @@ export const QrDetails = () => {
     getAllServicios: state.getAllServicios,
   }));
 
+  const [selectedImage, setSelectedImage] = useState('');
+
   useEffect(() => {
     getQrById(id);
     getAllServicios(); // Obtener servicios al cargar el componente
   }, [id, getQrById, getAllServicios]);
+
+  useEffect(() => {
+    if (qr) {
+      if (qr.isUsed) {
+        setSelectedImage(qrMini); // Muestra la imagen desde assets si isUsed es true
+      } else if (qr.base64Image) {
+        setSelectedImage(`data:image/png;base64,${qr.base64Image}`); // Muestra la imagen base64 si no está usada
+      }
+    }
+  }, [qr]);
 
   const getServiceName = (serviceId) => {
     const service = servicios.find((serv) => serv._id === serviceId);
@@ -68,8 +80,23 @@ export const QrDetails = () => {
         </Typography>
         <Grid container spacing={4}>
           <Grid item xs={12} md={6}>
-            <Paper elevation={3} sx={{ p: 2, borderRadius: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', transform: 'scale(0.9)', mt: 5 }}>
-              <img src={qrMini} alt="QR Code" style={{ width: '90%', height: 'auto', display: 'block' }} />
+            <Paper
+              elevation={3}
+              sx={{
+                p: 2,
+                borderRadius: 1,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                transform: 'scale(0.9)',
+                mt: 5,
+              }}
+            >
+              <img
+                src={selectedImage}
+                alt="QR Code"
+                style={{ width: '90%', height: 'auto', display: 'block' }}
+              />
             </Paper>
           </Grid>
           <Grid item xs={12} md={6} mt={6}>

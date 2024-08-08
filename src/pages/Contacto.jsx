@@ -209,32 +209,7 @@ export const Contacto = () => {
             </form>
           </Box>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <Box
-            bgcolor={isDarkMode ? "grey.900" : "grey.100"}
-            color={isDarkMode ? "white" : "black"}
-            p={3}
-            borderRadius={2}
-            sx={{ fontSize: { xs: "1rem", md: "1.2rem" } }}
-          >
-            <Typography variant="h4" align="center" gutterBottom>
-        Referi2
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Dirección para llegar a nuestra sede a hacer los trámites personalmente, te esperamos para brindarte la mejor información y nuestra ayuda.
-            </Typography>
-            <Box mt={2}>
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d56956.87802569709!2d-65.29199830880904!3d-26.846157777328003!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94225df5fcca2727%3A0x331b810e527e57fd!2sFast%20-%20Servicio%20T%C3%A9cnico%20Inmediato!5e0!3m2!1ses-419!2sar!4v1722471943110!5m2!1ses-419!2sar"
-                width="100%"
-                height="364"
-                style={{ border: "0" }}
-                allowFullScreen=""
-                loading="lazy"
-              ></iframe>
-            </Box>
-          </Box>
-        </Grid>
+        
       </Grid>
     </Container>
   );

@@ -199,26 +199,27 @@ export const QrList = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
-              width: { xs: "100%", sm: "300px" },
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": {
-                  borderColor:
-                    theme.palette.mode === "dark" ? "white" : "black",
+              width: { xs: '100%', sm: '300px' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'black', // Borde negro para ambos temas
                 },
-                "&:hover fieldset": {
-                  borderColor:
-                    theme.palette.mode === "dark" ? "white" : "black",
+                '&:hover fieldset': {
+                  borderColor: 'black', // Borde negro al pasar el cursor
                 },
-                "&.Mui-focused fieldset": {
-                  borderColor:
-                    theme.palette.mode === "dark" ? "white" : "black",
+                '&.Mui-focused fieldset': {
+                  borderColor: 'black', // Borde negro al enfocarse
                 },
               },
-              "& .MuiInputBase-input": {
-                color: theme.palette.mode === "dark" ? "white" : "black",
+              '& .MuiInputBase-input': {
+                color: 'black', // Texto negro para ambos temas
               },
-              "& .MuiInputLabel-root": {
-                color: theme.palette.mode === "dark" ? "white" : "black",
+              '& .MuiInputLabel-root': {
+                color: 'black', // Placeholder negro para ambos temas
+              },
+              '& .MuiInputBase-input::placeholder': {
+                color: 'black', // Placeholder negro para ambos temas
+                opacity: 1, // Asegura que el placeholder sea visible
               },
             }}
           />
@@ -511,3 +512,5 @@ export const QrList = () => {
     </Container>
   );
 };
+
+
