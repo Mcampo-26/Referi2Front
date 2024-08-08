@@ -18,7 +18,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import MenuItem from "@mui/material/MenuItem";
 import useUsuariosStore from "../store/useUsuariosStore";
 
-
 export const Navbar = ({ toggleDarkMode, darkMode }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { usuario, isAuthenticated, role, logoutUsuario } = useUsuariosStore((state) => ({
@@ -109,28 +108,28 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
     <ThemeProvider theme={theme}>
       <AppBar position="sticky">
         <Toolbar sx={{ justifyContent: "space-between" }}>
-        {isAuthenticated && (
-          <Typography 
-          variant="body1" 
-          sx={{ 
-            color: 'inherit', 
-            display: { xs: 'none', md: 'block' }, 
-            mr: 2 // Margen derecho para separar del título
-          }}>
-          Hola, {usuario.nombre}! {usuario.role?.name && `eres ${usuario.role.name} de`}
-        </Typography>
-        
+          {isAuthenticated && (
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'inherit', 
+                display: { xs: 'block', md: 'block' }, 
+                fontSize: { xs: '0.8rem', md: '1rem' }, // Reduce la fuente en dispositivos pequeños
+                mr: 2 // Margen derecho para separar del título
+              }}
+            >
+       Hola, {usuario.nombre}! eres {usuario.role.name}
+            </Typography>
+          )}
 
-)}
-
-<Typography
-  variant="h6"
-  component={RouterLink}
-  to="/"
-  sx={{ color: "inherit", textDecoration: "none", flexGrow: 1 }}
->
-  Referi2
-</Typography>
+          <Typography
+            variant="h6"
+            component={RouterLink}
+            to="/"
+            sx={{ color: "inherit", textDecoration: "none", flexGrow: 1 }}
+          >
+            Referi2
+          </Typography>
 
           {/* Menú de navegación en dispositivos grandes */}
           <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}>
