@@ -53,7 +53,9 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
         { id: 6, text: "Usuarios", to: "/Users" },
         { id: 10, text: "Empresas", to: "/Empresas" },
         { id: 9, text: "Roles", to: "/roles" },
+        { id: 11, text: "Contacto", to: "/contacto" },
         { id: 5, text: "Cerrar Sesión", action: handleLogout },
+
       ]
     : role === "Admin"
     ? [

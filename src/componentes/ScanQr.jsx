@@ -32,6 +32,7 @@ export const ScanQr = () => {
   const [fadeOut, setFadeOut] = useState(false); // Estado para la transición
   const [isScanning, setIsScanning] = useState(false); // Estado para saber si está escaneando
   const userRole = localStorage.getItem('role'); 
+  const [refreshKey, setRefreshKey] = useState(0); 
   const {
     servicios,
     getServiciosByEmpresaId,
@@ -144,6 +145,15 @@ export const ScanQr = () => {
         const qrFromDb = await getQrById(parsedData.id);
   
         if (!qrFromDb) {
+          stopScan(); // Detener el escaneo
+          if (!Swal.isVisible()) { // Verificar si SweetAlert ya está visible
+            await Swal.fire({
+              title: "QR no encontrado",
+              text: "no puede leer un qr de otra empresa ",
+              icon: "error",
+              confirmButtonText: "Aceptar",
+            });
+          }
           stopScan(); // Detener el escaneo
           if (!Swal.isVisible()) { // Verificar si SweetAlert ya está visible
             await Swal.fire({
@@ -291,7 +301,7 @@ export const ScanQr = () => {
       console.log("No QR code ID found");
       return;
     }
-
+  
     const discountValue = parseFloat(discount);
     if (isNaN(discountValue) || discountValue <= 0) {
       Swal.fire({
@@ -301,29 +311,29 @@ export const ScanQr = () => {
       });
       return;
     }
-
+  
     const qrData = {
       service: selectedService,
       details,
       discount: discountValue, // Añadir el descuento
       updatedAt: new Date().toISOString(), // Añadir la fecha de actualización
     };
-
+  
     console.log("Datos a enviar:", qrData);
     console.log("QR ID:", scannedData.id);
-
+  
     try {
       const response = await updateQr(scannedData.id, qrData);
       console.log("Response from backend:", response);
       const updatedQr = response.qr;
       console.log("QR actualizado con éxito:", updatedQr);
-
+  
       if (!updatedQr) {
         throw new Error("QR data is undefined");
       }
-
+  
       setFadeOut(true); // Aplica la clase fade-out
-
+  
       Swal.fire({
         title: "QR actualizado",
         text: "El QR ha sido actualizado correctamente.",
@@ -333,8 +343,9 @@ export const ScanQr = () => {
         setScannedData(null); // Resetea el estado de scannedData
         setSelectedService("");
         setDetails("");
-        setDiscount(""); // Resetea el estado de discount
+        setDiscount(""); // Resetea el estado de discount        
         setFadeOut(false); // Elimina la clase fade-out después de ocultar los datos
+        setRefreshKey(oldKey => oldKey + 1); // Fuerza una actualización
       });
     } catch (error) {
       console.error("Error al actualizar QR:", error);
@@ -346,13 +357,13 @@ export const ScanQr = () => {
       });
     }
   };
-
   const usosRestantes = scannedData
-    ? scannedData.maxUsageCount - scannedData.usageCount
-    : 0;
-
+  ? scannedData.maxUsageCount - scannedData.usageCount
+  : 0;
+  
   return (
     <Container
+      key={refreshKey} // Añade esta key para forzar re-render
       maxWidth="md"
       className="flex flex-col items-center justify-center mt-20"
       sx={{
@@ -366,7 +377,7 @@ export const ScanQr = () => {
     >
       {isSmallScreen && (
         <Container>
-          {!isScanning && (
+          {!isScanning && !scannedData && (
             <Box className="flex justify-center mb-4" onClick={startScan}>
               <img
                 src={qrHome}
@@ -377,7 +388,7 @@ export const ScanQr = () => {
             </Box>
           )}
           <Box display="flex" justifyContent="center" alignItems="center">
-          <Typography variant="h5" className="mb-6" sx={{ color: "dark" }}>
+            <Typography variant="h5" className="mb-6" sx={{ color: "white" }}>
               Escanear
             </Typography>
           </Box>
@@ -440,7 +451,7 @@ export const ScanQr = () => {
         onChange={handleFileChange}
         style={{ display: "none" }}
       />
-
+  
       {scannedData && (
         <Fade in={!fadeOut} timeout={100}>
           <Box
@@ -466,7 +477,7 @@ export const ScanQr = () => {
                     Información del QR:
                   </Typography>
                 </Box>
-
+  
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body1">
