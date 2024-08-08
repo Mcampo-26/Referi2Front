@@ -10,7 +10,7 @@ import { WhatsApp } from '@mui/icons-material';
 import { useTheme, ThemeProvider, CssBaseline, useMediaQuery } from '@mui/material';
 import { styled } from '@mui/system';
 import Swal from 'sweetalert2';
-import './Css/QrMain.css';
+import './Css/QrMain.css'
 
 const StyledBox = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
