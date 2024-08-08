@@ -118,7 +118,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
                 mr: 2 // Margen derecho para separar del título
               }}
             >
-       Hola, {usuario.nombre}! eres {usuario.role.name}
+       Hola, {usuario.nombre}! eres {usuario.role.name} de
             </Typography>
           )}
 
