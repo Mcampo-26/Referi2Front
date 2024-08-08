@@ -119,7 +119,7 @@ export const ScanQr = () => {
       scannerRef.current
         .start(
           { facingMode: "environment" },
-          { fps: 30, qrbox: 300 },
+          { fps: 50, qrbox: 300 },
 
           handleScan,
           handleError
