@@ -1,46 +1,68 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import useUsuariosStore from '../store/useUsuariosStore';
+
+const MySwal = withReactContent(Swal);
 
 export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isAlertActive, setIsAlertActive] = useState(false);
   const navigate = useNavigate();
-  const { loginUsuario, isAuthenticated, role } = useUsuariosStore();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      if (role === 'SuperAdmin' || role === 'Admin') {
-        navigate('/QrMain');
-      } else if (role === 'Referidor') {
-        navigate('/Referidos');
-      } else {
-        navigate('/Referidos'); // Redirección por defecto si no tiene rol
-      }
-    }
-  }, [isAuthenticated, role, navigate]);
-  
+  const { loginUsuario, role } = useUsuariosStore();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     const isSuccess = await loginUsuario(email, password);
+
     if (isSuccess) {
-      // Aquí puedes manejar una redirección después del login si es necesario
       console.log('Inicio de sesión exitoso');
+
+      setIsAlertActive(true); // Activar el desenfoque del fondo
+
+      // Mostrar el SweetAlert con la animación y redirección
+      MySwal.fire({
+        title: '¡Bienvenido a Referidos!',
+        icon: 'success',
+        showConfirmButton: false,
+        timer: 3000,
+        customClass: {
+          popup: 'swal-custom',
+        },
+        didOpen: () => {
+          const swalPopup = Swal.getPopup();
+          if (swalPopup) {
+            swalPopup.classList.add('animate-fadeIn');
+          }
+        },
+        willClose: () => {
+          const swalPopup = Swal.getPopup();
+          if (swalPopup) {
+            swalPopup.classList.remove('animate-fadeIn');
+            swalPopup.classList.add('animate-fadeOut');
+          }
+          setIsAlertActive(false); // Desactivar el desenfoque del fondo
+
+          // Redirigir según el rol del usuario después de que SweetAlert se haya cerrado
+          setTimeout(() => {
+           navigate('/home')
+          }, 500); // Tiempo de espera para asegurar la finalización de la animación
+        },
+      });
     } else {
       alert('Error en el inicio de sesión');
     }
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center back py-12 px-4 sm:px-6 lg:px-8 bg-gray-500 bg-no-repeat dark:bg-gray-900 bg-cover">
-      <div className="absolute opacity-60 inset-0 z-0"></div>
+    <div className={`relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-500 bg-no-repeat dark:bg-gray-900 bg-cover ${isAlertActive ? 'blur-bg' : ''}`}>
       <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl z-10 dark:bg-gray-600">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold">¡Bienvenido a Referi2</h2>
+          <h2 className="mt-6 text-3xl font-bold">¡Bienvenido a Referi2!</h2>
           <p className="mt-2 text-sm text-gray-600">Por favor, inicia sesión en tu cuenta</p>
         </div>
-       
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <input type="hidden" name="remember" defaultValue="true" />
           <div className="rounded-md shadow-sm -space-y-px">

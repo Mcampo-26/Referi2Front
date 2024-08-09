@@ -95,9 +95,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/QrMain" element={<QrMain />} />
           <Route 
-            path="/Escanear" 
-            element={isAuthenticated && role === 'Admin' ? <ScanPage /> : <Navigate to="/" />} 
-          />
+            path="/Escanear" element={ <ScanPage />} />
+          
           <Route path="/Login" element={<Login />} />
           <Route path="/Register" element={<Register />} />
           <Route path="/Users" element={<Users />} />
@@ -110,6 +109,7 @@ function App() {
           <Route path="/pdfs" element={<PdfManager />} />
           <Route path="/reportes" element={<Error404 />} />
           <Route path="/contacto" element={<Contacto />} />
+          <Route path="/home" element={<Home />} />
         </Routes>
       </div>
     </ThemeProvider>

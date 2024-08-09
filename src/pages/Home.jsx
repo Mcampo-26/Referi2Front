@@ -27,18 +27,15 @@ export const Home = () => {
   // Verifica si el usuario está autenticado y si es Admin o SuperAdmin
   if (isAuthenticated && (role === 'Admin' || role === 'SuperAdmin')) {
     return (
-
-  
-         
-          <ScanQr />
         
+          <ScanQr />   
     
     );
-  } else if (isAuthenticated && role === 'Referidor') {
+  } else if (isAuthenticated && role === 'Referidor' || role === 'Vendedor') {
     return (
-      <BackgroundContainer>
+ 
        <Referidos/>
-      </BackgroundContainer>
+
     );
   } else {
     return (

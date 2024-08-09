@@ -64,7 +64,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
         { id: 6, text: "Usuarios", to: "/Users" },
         { id: 5, text: "Cerrar Sesión", action: handleLogout },
       ]
-    : role === "Ref"
+    : role === "Referidor"
     ? [
         { id: 4, text: "Mis QR", to: "/Referidos" },
         { id: 6, text: "Usuarios", to: "/Users" },

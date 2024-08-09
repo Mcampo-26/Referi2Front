@@ -1,4 +1,4 @@
-import {create} from 'zustand';
+import { create } from 'zustand';
 import axiosInstance from '../utilities/axiosInstance'; // Importa la instancia configurada
 
 export const useUsuariosStore = create((set, get) => ({
@@ -16,9 +16,7 @@ export const useUsuariosStore = create((set, get) => ({
   getUsuarios: async (page = 1, limit = 10) => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosInstance.get('/usuarios/get', {
-        params: { page, limit },
-      });
+      const response = await axiosInstance.get('/usuarios/get', { params: { page, limit } });
       const { usuarios, total, totalPages, currentPage } = response.data;
       set({
         usuarios,
@@ -104,11 +102,11 @@ export const useUsuariosStore = create((set, get) => ({
       if (response.status === 200) {
         const usuario = response.data.usuario;
         const token = response.data.token;
-
         const role = usuario.role ? usuario.role.name : null;
         const empresaId = usuario.empresa ? usuario.empresa._id : null;
         const empresaName = usuario.empresa ? usuario.empresa.name : null;
 
+   
         set({
           usuario,
           userId: usuario._id,
