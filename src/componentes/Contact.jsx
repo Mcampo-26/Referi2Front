@@ -12,6 +12,7 @@ import {
   useTheme,
   useMediaQuery
 } from "@mui/material";
+import {PlanSelector} from './PlanSelector'
 
 const nameRegex = /^[A-Za-z0-9\s]+$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -109,9 +110,18 @@ export const Contact = () => {
 
   return (
     <>
+
+   
+    <Box>
+       <Typography variant="h4" align="center" gutterBottom>
+                Envíanos un mensaje
+              </Typography>
+              </Box>
       <Container maxWidth="lg" sx={{ py: 5, mt: 10 }}>
+   
         <Grid container spacing={4}>
           <Grid item xs={12} md={6}>
+       
             <Box
               bgcolor={isDarkMode ? "grey.900" : "grey.100"}
               color={isDarkMode ? "white" : "black"}
@@ -119,9 +129,7 @@ export const Contact = () => {
               borderRadius={2}
               sx={{ fontSize: { xs: "1rem", md: "1.2rem" } }}
             >
-              <Typography variant="h4" align="center" gutterBottom>
-                Envíanos un mensaje
-              </Typography>
+              
               <form id="contact-form" onSubmit={handleSubmit}>
                 <Box mb={2}>
                   <TextField
@@ -237,6 +245,7 @@ export const Contact = () => {
         </Grid>
       </Container>
       <Footer />
+      <PlanSelector/>
     </>
   );
 };
