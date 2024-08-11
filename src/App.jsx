@@ -19,6 +19,7 @@ import PdfManager from "./componentes/PdfManager";
 import { Error404 } from './pages/Error404';
 import { Contacto } from './pages/Contacto';
 import useUsuariosStore from './store/useUsuariosStore';
+import {PlanSelector} from './componentes/PlanSelector'
 
 // Aquí defines los temas
 const lightTheme = createTheme({
@@ -110,6 +111,7 @@ function App() {
           <Route path="/reportes" element={<Error404 />} />
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/planSelector" element={<PlanSelector />} />
         </Routes>
       </div>
     </ThemeProvider>

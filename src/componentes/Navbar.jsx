@@ -52,9 +52,9 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
         { id: 6, text: "Usuarios", to: "/Users" },
         { id: 10, text: "Empresas", to: "/Empresas" },
         { id: 9, text: "Roles", to: "/roles" },
-        { id: 11, text: "Contacto", to: "/contacto" },
+        { id: 11, text: "Planes de Pago", to: "/planSelector" }, // Nueva opción agregada
+        { id: 12, text: "Contacto", to: "/contacto" },
         { id: 5, text: "Cerrar Sesión", action: handleLogout },
-
       ]
     : role === "Admin"
     ? [
@@ -62,24 +62,28 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
         { id: 2, text: "Escanear QR", to: "/Escanear" },
         { id: 4, text: "Mis QR", to: "/Referidos" },
         { id: 6, text: "Usuarios", to: "/Users" },
+        { id: 11, text: "Planes de Pago", to: "/planSelector" }, // Nueva opción agregada
         { id: 5, text: "Cerrar Sesión", action: handleLogout },
       ]
     : role === "Referidor"
     ? [
         { id: 4, text: "Mis QR", to: "/Referidos" },
         { id: 6, text: "Usuarios", to: "/Users" },
+        { id: 11, text: "Planes de Pago", to: "/planSelector" }, // Nueva opción agregada
         { id: 5, text: "Cerrar Sesión", action: handleLogout },
       ]
     : role === "Vendedor"
     ? [
         { id: 4, text: "Mis QR", to: "/Referidos" },
+        { id: 11, text: "Planes de Pago", to: "/planSelector" }, // Nueva opción agregada
         { id: 5, text: "Cerrar Sesión", action: handleLogout },
       ]
-    : [{ id: 5, text: "Cerrar Sesión", action: handleLogout },] // Manejo de caso donde role no coincide con ninguno
+    : [{ id: 11, text: "Planes de Pago", to: "/planSelector" }, { id: 5, text: "Cerrar Sesión", action: handleLogout }]
   : [
       { id: 6, text: "Iniciar Sesión", to: "/Login" },
       { id: 7, text: "Registrarse", to: "/Register" },
     ];
+
 
   const theme = createTheme({
     palette: {
