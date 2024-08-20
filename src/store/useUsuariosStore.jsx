@@ -106,7 +106,10 @@ export const useUsuariosStore = create((set, get) => ({
         const empresaId = usuario.empresa ? usuario.empresa._id : null;
         const empresaName = usuario.empresa ? usuario.empresa.name : null;
 
-   
+        // Guardar nombre y correo electrónico en localStorage
+        const nombre = usuario.nombre || '';  // Ajusta según el nombre del campo en tu modelo
+        const userEmail = usuario.email || '';
+
         set({
           usuario,
           userId: usuario._id,
@@ -120,6 +123,9 @@ export const useUsuariosStore = create((set, get) => ({
         localStorage.setItem('usuario', JSON.stringify(usuario));
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('token', token);
+        localStorage.setItem('userName', nombre); // Almacena el nombre en localStorage
+        localStorage.setItem('userEmail', userEmail); // Almacena el email en localStorage
+
         if (role) {
           localStorage.setItem('role', role);
         } else {
@@ -150,6 +156,8 @@ export const useUsuariosStore = create((set, get) => ({
     localStorage.removeItem('role');
     localStorage.removeItem('userId');
     localStorage.removeItem('token');
+    localStorage.removeItem('userName'); // Elimina el nombre almacenado
+    localStorage.removeItem('userEmail'); // Elimina el email almacenado
     set({ usuario: null, userId: null, isAuthenticated: false, role: null });
   },
 

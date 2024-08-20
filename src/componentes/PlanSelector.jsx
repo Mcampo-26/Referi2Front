@@ -1,34 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Grid, Card, CardContent, Typography, Button, ToggleButton, ToggleButtonGroup, useTheme, useMediaQuery } from "@mui/material";
+import usePaymentStore from '../store/usePaymentStore';
+import PaymentWidget from './PaymentWidget'; // Asegúrate de importar el componente PaymentWidget
 
 export const PlanSelector = () => {
   const [billingType, setBillingType] = useState("month");
+  const [preferenceId, setPreferenceId] = useState(null);
+  const { createPayment, paymentLoading, paymentError } = usePaymentStore();
 
-  // Accede al tema actual
   const theme = useTheme();
-  
-  // Detecta si la pantalla es pequeña
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const plans = [
-    {
-      name: 'Basic',
-      monthPrice: '9.900',
-      yearPrice: '205',
-      items: ['✔ Genera hasta 20 Qr', '✔ Escanea Qr ', '✔ Genera Referidores'],
-    },
-    {
-      name: 'Premium',
-      monthPrice: '75.000',
-      yearPrice: '313',
-      items:['✔ Genera hasta 50 Qr', '✔ Escanea Qr', '✔ Genera Referidores','✔ Crea Vendedores','✔ Crea Reportes en Pdf' ],
-    },
-    {
-      name: 'Pro',
-      monthPrice: '180.000',
-      yearPrice: '421',
-      items:['✔ Genera  Qr infinitos', '✔ Escanea Qr ', '✔ Genera Referidores','✔ Crea Vendedores','✔ Crea Reportes en Pdf' ],
-    },
+    { name: 'Basic', monthPrice: 102, yearPrice: 205, items: ['✔ Genera hasta 20 Qr', '✔ Escanea Qr', '✔ Genera Referidores'] },
+    { name: 'Premium', monthPrice: 75000, yearPrice: 313, items: ['✔ Genera hasta 50 Qr', '✔ Escanea Qr', '✔ Genera Referidores', '✔ Crea Vendedores', '✔ Crea Reportes en Pdf'] },
+    { name: 'Pro', monthPrice: 180000, yearPrice: 421, items: ['✔ Genera Qr infinitos', '✔ Escanea Qr', '✔ Genera Referidores', '✔ Crea Vendedores', '✔ Crea Reportes en Pdf'] },
   ];
 
   const handleBillingChange = (event, newBillingType) => {
@@ -37,17 +23,29 @@ export const PlanSelector = () => {
     }
   };
 
+  const handleBuyClick = async (plan) => {
+    const price = billingType === 'month' ? plan.monthPrice : plan.yearPrice;
+    const email = "user@example.com"; // Cambia esto según el usuario autenticado
+
+    try {
+      const initPointUrl = await createPayment(plan.name, price, null, email);
+      setPreferenceId(initPointUrl); // Establece el preferenceId para usar en el widget
+    } catch (error) {
+      console.error('Error al procesar el pago:', error);
+    }
+  };
+
   return (
-    <Box 
-      sx={{ 
-        minHeight: '100vh', 
-        background: theme.palette.mode === 'dark' 
-          ? 'linear-gradient(to right, #141E30, #243B55)'  // Fondo oscuro para tema oscuro
-          : 'linear-gradient(to right, #a1c4fd, #c2e9fb)', // Fondo claro para tema claro
-        pb: 12, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: theme.palette.mode === 'dark'
+          ? 'linear-gradient(to right, #141E30, #243B55)'
+          : 'linear-gradient(to right, #a1c4fd, #c2e9fb)',
+        pb: 12,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         color: theme.palette.text.primary
       }}
     >
@@ -67,33 +65,35 @@ export const PlanSelector = () => {
         </ToggleButtonGroup>
       </Box>
 
+      {paymentError && <Typography color="error" sx={{ mt: 2 }}>{paymentError}</Typography>}
+
       <Grid container spacing={4} justifyContent="center" sx={{ width: '100%', mt: 4, px: 2 }}>
         {plans.map((plan, index) => (
           <Grid item xs={12} md={4} key={index}>
             <Card sx={{
-              backgroundColor: theme.palette.mode === 'dark' 
-                ? 'rgba(255, 255, 255, 0.15)' // Fondo semi-transparente para tema oscuro
-                : '#FFFFFF', // Fondo blanco para tema claro
-              backdropFilter: theme.palette.mode === 'dark' ? 'blur(10px)' : 'none', 
+              backgroundColor: theme.palette.mode === 'dark'
+                ? 'rgba(255, 255, 255, 0.15)'
+                : '#FFFFFF',
+              backdropFilter: theme.palette.mode === 'dark' ? 'blur(10px)' : 'none',
               borderRadius: '16px',
-              boxShadow: theme.palette.mode === 'dark' 
-                ? '0 8px 32px 0 rgba(31, 38, 135, 0.37)' 
-                : '0 4px 16px 0 rgba(0, 0, 0, 0.1)', // Sombra más suave para tema claro
+              boxShadow: theme.palette.mode === 'dark'
+                ? '0 8px 32px 0 rgba(31, 38, 135, 0.37)'
+                : '0 4px 16px 0 rgba(0, 0, 0, 0.1)',
               transition: 'transform 0.3s, box-shadow 0.3s, border-color 0.3s',
-              border: `2px solid transparent`, // Borde inicial transparente
+              border: `2px solid transparent`,
               '&:hover': {
-                transform: isSmallScreen ? 'translateY(-10px)' : 'scale(1.05)', // Evita la escala en pantallas pequeñas
-                boxShadow: theme.palette.mode === 'dark' 
-                  ? '0 16px 32px 0 rgba(31, 38, 135, 0.37)' 
-                  : '0 8px 32px 0 rgba(0, 0, 0, 0.2)', // Sombra más intensa para tema claro
-                borderColor: theme.palette.mode === 'dark' 
-                  ? '#FFD700' // Borde dorado para tema oscuro
-                  : '#2980B9', // Borde azul para tema claro
+                transform: isSmallScreen ? 'translateY(-10px)' : 'scale(1.05)',
+                boxShadow: theme.palette.mode === 'dark'
+                  ? '0 16px 32px 0 rgba(31, 38, 135, 0.37)'
+                  : '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
+                borderColor: theme.palette.mode === 'dark'
+                  ? '#FFD700'
+                  : '#2980B9',
                 '& .MuiTypography-root': {
-                  transform: 'scale(1.05)', // Escala el texto para que no se difumine
+                  transform: 'scale(1.05)',
                 }
               },
-              willChange: 'transform, box-shadow, border-color', // Optimiza el renderizado del hover
+              willChange: 'transform, box-shadow, border-color',
             }}>
               <CardContent sx={{ textAlign: 'center', color: theme.palette.text.primary }}>
                 <Typography variant="h5" color="inherit">{plan.name}</Typography>
@@ -106,12 +106,23 @@ export const PlanSelector = () => {
                     <Typography key={idx} variant="body1" sx={{ mb: 2 }}>{item}</Typography>
                   ))}
                 </Box>
-                <Button variant="contained" color="primary" sx={{ mt: 4, backgroundColor: '#2980B9', '&:hover': { backgroundColor: '#1F618D' } }}>Comprar</Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  sx={{ mt: 4, backgroundColor: '#2980B9', '&:hover': { backgroundColor: '#1F618D' } }}
+                  onClick={() => handleBuyClick(plan)}
+                  disabled={paymentLoading}
+                >
+                  {paymentLoading ? 'Procesando...' : 'Comprar'}
+                </Button>
               </CardContent>
             </Card>
           </Grid>
         ))}
       </Grid>
+
+      {/* Renderizar el widget si preferenceId está disponible */}
+      {preferenceId && <PaymentWidget preferenceId={preferenceId} />}
     </Box>
   );
 };
