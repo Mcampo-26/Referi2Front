@@ -17,6 +17,7 @@ export const Register = () => {
   const location = useLocation();
   const showEmpresa = location.state?.showEmpresa || false;
   const preselectedEmpresa = location.state?.empresaName || '';
+  const role = localStorage.getItem('role'); // Obtén el rol del usuario
 
   const { createUsuario } = useUsuariosStore();
 
@@ -59,7 +60,7 @@ export const Register = () => {
       });
       return;
     }
-  
+
     try {
       const userData = {
         nombre: formData.nombre,
@@ -67,12 +68,12 @@ export const Register = () => {
         password: formData.password,
         telefono: formData.telefono,
       };
-  
-      // Solo agrega la empresa si está presente
-      if (formData.empresa) {
+
+      // Solo agrega la empresa si está presente y el rol es SuperAdmin
+      if (formData.empresa && role === 'SuperAdmin') {
         userData.empresa = formData.empresa;
       }
-  
+
       await createUsuario(userData);
       Swal.fire({
         icon: 'success',
@@ -88,7 +89,7 @@ export const Register = () => {
       });
     }
   };
-  
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -131,7 +132,8 @@ export const Register = () => {
                 autoComplete="organization"
                 value={formData.empresa}
                 onChange={handleChange}
-                 disabled // Para que no se pueda cambiar
+                disabled={role !== 'SuperAdmin'} // Permite editar solo si es SuperAdmin
+                helperText={role === 'SuperAdmin' ? 'Deja en blanco si no deseas asignar una empresa.' : ''}
               />
             )}
             <TextField

@@ -11,7 +11,7 @@ export const Login = () => {
   const [password, setPassword] = useState('');
   const [isAlertActive, setIsAlertActive] = useState(false);
   const navigate = useNavigate();
-  const { loginUsuario, role } = useUsuariosStore();
+  const { loginUsuario, solicitarRestauracion } = useUsuariosStore();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -19,7 +19,6 @@ export const Login = () => {
 
     if (isSuccess) {
       console.log('Inicio de sesión exitoso');
-
       setIsAlertActive(true); // Activar el desenfoque del fondo
 
       // Mostrar el SweetAlert con la animación y redirección
@@ -47,13 +46,41 @@ export const Login = () => {
 
           // Redirigir según el rol del usuario después de que SweetAlert se haya cerrado
           setTimeout(() => {
-           navigate('/home')
+            navigate('/home');
           }, 500); // Tiempo de espera para asegurar la finalización de la animación
         },
       });
     } else {
       alert('Error en el inicio de sesión');
     }
+  };
+
+  const handleForgotPassword = () => {
+    MySwal.fire({
+      title: 'Restaurar Contraseña',
+      input: 'email',
+      inputLabel: 'Ingresa tu correo electrónico',
+      inputPlaceholder: 'Correo electrónico',
+      showCancelButton: true,
+      confirmButtonText: 'Enviar enlace de restauración',
+      cancelButtonText: 'Cancelar',
+      preConfirm: async (email) => {
+        try {
+          const message = await solicitarRestauracion(email);
+          MySwal.fire({
+            title: '¡Correo enviado!',
+            text: message,
+            icon: 'success',
+          });
+        } catch (error) {
+          MySwal.fire({
+            title: 'Error',
+            text: error.message,
+            icon: 'error',
+          });
+        }
+      },
+    });
   };
 
   return (
@@ -101,7 +128,9 @@ export const Login = () => {
               <label htmlFor="remember_me" className="ml-2 block text-sm text-gray-900">Recuérdame</label>
             </div>
             <div className="text-sm mt-4">
-              <button type="button" className="font-medium text-blue-600 dark:text-blue-500 hover:text-indigo-500">¿Olvidaste tu contraseña?</button>
+              <button type="button" className="font-medium text-blue-600 dark:text-blue-500 hover:text-indigo-500" onClick={handleForgotPassword}>
+                ¿Olvidaste tu contraseña?
+              </button>
             </div>
           </div>
           <div>

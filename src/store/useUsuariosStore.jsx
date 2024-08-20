@@ -180,6 +180,34 @@ export const useUsuariosStore = create((set, get) => ({
       set({ loading: false, error: 'Error al obtener usuarios por empresa' });
     }
   },
+
+  solicitarRestauracion: async (email) => {
+    console.log('Iniciando solicitud de restauración para:', email);
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosInstance.post('/usuarios/solicitar-restauracion', { email });
+      console.log('Respuesta del servidor:', response.data);
+      set({ loading: false });
+      return response.data.message;
+    } catch (error) {
+      console.error('Error al solicitar restauración de contraseña:', error.response || error.message);
+      set({ loading: false, error: 'Error al solicitar restauración de contraseña' });
+      throw new Error(error.response?.data?.message || 'Error al solicitar restauración de contraseña');
+    }
+  },
+
+  restaurarPassword: async (token, password) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosInstance.post('/usuarios/restaurar-password', { token, password });
+      set({ loading: false });
+      return response.data.message;
+    } catch (error) {
+      console.error('Error al restaurar la contraseña:', error.response || error.message);
+      set({ loading: false, error: 'Error al restaurar la contraseña' });
+      throw new Error(error.response?.data?.message || 'Error al restaurar la contraseña');
+    }
+  },
 }));
 
 export default useUsuariosStore;
