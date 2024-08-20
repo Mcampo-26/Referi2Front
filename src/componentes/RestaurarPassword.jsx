@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import useUsuariosStore from '../store/useUsuariosStore';
 import Swal from 'sweetalert2';
@@ -18,20 +18,9 @@ export const RestaurarPassword = () => {
   const { restaurarPassword } = useUsuariosStore();
   const navigate = useNavigate();
 
-  // useEffect para verificar el token
-  useEffect(() => {
-    console.log("Token recibido:", token);
-    if (!token) {
-      console.error("Token no encontrado");
-    }
-  }, [token]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Intentando restaurar la contraseña");
-
     if (password !== confirmPassword) {
-      console.error("Las contraseñas no coinciden");
       Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -42,7 +31,6 @@ export const RestaurarPassword = () => {
 
     try {
       const responseMessage = await restaurarPassword(token, password);
-      console.log("Respuesta del servidor:", responseMessage);
       Swal.fire({
         icon: 'success',
         title: '¡Éxito!',
@@ -51,7 +39,6 @@ export const RestaurarPassword = () => {
         navigate('/login');
       });
     } catch (error) {
-      console.error("Error al restaurar la contraseña:", error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
