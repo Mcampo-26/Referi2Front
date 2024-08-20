@@ -20,6 +20,7 @@ import { Error404 } from './pages/Error404';
 import { Contacto } from './pages/Contacto';
 import useUsuariosStore from './store/useUsuariosStore';
 import {PlanSelector} from './componentes/PlanSelector'
+import {RestaurarPassword} from './componentes/RestaurarPassword'
 
 // Aquí defines los temas
 const lightTheme = createTheme({
@@ -112,6 +113,7 @@ function App() {
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/home" element={<Home />} />
           <Route path="/planSelector" element={<PlanSelector />} />
+          <Route path="/restaurarPass/:token" element={<RestaurarPassword />} />
         </Routes>
       </div>
     </ThemeProvider>
