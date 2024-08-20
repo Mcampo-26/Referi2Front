@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import useUsuariosStore from '../store/useUsuariosStore';
 import Swal from 'sweetalert2';
@@ -17,6 +17,11 @@ export const RestaurarPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const { restaurarPassword } = useUsuariosStore();
   const navigate = useNavigate();
+
+  // useEffect para verificar el token
+  useEffect(() => {
+    console.log("Token recibido:", token);
+  }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
