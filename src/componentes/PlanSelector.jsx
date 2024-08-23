@@ -29,10 +29,13 @@ export const PlanSelector = () => {
       console.error('No se pudo obtener el ID del usuario o el correo electrónico desde localStorage');
       return;
     }
-  
+
+    console.log('ID de usuario obtenido:', userId); // Log para verificar el userId
+    console.log('Correo electrónico obtenido:', email); // Log para verificar el email
+
     try {
       const initPointUrl = await createPayment(plan.name, price, null, email);
-  
+
       const paymentDetails = {
         userId: userId,
         planName: plan.name,
@@ -41,9 +44,9 @@ export const PlanSelector = () => {
         expiryDate: new Date(new Date().setMonth(new Date().getMonth() + (billingType === 'month' ? 1 : 12))),
         items: plan.items  // Envía los ítems del plan
       };
-  
+
       await savePaymentDetails(paymentDetails);
-  
+
       if (initPointUrl) {
         window.location.href = initPointUrl;
       } else {
@@ -53,7 +56,7 @@ export const PlanSelector = () => {
       console.error('Error al procesar el pago:', error);
     }
   };
-  
+
   return (
     <Box
       sx={{
