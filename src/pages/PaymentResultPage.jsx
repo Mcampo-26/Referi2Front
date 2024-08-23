@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import { usePaymentStore } from '../store/usePaymentStore'; // Importa tu estado de Zustand
+import Swal from 'sweetalert2';
 
 export const PaymentResultPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { savePaymentDetails } = usePaymentStore(); // Destructura la función que guarda los detalles del pago
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -17,30 +19,65 @@ export const PaymentResultPage = () => {
     const expiryDate = new Date();
     expiryDate.setMonth(expiryDate.getMonth() + 1); // Ejemplo: 1 mes de suscripción
 
-    if (status === 'approved') {
-      // Llama a la API para guardar los detalles del pago
-      const savePaymentDetails = async () => {
+    const handlePaymentResult = async () => {
+      if (status === 'approved') {
         try {
-          const response = await axios.post('/Pagos/save_payment_details', {
+          await savePaymentDetails({
             userId,
-            planName: 'Nombre del Plan', // Deberías obtener el nombre del plan adecuado
+            planName: 'Nombre del Plan', // Obtén el nombre del plan adecuado desde el backend si es posible
             amount,
             paymentId,
             expiryDate,
+            items: [],  // Agrega los ítems específicos si tienes esta información
           });
-          console.log('Detalles de pago guardados:', response.data);
+
+          Swal.fire({
+            title: '¡Pago Exitoso!',
+            text: 'Gracias por tu compra. Tu plan ha sido activado.',
+            icon: 'success',
+            confirmButtonText: 'OK',
+            timer: 3000,
+            timerProgressBar: true,
+            willClose: () => {
+              navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
+            }
+          });
         } catch (error) {
-          console.error('Error al guardar los detalles del pago:', error);
+          Swal.fire({
+            title: 'Error',
+            text: 'Hubo un problema al procesar tu pago. Por favor, inténtalo de nuevo.',
+            icon: 'error',
+            confirmButtonText: 'OK',
+            willClose: () => {
+              navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
+            }
+          });
         }
-      };
+      } else if (status === 'failure') {
+        Swal.fire({
+          title: 'Pago Fallido',
+          text: 'Tu pago no pudo ser procesado. Por favor, revisa tu método de pago o inténtalo de nuevo.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+          willClose: () => {
+            navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
+          }
+        });
+      } else if (status === 'pending') {
+        Swal.fire({
+          title: 'Pago Pendiente',
+          text: 'Tu pago está pendiente de confirmación. Te notificaremos cuando esté completo.',
+          icon: 'info',
+          confirmButtonText: 'OK',
+          willClose: () => {
+            navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
+          }
+        });
+      }
+    };
 
-      savePaymentDetails();
-    }
-
-    setTimeout(() => {
-      navigate('/');
-    }, 3000); // Redirige después de 3 segundos
-  }, [location, navigate]);
+    handlePaymentResult();
+  }, [location, navigate, savePaymentDetails]);
 
   return <div>Procesando resultado del pago...</div>;
 };
