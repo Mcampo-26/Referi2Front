@@ -30,37 +30,39 @@ const MySwal = withReactContent(Swal);
 
 export const Empresas = () => {
   const navigate = useNavigate();
-  const { empresas, getAllEmpresas, loading, error, createEmpresa, updateEmpresa, deleteEmpresa, totalPages } = useEmpresasStore();
+  const { empresa, empresas, getAllEmpresas, getEmpresaById, loading, error, createEmpresa, updateEmpresa, deleteEmpresa } = useEmpresasStore();
   const [showModal, setShowModal] = useState(false);
   const [newEmpresaName, setNewEmpresaName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editingEmpresaId, setEditingEmpresaId] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Cargar las empresas cuando el componente se monta y cuando la página actual cambia
+  const role = localStorage.getItem('role');
+  const empresaId = localStorage.getItem('empresaId');
+
   useEffect(() => {
-    getAllEmpresas();
-  }, [currentPage]);
+    if (role === 'SuperAdmin') {
+      getAllEmpresas();
+    } else if (role === 'Admin' && empresaId) {
+      getEmpresaById(empresaId);
+    }
+  }, [role, empresaId, getAllEmpresas, getEmpresaById]);
 
-  // Verificar los datos obtenidos
   useEffect(() => {
-    console.log('Empresas en el estado:', empresas);
-  }, [empresas]);
+    if (role === 'Admin' && empresa) {
+      // Si es Admin, y hay una empresa cargada, la agregamos al array para que se renderice
+      setFilteredEmpresas([empresa]);
+    } else {
+      setFilteredEmpresas(empresas);
+    }
+  }, [role, empresa, empresas]);
 
-  // Filtrar las empresas según el término de búsqueda
-  const filteredEmpresas = Array.isArray(empresas) 
-    ? empresas.filter((empresa) =>
-        empresa?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
+  const [filteredEmpresas, setFilteredEmpresas] = useState([]);
 
-  // Alternar el modal para crear/editar una empresa
   const toggleModal = () => {
     setShowModal(!showModal);
   };
 
-  // Preparar el modal para crear una nueva empresa
   const handleCreate = () => {
     setNewEmpresaName('');
     setIsEditing(false);
@@ -68,7 +70,6 @@ export const Empresas = () => {
     toggleModal();
   };
 
-  // Preparar el modal para editar una empresa existente
   const handleEdit = (empresa) => {
     setNewEmpresaName(empresa.name);
     setIsEditing(true);
@@ -76,7 +77,6 @@ export const Empresas = () => {
     toggleModal();
   };
 
-  // Eliminar una empresa
   const handleDelete = (_id) => {
     MySwal.fire({
       title: "¿Estás seguro de que deseas eliminar esta empresa?",
@@ -97,7 +97,11 @@ export const Empresas = () => {
               confirmButtonColor: "#3085d6",
               confirmButtonText: "Ok",
             });
-            getAllEmpresas(); // Refrescar la lista de empresas
+            if (role === 'SuperAdmin') {
+              getAllEmpresas();
+            } else if (role === 'Admin' && empresaId) {
+              getEmpresaById(empresaId);
+            }
           })
           .catch((error) => {
             MySwal.fire({
@@ -111,91 +115,50 @@ export const Empresas = () => {
     });
   };
 
-  // Manejar la creación o actualización de una empresa
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (newEmpresaName.trim() !== '') {
-      toggleModal(); // Cierra el modal antes de mostrar el SweetAlert
+      toggleModal();
 
-      setTimeout(async () => {
-        try {
-          MySwal.fire({
-            title: "Guardando...",
-            text: "Por favor espera mientras se guarda la empresa.",
-            allowOutsideClick: false,
-            didOpen: () => {
-              Swal.showLoading();
-            },
-            customClass: {
-              popup: 'z-50' // Clase Tailwind para ajustar el z-index
-            },
-            backdrop: `rgba(0,0,0,0.4)`
-          });
-
-          if (isEditing) {
-            await updateEmpresa({ empresaId: editingEmpresaId, updatedEmpresa: { name: newEmpresaName } });
-          } else {
-            await createEmpresa({ name: newEmpresaName });
-          }
-
-          await getAllEmpresas(); // Refrescar la lista de empresas
-          MySwal.close();
-          MySwal.fire({
-            icon: "success",
-            title: "Empresas actualizadas",
-            text: "Las empresas se han actualizado correctamente.",
-            customClass: {
-              popup: 'z-50' // Clase Tailwind para ajustar el z-index
-            },
-            backdrop: `rgba(0,0,0,0.4)`
-          });
-
-        } catch (error) {
-          MySwal.close();
-          MySwal.fire({
-            icon: "error",
-            title: "Error",
-            text: "Hubo un error al actualizar las empresas.",
-            customClass: {
-              popup: 'z-50' // Clase Tailwind para ajustar el z-index
-            },
-            backdrop: `rgba(0,0,0,0.4)`
-          });
-          console.error("Error al actualizar las empresas:", error);
+      try {
+        if (isEditing) {
+          await updateEmpresa({ empresaId: editingEmpresaId, updatedEmpresa: { name: newEmpresaName } });
+        } else {
+          await createEmpresa({ name: newEmpresaName });
         }
-      }, 500); // Retraso de 500ms antes de mostrar el SweetAlert "Guardando..."
+
+        if (role === 'SuperAdmin') {
+          getAllEmpresas();
+        } else if (role === 'Admin' && empresaId) {
+          getEmpresaById(empresaId);
+        }
+      } catch (error) {
+        MySwal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Hubo un error al actualizar la empresa.",
+        });
+        console.error("Error al actualizar la empresa:", error);
+      }
     } else {
       MySwal.fire({
         icon: "error",
         title: "Error",
         text: "El nombre de la empresa no puede estar vacío.",
-        customClass: {
-          popup: 'z-50' // Clase Tailwind para ajustar el z-index
-        },
-        backdrop: `rgba(0,0,0,0.4)`
       });
     }
   };
 
-  // Navegación de páginas
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  // Redirigir a los detalles de la empresa
   const handleRowClick = (id) => {
     navigate(`/EmpresaDetails/${id}`);
   };
 
-  // Renderizado del componente
+  const filteredEmpresasToShow = searchTerm
+    ? filteredEmpresas.filter((empresa) =>
+        empresa.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : filteredEmpresas;
+
   return (
     <Container maxWidth="md">
       <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
@@ -275,7 +238,7 @@ export const Empresas = () => {
         <Typography color="error" align="center">
           Error al cargar datos: {error}
         </Typography>
-      ) : filteredEmpresas && filteredEmpresas.length > 0 ? (
+      ) : filteredEmpresasToShow && filteredEmpresasToShow.length > 0 ? (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -293,7 +256,7 @@ export const Empresas = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredEmpresas.map((empresa, index) => (
+              {filteredEmpresasToShow.map((empresa, index) => (
                 <TableRow key={`${empresa._id}-${index}`} onClick={() => handleRowClick(empresa._id)} style={{ cursor: 'pointer' }}>
                   <TableCell>{empresa.name}</TableCell>
                   <TableCell align="right">
@@ -318,15 +281,6 @@ export const Empresas = () => {
           Ningún dato disponible en esta tabla
         </Typography>
       )}
-      <div className="flex justify-between items-center mt-4">
-        <Typography>
-          Mostrando registros del {(currentPage - 1) * 10 + 1} al {Math.min(currentPage * 10, empresas.length)} de un total de {empresas.length} registros
-        </Typography>
-        <div>
-          <Button variant="outlined" className="mr-2" onClick={handlePreviousPage} disabled={currentPage === 1}>Anterior</Button>
-          <Button variant="outlined" onClick={handleNextPage} disabled={currentPage === totalPages}>Siguiente</Button>
-        </div>
-      </div>
     </Container>
   );
 };

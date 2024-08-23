@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import withReactContent from "sweetalert2-react-content";
-import { EditUserModal } from './EditUserModal';
+import { EditUserModal } from "./EditUserModal";
 import useUsuariosStore from "../store/useUsuariosStore";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import {
   Container,
   Typography,
@@ -20,34 +20,53 @@ import {
   Paper,
   CircularProgress,
   Box,
-  useTheme
-} from '@mui/material';
+  useTheme,
+} from "@mui/material";
 
 const MySwal = withReactContent(Swal);
 
-const StyledTableCell = ({ children, onClick, orderBy, column, orderDirection }) => {
+const StyledTableCell = ({
+  children,
+  onClick,
+  orderBy,
+  column,
+  orderDirection,
+}) => {
   return (
-    <TableCell onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
-      <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-        {children} {orderBy === column && (orderDirection === 'asc' ? '▲' : '▼')}
+    <TableCell
+      onClick={onClick}
+      style={{ cursor: onClick ? "pointer" : "default" }}
+    >
+      <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
+        {children}{" "}
+        {orderBy === column && (orderDirection === "asc" ? "▲" : "▼")}
       </Typography>
     </TableCell>
   );
 };
 
 export const UserList = () => {
-  const [orderBy, setOrderBy] = useState('nombre');
-  const [orderDirection, setOrderDirection] = useState('asc');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [orderBy, setOrderBy] = useState("nombre");
+  const [orderDirection, setOrderDirection] = useState("asc");
+  const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editedUser, setEditedUser] = useState(null);
 
   // Obtén role, empresaId, y empresaName directamente de localStorage
-  const role = localStorage.getItem('role');
-  const empresaId = localStorage.getItem('empresaId');
-  const empresaName = localStorage.getItem('empresaName');
+  const role = localStorage.getItem("role");
+  const empresaId = localStorage.getItem("empresaId");
+  const empresaName = localStorage.getItem("empresaName");
 
-  const { getUsuarios, getUsuariosByEmpresa, usuarios, loading: loadingUsuarios, deleteUsuario, totalRecords, totalPages, currentPage } = useUsuariosStore();
+  const {
+    getUsuarios,
+    getUsuariosByEmpresa,
+    usuarios,
+    loading: loadingUsuarios,
+    deleteUsuario,
+    totalRecords,
+    totalPages,
+    currentPage,
+  } = useUsuariosStore();
   const navigate = useNavigate();
   const theme = useTheme();
 
@@ -63,19 +82,19 @@ export const UserList = () => {
 
   const handleSort = (column) => {
     if (column === orderBy) {
-      setOrderDirection(orderDirection === 'asc' ? 'desc' : 'asc');
+      setOrderDirection(orderDirection === "asc" ? "desc" : "asc");
     } else {
       setOrderBy(column);
-      setOrderDirection('asc');
+      setOrderDirection("asc");
     }
   };
 
   const handleDelete = (_id, email) => {
     if (email === "admin@admin.com") {
       Swal.fire({
-        icon: 'warning',
-        title: 'No permitido',
-        text: 'No se puede eliminar al administrador.',
+        icon: "warning",
+        title: "No permitido",
+        text: "No se puede eliminar al administrador.",
       });
       return;
     }
@@ -113,18 +132,18 @@ export const UserList = () => {
     });
   };
 
-  const handleEdit = (usuario) => {  
-    setEditedUser(usuario);  // Establece el usuario seleccionado
-    setShowModal(true);  // Abre el modal
+  const handleEdit = (usuario) => {
+    setEditedUser(usuario); // Establece el usuario seleccionado
+    setShowModal(true); // Abre el modal
   };
 
   const handleClear = () => {
-    setSearchTerm('');
+    setSearchTerm("");
   };
 
   const handleCloseEditModal = () => {
-    setEditedUser(null);  // Limpia el estado de usuario editado
-    setShowModal(false);  // Cierra el modal
+    setEditedUser(null); // Limpia el estado de usuario editado
+    setShowModal(false); // Cierra el modal
   };
 
   const handlePreviousPage = () => {
@@ -139,22 +158,21 @@ export const UserList = () => {
     }
   };
 
-  const filteredUsers = usuarios.filter((usuario) =>
-    usuario &&
-    usuario.nombre &&
-    (
-      usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  const filteredUsers = usuarios.filter(
+    (usuario) =>
+      usuario &&
+      usuario.nombre &&
+      (usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        usuario._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        usuario.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const sortedUsers = filteredUsers.sort((a, b) => {
     const aValue = a[orderBy];
     const bValue = b[orderBy];
 
-    if (aValue < bValue) return orderDirection === 'asc' ? -1 : 1;
-    if (aValue > bValue) return orderDirection === 'asc' ? 1 : -1;
+    if (aValue < bValue) return orderDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return orderDirection === "asc" ? 1 : -1;
     return 0;
   });
 
@@ -165,136 +183,185 @@ export const UserList = () => {
   return (
     <Container maxWidth="md">
       <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
-        <Typography variant="h4" mb={4}>Lista de Usuarios</Typography>
+        <Typography variant="h4" mb={4}>
+          Lista de Usuarios
+        </Typography>
       </Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} mt={2} flexWrap="wrap">
-      <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
-  <TextField
-    variant="outlined"
-    placeholder="Buscar Usuarios..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-    sx={{
-      width: { xs: '100%', sm: '300px' },
-      '& .MuiOutlinedInput-root': {
-        '& fieldset': {
-          borderColor: 'black', // Borde negro para ambos temas
-        },
-        '&:hover fieldset': {
-          borderColor: 'black', // Borde negro al pasar el cursor
-        },
-        '&.Mui-focused fieldset': {
-          borderColor: 'black', // Borde negro al enfocarse
-        },
-      },
-      '& .MuiInputBase-input': {
-        color: 'black', // Texto negro para ambos temas
-      },
-      '& .MuiInputLabel-root': {
-        color: 'black', // Placeholder negro para ambos temas
-      },
-      '& .MuiInputBase-input::placeholder': {
-        color: 'black', // Placeholder negro para ambos temas
-        opacity: 1, // Asegura que el placeholder sea visible
-      },
-    }}
-  />
-  {searchTerm && (
-    <Button
-      variant="contained"
-      color="secondary"
-      onClick={handleClear}
-      sx={{ ml: 1 }}
-    >
-      Limpiar
-    </Button>
-  )}
-</Box>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={4}
+        mt={2}
+        flexWrap="wrap"
+      >
+        <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
+        <TextField
+            variant="outlined"
+            placeholder="Buscar Empresas..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{
+              width: { xs: '100%', sm: '300px' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'white',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'white',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: 'white',
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: 'white',
+              },
+              '& .MuiInputLabel-root': {
+                color: 'white',
+              },
+            }}
+          />
+          {searchTerm && (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleClear}
+              sx={{ ml: 1 }}
+            >
+              Limpiar
+            </Button>
+          )}
+        </Box>
 
         <Button
-  variant="contained"
-  color="primary"
-  onClick={() => {
-    console.log('Empresa del usuario logueado:', empresaName); // Debería mostrar el nombre de la empresa
-    navigate('/register', { state: { showEmpresa: true, empresaName } });
-  }}
-  sx={{ mt: { xs: 2, sm: 0 } }}
->
-  Nuevo Usuario
-</Button>
-
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            console.log("Empresa del usuario logueado:", empresaName); // Debería mostrar el nombre de la empresa
+            navigate("/register", {
+              state: { showEmpresa: true, empresaName },
+            });
+          }}
+          sx={{ mt: { xs: 2, sm: 0 } }}
+        >
+          Nuevo Usuario
+        </Button>
       </Box>
 
       {sortedUsers.length ? (
-        <TableContainer component={Paper} style={{ marginTop: '2rem' }}>
+        <TableContainer component={Paper} style={{ marginTop: "2rem" }}>
           <Table>
             <TableHead>
               <TableRow>
-                <StyledTableCell onClick={() => handleSort('nombre')} orderBy={orderBy} column="nombre" orderDirection={orderDirection}>
+                <StyledTableCell
+                  onClick={() => handleSort("nombre")}
+                  orderBy={orderBy}
+                  column="nombre"
+                  orderDirection={orderDirection}
+                >
                   Nombre
                 </StyledTableCell>
-                <StyledTableCell onClick={() => handleSort('email')} orderBy={orderBy} column="email" orderDirection={orderDirection}>
+                <StyledTableCell
+                  onClick={() => handleSort("email")}
+                  orderBy={orderBy}
+                  column="email"
+                  orderDirection={orderDirection}
+                >
                   Email
                 </StyledTableCell>
-                <StyledTableCell onClick={() => handleSort('empresa')} orderBy={orderBy} column="empresa" orderDirection={orderDirection}>
+                <StyledTableCell
+                  onClick={() => handleSort("empresa")}
+                  orderBy={orderBy}
+                  column="empresa"
+                  orderDirection={orderDirection}
+                >
                   Empresa
                 </StyledTableCell>
-                <StyledTableCell onClick={() => handleSort('role')} orderBy={orderBy} column="role" orderDirection={orderDirection}>
+                <StyledTableCell
+                  onClick={() => handleSort("role")}
+                  orderBy={orderBy}
+                  column="role"
+                  orderDirection={orderDirection}
+                >
                   Rol
                 </StyledTableCell>
                 <TableCell>
-                  <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+                  <Typography
+                    variant="h6"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
+                  >
                     Acciones
                   </Typography>
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedUsers.map((usuario) => {  // Iteramos sobre `usuarios`
-                const isAdmin = usuario.email === "admin@admin.com";
-                return (
-                  <TableRow key={usuario._id}>
-                    <TableCell>{usuario.nombre || "Nombre no disponible"}</TableCell>
-                    <TableCell>{usuario.email || "Email no disponible"}</TableCell>
-                    <TableCell>{usuario.empresa ? usuario.empresa.name : "Empresa no disponible"}</TableCell>
-                    <TableCell>{usuario.role?.name || "Rol no disponible"}</TableCell>
-                    <TableCell>
-                      <FontAwesomeIcon
-                        icon={faPenToSquare}
-                        className={`h-6 w-5 ${isAdmin ? 'text-gray-500' : 'text-blue-400 hover:text-blue-700 cursor-pointer'}`}
-                        onClick={() => {
-                          if (isAdmin) {
-                            Swal.fire({
-                              icon: 'warning',
-                              title: 'No permitido',
-                              text: 'No se puede editar al administrador.',
-                            });
-                          } else {
-                            handleEdit(usuario);  // Pasamos `usuario` a `handleEdit`
-                          }
-                        }}
-                      />
-                      <FontAwesomeIcon
-                        icon={faTrash}
-                        className={`h-4 w-4 ${isAdmin ? 'text-gray-500' : 'text-red-600 hover:text-red-800 cursor-pointer'}`}
-                        onClick={() => {
-                          if (isAdmin) {
-                            Swal.fire({
-                              icon: 'warning',
-                              title: 'No permitido',
-                              text: 'No se puede eliminar al administrador.',
-                            });
-                          } else {
-                            handleDelete(usuario._id, usuario.email);  // Usamos `_id` y `email` para eliminar
-                          }
-                        }}
-                        style={{ marginLeft: '10px' }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
+  {sortedUsers.map((usuario) => {
+    const isAdmin = usuario.email === "admin@admin.com";
+    const isSuperAdmin = usuario.role?.name === "SuperAdmin"; // Verifica si el usuario tiene rol de SuperAdmin
+
+    return (
+      <TableRow key={usuario._id}>
+        <TableCell>{usuario.nombre || "Nombre no disponible"}</TableCell>
+        <TableCell>{usuario.email || "Email no disponible"}</TableCell>
+        <TableCell>{usuario.empresa ? usuario.empresa.name : "Empresa no disponible"}</TableCell>
+        <TableCell>{usuario.role?.name || "Rol no disponible"}</TableCell>
+        <TableCell>
+          {/* Botón de Editar */}
+          <FontAwesomeIcon
+            icon={faPenToSquare}
+            className={`h-6 w-5 ${
+              isAdmin || (role === "Admin" && isSuperAdmin)
+                ? 'text-gray-500'
+                : 'text-blue-400 hover:text-blue-700 cursor-pointer'
+            }`}
+            onClick={() => {
+              if (isAdmin || (role === "Admin" && isSuperAdmin)) {
+                Swal.fire({
+                  icon: 'warning',
+                  title: 'No permitido',
+                  text: 'No se puede editar a este usuario.',
+                });
+              } else {
+                handleEdit(usuario);
+              }
+            }}
+            style={{
+              cursor: isAdmin || (role === "Admin" && isSuperAdmin) ? 'not-allowed' : 'pointer'
+            }}
+          />
+          {/* Botón de Eliminar */}
+          <FontAwesomeIcon
+            icon={faTrash}
+            className={`h-4 w-4 ${
+              isAdmin || (role === "Admin" && isSuperAdmin)
+                ? 'text-gray-500'
+                : 'text-red-600 hover:text-red-800 cursor-pointer'
+            }`}
+            onClick={() => {
+              if (isAdmin || (role === "Admin" && isSuperAdmin)) {
+                Swal.fire({
+                  icon: 'warning',
+                  title: 'No permitido',
+                  text: 'No se puede eliminar a este usuario.',
+                });
+              } else {
+                handleDelete(usuario._id, usuario.email);
+              }
+            }}
+            style={{
+              marginLeft: '10px',
+              cursor: isAdmin || (role === "Admin" && isSuperAdmin) ? 'not-allowed' : 'pointer'
+            }}
+          />
+        </TableCell>
+      </TableRow>
+    );
+  })}
+</TableBody>
+
           </Table>
         </TableContainer>
       ) : (
@@ -342,7 +409,7 @@ export const UserList = () => {
         <EditUserModal
           isOpen={showModal}
           handleClose={handleCloseEditModal}
-          editedUser={editedUser}  // Pasa el usuario seleccionado al modal
+          editedUser={editedUser} // Pasa el usuario seleccionado al modal
         />
       )}
     </Container>

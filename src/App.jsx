@@ -21,6 +21,8 @@ import { Contacto } from './pages/Contacto';
 import useUsuariosStore from './store/useUsuariosStore';
 import {PlanSelector} from './componentes/PlanSelector'
 import {RestaurarPassword} from './componentes/RestaurarPassword'
+import {PaymentResultPage} from './pages/PaymentResultPage'
+import {UserPlanDetails} from './pages/UserPlanDetails'
 
 // Aquí defines los temas
 const lightTheme = createTheme({
@@ -114,6 +116,8 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/planSelector" element={<PlanSelector />} />
           <Route path="/restaurarPass/:token" element={<RestaurarPassword />} />
+          <Route path="/payment-result/:status" element={<PaymentResultPage />} />
+          <Route path="/UserPlan" element={<UserPlanDetails />} />
         </Routes>
       </div>
     </ThemeProvider>

@@ -54,6 +54,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
         { id: 9, text: "Roles", to: "/roles" },
         { id: 11, text: "Planes de Pago", to: "/planSelector" }, // Nueva opción agregada
         { id: 12, text: "Contacto", to: "/contacto" },
+        { id: 13, text: "Cuenta", to: "/UserPlan" },
         { id: 5, text: "Cerrar Sesión", action: handleLogout },
       ]
     : role === "Admin"
@@ -62,6 +63,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
         { id: 2, text: "Escanear QR", to: "/Escanear" },
         { id: 4, text: "Mis QR", to: "/Referidos" },
         { id: 6, text: "Usuarios", to: "/Users" },
+        { id: 10, text: "Empresas", to: "/Empresas" },
         
         { id: 5, text: "Cerrar Sesión", action: handleLogout },
       ]
