@@ -1,19 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Grid, Card, CardContent, Typography, Button, ToggleButton, ToggleButtonGroup, useTheme, useMediaQuery } from "@mui/material";
 import usePaymentStore from '../store/usePaymentStore';
 import PaymentWidget from './PaymentWidget';
+import axiosInstance from '../utilities/axiosInstance'; // Asegúrate de usar tu instancia configurada de Axios
 
 export const PlanSelector = () => {
   const [billingType, setBillingType] = useState("month");
-  const { createPayment, savePaymentDetails, paymentLoading, paymentError } = usePaymentStore();
+  const [plans, setPlans] = useState([]);
+  const { createPayment, paymentLoading, paymentError, savePaymentDetails } = usePaymentStore();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const plans = [
-    { name: 'Basic', monthPrice: 102, yearPrice: 205, items: ['✔ Genera hasta 20 Qr', '✔ Escanea Qr', '✔ Genera Referidores'] },
-    { name: 'Premium', monthPrice: 75000, yearPrice: 313, items: ['✔ Genera hasta 50 Qr', '✔ Escanea Qr', '✔ Genera Referidores', '✔ Crea Vendedores', '✔ Crea Reportes en Pdf'] },
-    { name: 'Pro', monthPrice: 180000, yearPrice: 421, items: ['✔ Genera Qr infinitos', '✔ Escanea Qr', '✔ Genera Referidores', '✔ Crea Vendedores', '✔ Crea Reportes en Pdf'] },
-  ];
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await axiosInstance.get('/planes');
+        setPlans(response.data);
+      } catch (error) {
+        console.error('Error al obtener los planes:', error);
+      }
+    };
+
+    fetchPlans();
+  }, []);
 
   const handleBillingChange = (event, newBillingType) => {
     if (newBillingType) {
@@ -25,26 +34,27 @@ export const PlanSelector = () => {
     const price = billingType === 'month' ? plan.monthPrice : plan.yearPrice;
     const email = localStorage.getItem('userEmail'); // Cambia esto según el usuario autenticado
     const userId = localStorage.getItem('userId'); // Obtén el userId desde localStorage
-    
+
     if (!userId) {
       console.error('No se pudo obtener el ID del usuario desde localStorage');
       return;
     }
-  
+
     try {
       const initPointUrl = await createPayment(plan.name, price, null, email);
-  
+      console.log('Init Point URL:', initPointUrl);
+
       const paymentDetails = {
-        userId: userId,
+        userId,
         planName: plan.name,
         amount: price,
         paymentId: 'simulated_payment_id',
         expiryDate: new Date(new Date().setMonth(new Date().getMonth() + (billingType === 'month' ? 1 : 12))),
-        items: plan.items  // Envía los ítems del plan
+        items: plan.items,  // Envía los ítems del plan
       };
-  
+
       await savePaymentDetails(paymentDetails);
-  
+
       if (initPointUrl) {
         window.location.href = initPointUrl;
       } else {
@@ -54,7 +64,7 @@ export const PlanSelector = () => {
       console.error('Error al procesar el pago:', error);
     }
   };
-  
+
   return (
     <Box
       sx={{
@@ -140,6 +150,9 @@ export const PlanSelector = () => {
           </Grid>
         ))}
       </Grid>
+
+      {/* Renderizar el widget si preferenceId está disponible */}
+      {preferenceId && <PaymentWidget preferenceId={preferenceId} />}
     </Box>
   );
 };
