@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Grid, Card, CardContent, Typography, Button, ToggleButton, ToggleButtonGroup, useTheme, useMediaQuery } from "@mui/material";
 import usePaymentStore from '../store/usePaymentStore';
-import PaymentWidget from './PaymentWidget';
+import PaymentWidget from './PaymentWidget'; // Si realmente necesitas PaymentWidget
 import axiosInstance from '../utilities/axiosInstance'; // Asegúrate de usar tu instancia configurada de Axios
 
 export const PlanSelector = () => {
@@ -150,9 +150,6 @@ export const PlanSelector = () => {
           </Grid>
         ))}
       </Grid>
-
-      {/* Renderizar el widget si preferenceId está disponible */}
-      {preferenceId && <PaymentWidget preferenceId={preferenceId} />}
     </Box>
   );
 };
