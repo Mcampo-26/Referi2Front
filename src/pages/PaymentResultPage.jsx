@@ -31,48 +31,44 @@ export const PaymentResultPage = () => {
             items: [],  // Agrega los ítems específicos si tienes esta información
           });
 
-          Swal.fire({
+          await Swal.fire({
             title: '¡Pago Exitoso!',
             text: 'Gracias por tu compra. Tu plan ha sido activado.',
             icon: 'success',
             confirmButtonText: 'OK',
             timer: 3000,
             timerProgressBar: true,
-            willClose: () => {
-              navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
-            }
           });
+          
+          navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
         } catch (error) {
-          Swal.fire({
+          await Swal.fire({
             title: 'Error',
             text: 'Hubo un problema al procesar tu pago. Por favor, inténtalo de nuevo.',
             icon: 'error',
             confirmButtonText: 'OK',
-            willClose: () => {
-              navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
-            }
           });
+          
+          navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
         }
       } else if (status === 'failure') {
-        Swal.fire({
+        await Swal.fire({
           title: 'Pago Fallido',
           text: 'Tu pago no pudo ser procesado. Por favor, revisa tu método de pago o inténtalo de nuevo.',
           icon: 'error',
           confirmButtonText: 'OK',
-          willClose: () => {
-            navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
-          }
         });
+        
+        navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
       } else if (status === 'pending') {
-        Swal.fire({
+        await Swal.fire({
           title: 'Pago Pendiente',
           text: 'Tu pago está pendiente de confirmación. Te notificaremos cuando esté completo.',
           icon: 'info',
           confirmButtonText: 'OK',
-          willClose: () => {
-            navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
-          }
         });
+        
+        navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
       }
     };
 
