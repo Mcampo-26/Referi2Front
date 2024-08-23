@@ -22,45 +22,38 @@ export const PlanSelector = () => {
   };
 
   const handleBuyClick = async (plan) => {
-  const price = billingType === 'month' ? plan.monthPrice : plan.yearPrice;
-  
-  // Obtener el userId desde localStorage
-  const userId = localStorage.getItem('userId');
-  
-  // Validar que userId no sea nulo o indefinido
-  if (!userId) {
-    console.error('El ID de usuario es nulo o indefinido.');
-    return; // Detiene la ejecución si no hay un userId válido
-  }
-
-  try {
-    const initPointUrl = await createPayment(plan.name, price, null, email);
-    console.log('Init Point URL:', initPointUrl);
-
-    // Preparar los detalles del pago
-    const paymentDetails = {
-      userId,
-      planName: plan.name,
-      amount: price,
-      paymentId: 'simulated_payment_id', // Puedes ajustar esto según el ID real del pago
-      expiryDate: new Date(new Date().setMonth(new Date().getMonth() + (billingType === 'month' ? 1 : 12))),
-      items: plan.items,  // Envía los ítems del plan
-    };
-
-    // Guardar los detalles del pago
-    await savePaymentDetails(paymentDetails);
-
-    if (initPointUrl) {
-      // Redirigir a la URL de Mercado Pago
-      window.location.href = initPointUrl;
-    } else {
-      console.error('No se recibió un init_point en la respuesta');
+    const price = billingType === 'month' ? plan.monthPrice : plan.yearPrice;
+    const email = localStorage.getItem('userEmail'); // Obtén el email del usuario autenticado
+    const userId = localStorage.getItem('userId'); // Obtén el userId desde localStorage
+    
+    if (!userId || !email) {
+      console.error('No se pudo obtener el ID del usuario o el correo electrónico desde localStorage');
+      return;
     }
-  } catch (error) {
-    console.error('Error al procesar el pago:', error);
-  }
-};
-
+  
+    try {
+      const initPointUrl = await createPayment(plan.name, price, null, email);
+  
+      const paymentDetails = {
+        userId: userId,
+        planName: plan.name,
+        amount: price,
+        paymentId: 'simulated_payment_id',
+        expiryDate: new Date(new Date().setMonth(new Date().getMonth() + (billingType === 'month' ? 1 : 12))),
+        items: plan.items  // Envía los ítems del plan
+      };
+  
+      await savePaymentDetails(paymentDetails);
+  
+      if (initPointUrl) {
+        window.location.href = initPointUrl;
+      } else {
+        console.error('No se recibió un init_point en la respuesta');
+      }
+    } catch (error) {
+      console.error('Error al procesar el pago:', error);
+    }
+  };
   
   return (
     <Box
@@ -147,6 +140,9 @@ export const PlanSelector = () => {
           </Grid>
         ))}
       </Grid>
+
+      {/* Renderizar el widget si preferenceId está disponible */}
+      {preferenceId && <PaymentWidget preferenceId={preferenceId} />}
     </Box>
   );
 };
