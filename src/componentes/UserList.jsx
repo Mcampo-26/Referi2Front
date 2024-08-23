@@ -196,33 +196,31 @@ export const UserList = () => {
         flexWrap="wrap"
       >
         <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
-          <TextField
+
+        <TextField
             variant="outlined"
-            placeholder="Buscar Usuarios..."
+            placeholder="Buscar Empresas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
-              width: { xs: "100%", sm: "300px" },
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": {
-                  borderColor: "black", // Borde negro para ambos temas
+              width: { xs: '100%', sm: '300px' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'white',
                 },
-                "&:hover fieldset": {
-                  borderColor: "black", // Borde negro al pasar el cursor
+                '&:hover fieldset': {
+                  borderColor: 'white',
                 },
-                "&.Mui-focused fieldset": {
-                  borderColor: "black", // Borde negro al enfocarse
+                '&.Mui-focused fieldset': {
+                  borderColor: 'white',
                 },
               },
-              "& .MuiInputBase-input": {
-                color: "black", // Texto negro para ambos temas
+              '& .MuiInputBase-input': {
+                color: 'white',
               },
-              "& .MuiInputLabel-root": {
-                color: "black", // Placeholder negro para ambos temas
-              },
-              "& .MuiInputBase-input::placeholder": {
-                color: "black", // Placeholder negro para ambos temas
-                opacity: 1, // Asegura que el placeholder sea visible
+              '& .MuiInputLabel-root': {
+                color: 'white'
+        
               },
             }}
           />

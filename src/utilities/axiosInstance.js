@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { URL } from './config'; // Importa las URLs desde config.js
+import { URL } from './config'; // Importa la URL base de producción desde config.js
 
 const axiosInstance = axios.create({
-  baseURL: URL,  // URL base general predeterminada
+  baseURL: URL,  // Esta es la URL de tu servidor backend en producción
   headers: {
     'Content-Type': 'application/json',
   },

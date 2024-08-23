@@ -208,6 +208,28 @@ export const useUsuariosStore = create((set, get) => ({
       throw new Error(error.response?.data?.message || 'Error al restaurar la contraseña');
     }
   },
+
+
+  fetchPlanDetails: async () => {
+    const userId = get().userId;
+  
+    if (!userId) {
+      set({ error: 'No se pudo obtener el ID del usuario.', loading: false });
+      return;
+    }
+  
+    set({ loading: true, error: null });
+  
+    try {
+      const response = await axiosInstance.get(`/Pagos/usuarios/${userId}/plan-details`);
+      set({ planDetails: response.data, loading: false });
+    } catch (error) {
+      console.error('Error al obtener los detalles del plan:', error.response || error.message);
+      set({ error: 'No se pudieron cargar los detalles del plan.', loading: false });
+    }
+  },
+  
+
 }));
 
 export default useUsuariosStore;

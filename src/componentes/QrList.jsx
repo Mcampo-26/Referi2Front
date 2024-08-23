@@ -193,36 +193,33 @@ export const QrList = () => {
         flexWrap="wrap"
       >
         <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
-          <TextField
+        <TextField
             variant="outlined"
-            placeholder="Buscar QRs..."
+            placeholder="Buscar Empresas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
               width: { xs: '100%', sm: '300px' },
               '& .MuiOutlinedInput-root': {
                 '& fieldset': {
-                  borderColor: 'black', // Borde negro para ambos temas
+                  borderColor: 'white',
                 },
                 '&:hover fieldset': {
-                  borderColor: 'black', // Borde negro al pasar el cursor
+                  borderColor: 'white',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: 'black', // Borde negro al enfocarse
+                  borderColor: 'white',
                 },
               },
               '& .MuiInputBase-input': {
-                color: 'black', // Texto negro para ambos temas
+                color: 'white',
               },
               '& .MuiInputLabel-root': {
-                color: 'black', // Placeholder negro para ambos temas
-              },
-              '& .MuiInputBase-input::placeholder': {
-                color: 'black', // Placeholder negro para ambos temas
-                opacity: 1, // Asegura que el placeholder sea visible
+                color: 'white',
               },
             }}
           />
+        
           {searchTerm && (
             <Button
               variant="contained"
