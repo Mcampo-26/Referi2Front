@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Box, Grid, Card, CardContent, Typography, Button, ToggleButton, ToggleButtonGroup, useTheme, useMediaQuery } from "@mui/material";
 import usePaymentStore from '../store/usePaymentStore';
-import PaymentWidget from './PaymentWidget';
 
 export const PlanSelector = () => {
   const [billingType, setBillingType] = useState("month");
@@ -140,9 +139,6 @@ export const PlanSelector = () => {
           </Grid>
         ))}
       </Grid>
-
-      {/* Renderizar el widget si preferenceId está disponible */}
-      {preferenceId && <PaymentWidget preferenceId={preferenceId} />}
     </Box>
   );
 };
