@@ -196,6 +196,7 @@ export const UserList = () => {
         flexWrap="wrap"
       >
         <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
+
         <TextField
             variant="outlined"
             placeholder="Buscar Empresas..."
@@ -218,7 +219,8 @@ export const UserList = () => {
                 color: 'white',
               },
               '& .MuiInputLabel-root': {
-                color: 'white',
+                color: 'white'
+        
               },
             }}
           />
