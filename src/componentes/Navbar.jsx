@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Swal from 'sweetalert2';
@@ -17,20 +17,30 @@ import Brightness7 from "@mui/icons-material/Brightness7";
 import CloseIcon from '@mui/icons-material/Close';
 import MenuItem from "@mui/material/MenuItem";
 import useUsuariosStore from "../store/useUsuariosStore";
+import Brand from '../assets/Brand.jpg'; // Usa la importación por defecto
 
 export const Navbar = ({ toggleDarkMode, darkMode }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [empresaNombre, setEmpresaNombre] = useState('');
   const { usuario, isAuthenticated, role, logoutUsuario } = useUsuariosStore((state) => ({
     usuario: state.usuario,
     isAuthenticated: state.isAuthenticated,
     role: state.role,
     logoutUsuario: state.logoutUsuario,
-    
   }));
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const nombre = localStorage.getItem('empresaName');
+    if (nombre) {
+      setEmpresaNombre(nombre);
+    } else {
+      console.error("No se encontró el nombre de la empresa en localStorage");
+    }
+  }, []);
+
   const handleLogout = () => {
-    closeMenu(); // Cierra el menú antes de mostrar el SweetAlert
+    closeMenu(); 
     Swal.fire({
       title: 'Cerrando sesión...',
       timer: 2000,
@@ -43,52 +53,58 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
     });
   };
 
+  const handleEmpresasClick = () => {
+    const empresaId = localStorage.getItem('empresaId'); 
+    if (empresaId) {
+      navigate(`/empresaDetails/${empresaId}`);
+    } else {
+      console.error("No se encontró un ID de empresa en localStorage");
+    }
+    closeMenu(); 
+  };
+
+  // Determinar el menú basado en el rol del usuario
   const navItems = isAuthenticated
-  ? role === "SuperAdmin"
-    ? [
-        { id: 1, text: "Inicio", to: "/" },
-        { id: 8, text: "Crear", to: "/QrMain" },       
-        { id: 4, text: "Mis QR", to: "/Referidos" },
-        { id: 6, text: "Usuarios", to: "/Users" },
-        { id: 10, text: "Empresas", to: "/Empresas" },
-        { id: 9, text: "Roles", to: "/roles" },
-        { id: 11, text: "Planes de Pago", to: "/planSelector" }, // Nueva opción agregada
-        { id: 12, text: "Contacto", to: "/contacto" },
-
-        { id: 13, text: "Cuenta", to: "/UserPlan" },
-    
-
-        { id: 5, text: "Cerrar Sesión", action: handleLogout },
-      ]
-    : role === "Admin"
-    ? [
-        { id: 8, text: "Crear", to: "/QrMain" },
-        { id: 2, text: "Escanear QR", to: "/Escanear" },
-        { id: 4, text: "Mis QR", to: "/Referidos" },
-        { id: 6, text: "Usuarios", to: "/Users" },
-        { id: 10, text: "Empresas", to: "/Empresas" },
-        
-        { id: 5, text: "Cerrar Sesión", action: handleLogout },
-      ]
-    : role === "Referidor"
-    ? [
-        { id: 4, text: "Mis QR", to: "/Referidos" },
-        { id: 6, text: "Usuarios", to: "/Users" },
-
-        { id: 5, text: "Cerrar Sesión", action: handleLogout },
-      ]
-    : role === "Vendedor"
-    ? [
-        { id: 4, text: "Mis QR", to: "/Referidos" },
-       
-        { id: 5, text: "Cerrar Sesión", action: handleLogout },
-      ]
-    : { id: 5, text: "Cerrar Sesión", action: handleLogout }
+    ? usuario.role
+      ? role === "SuperAdmin"
+        ? [
+            { id: 1, text: "Inicio", to: "/" },
+            { id: 8, text: "Crear", to: "/QrMain" },       
+            { id: 4, text: "Mis QR", to: "/Referidos" },
+            { id: 6, text: "Usuarios", to: "/Users" },
+            { id: 10, text: "Empresas", to: "/Empresas" },
+            { id: 9, text: "Roles", to: "/roles" },
+            { id: 11, text: "Planes de Pago", to: "/planSelector" }, 
+            { id: 12, text: "Contacto", to: "/contacto" },
+            { id: 13, text: "Cuenta", to: "/UserPlan" },
+            { id: 5, text: "Cerrar Sesión", action: handleLogout },
+          ]
+        : role === "Admin"
+        ? [
+            { id: 8, text: "Crear", to: "/QrMain" },
+            { id: 2, text: "Escanear QR", to: "/Escanear" },
+            { id: 4, text: "Mis QR", to: "/Referidos" },
+            { id: 6, text: "Usuarios", to: "/Users" },
+            { id: 10, text: "Empresa", action: handleEmpresasClick },
+            { id: 5, text: "Cerrar Sesión", action: handleLogout },
+          ]
+        : role === "Referidor"
+        ? [
+            { id: 4, text: "Mis QR", to: "/Referidos" },
+            { id: 6, text: "Usuarios", to: "/Users" },
+            { id: 5, text: "Cerrar Sesión", action: handleLogout },
+          ]
+        : role === "Vendedor"
+        ? [
+            { id: 4, text: "Mis QR", to: "/Referidos" },
+            { id: 5, text: "Cerrar Sesión", action: handleLogout },
+          ]
+        : [{ id: 5, text: "Cerrar Sesión", action: handleLogout }]
+      : [{ id: 5, text: "Cerrar Sesión", action: handleLogout }]
     : [
-      { id: 6, text: "Iniciar Sesión", to: "/Login" },
-      { id: 7, text: "Registrarse", to: "/Register" },
-    ];
-
+        { id: 6, text: "Iniciar Sesión", to: "/Login" },
+        { id: 7, text: "Registrarse", to: "/Register" },
+      ];
 
   const theme = createTheme({
     palette: {
@@ -116,33 +132,34 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
   return (
     <ThemeProvider theme={theme}>
       <AppBar position="sticky">
-        <Toolbar sx={{ justifyContent: "space-between" }}>
+        <Toolbar sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: { xs: 1, md: 0 } }}>
+            <RouterLink to="/" style={{ display: "flex", alignItems: "center", textDecoration: "none", color: "inherit" }}>
+              <img src={Brand} alt="Referi2 Logo" style={{ height: 40, marginRight: 10 }} />
+              <Typography variant="h6" sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
+                Referi2
+              </Typography>
+            </RouterLink>
+          </Box>
+
           {isAuthenticated && (
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: 'inherit', 
-                display: { xs: 'block', md: 'block' }, 
-                fontSize: { xs: '0.8rem', md: '1rem' }, // Reduce la fuente en dispositivos pequeños
-                mr: 2 // Margen derecho para separar del título
-              }}
-            >
-       Hola, {usuario.nombre}! eres {usuario.role.name} de
-            </Typography>
-          )}
+  <Typography 
+    variant="body1" 
+    sx={{ 
+      color: 'inherit', 
+      fontSize: { xs: '1rem', md: '1.25rem' }, 
+      textAlign: { xs: 'center', md: 'left' },
+      width: { xs: '100%', md: 'auto' },
+      mb: { xs: 1, md: 0 }
+    }}
+  >
+    {`Hola, ${usuario.nombre}${usuario.role ? `! eres ${usuario.role.name} de ${empresaNombre}` : ''}`}
+  </Typography>
+)}
 
-          <Typography
-            variant="h6"
-            component={RouterLink}
-            to="/"
-            sx={{ color: "inherit", textDecoration: "none", flexGrow: 1 }}
-          >
-            Referi2
-          </Typography>
 
-          {/* Menú de navegación en dispositivos grandes */}
           <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}>
-            {navItems.map((item) =>
+            {Array.isArray(navItems) && navItems.map((item) =>
               item.to ? (
                 <MenuItem
                   key={item.id}
@@ -165,8 +182,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
             )}
           </Box>
 
-          {/* Botones de alternancia de tema y menú hamburguesa */}
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{ display: "flex", alignItems: "center", ml: { xs: 0, md: 2 } }}>
             <IconButton onClick={toggleDarkMode} color="inherit">
               {darkMode ? <Brightness7 /> : <Brightness4 />}
             </IconButton>
@@ -181,7 +197,6 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
         </Toolbar>
       </AppBar>
 
-      {/* Menú de navegación en dispositivos pequeños */}
       <Drawer
         anchor="left"
         open={drawerOpen}
@@ -199,7 +214,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
             <CloseIcon />
           </IconButton>
           <List>
-            {navItems.map((item) =>
+            {Array.isArray(navItems) && navItems.map((item) =>
               item.to ? (
                 <ListItem
                   button

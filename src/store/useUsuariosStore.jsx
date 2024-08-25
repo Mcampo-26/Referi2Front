@@ -228,6 +228,20 @@ export const useUsuariosStore = create((set, get) => ({
       set({ error: 'No se pudieron cargar los detalles del plan.', loading: false });
     }
   },
+  verifyUsuario: async (email, code) => {
+    console.log('Datos enviados al servidor:', { email, code }); // Log de los datos enviados
+    set({ loading: true, error: null });
+    try {
+        const response = await axiosInstance.post('/usuarios/verify', { email, code });
+        set({ loading: false });
+        return response.data.message;
+    } catch (error) {
+        console.error('Error al verificar usuario:', error.response || error.message);
+        set({ loading: false, error: 'Error al verificar usuario' });
+        throw new Error(error.response?.data?.message || 'Error al verificar usuario');
+    }
+},
+
   
 
 }));

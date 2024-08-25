@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import useUsuariosStore from '../store/useUsuariosStore'; // Importa el store
+import useUsuariosStore from '../store/useUsuariosStore'; 
 import Swal from 'sweetalert2';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -17,7 +17,7 @@ export const Register = () => {
   const location = useLocation();
   const showEmpresa = location.state?.showEmpresa || false;
   const preselectedEmpresa = location.state?.empresaName || '';
-  const role = localStorage.getItem('role'); // Obtén el rol del usuario
+  const role = localStorage.getItem('role');
 
   const { createUsuario } = useUsuariosStore();
 
@@ -60,35 +60,41 @@ export const Register = () => {
       });
       return;
     }
-
+  
     try {
       const userData = {
         nombre: formData.nombre,
         email: formData.email,
         password: formData.password,
         telefono: formData.telefono,
+        empresa: formData.empresa,
       };
-
-      // Solo agrega la empresa si está presente y el rol es SuperAdmin
-      if (formData.empresa && role === 'SuperAdmin') {
-        userData.empresa = formData.empresa;
-      }
-
+  
       await createUsuario(userData);
       Swal.fire({
         icon: 'success',
-        title: 'Usuario creado exitosamente',
+        title: 'Código de verificación enviado',
+        text: 'Por favor, revisa tu correo electrónico para verificar tu cuenta.',
       }).then(() => {
-        navigate('/');
+        navigate(`/verify?email=${formData.email}`);
       });
     } catch (error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error al crear usuario',
-        text: error.message,
-      });
+      if (error.message.includes('Ya se ha enviado un código de verificación')) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Código ya enviado',
+          text: 'Ya se ha enviado un código de verificación recientemente. Por favor, espera 30 minutos antes de solicitar uno nuevo.',
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al registrar usuario',
+          text: error.message,
+        });
+      }
     }
   };
+  
 
   const handleChange = (e) => {
     setFormData({
@@ -108,16 +114,8 @@ export const Register = () => {
           <CloseIcon />
         </IconButton>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Box sx={{ mb: 2 }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M12 4a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4"/>
-            </svg>
-          </Box>
           <Typography component="h1" variant="h5">
             Crea una nueva cuenta
-          </Typography>
-          <Typography variant="body2" color="textSecondary" align="center" sx={{ mb: 3 }}>
-            Ingresa tus datos para registrarte.
           </Typography>
           <form onSubmit={handleSubmit} noValidate>
             {showEmpresa && (
@@ -132,8 +130,7 @@ export const Register = () => {
                 autoComplete="organization"
                 value={formData.empresa}
                 onChange={handleChange}
-                disabled={role !== 'SuperAdmin'} // Permite editar solo si es SuperAdmin
-                helperText={role === 'SuperAdmin' ? 'Deja en blanco si no deseas asignar una empresa.' : ''}
+                disabled={role !== 'SuperAdmin'}
               />
             )}
             <TextField
@@ -186,9 +183,6 @@ export const Register = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
             />
-            <Typography variant="body2" color="textSecondary" align="center" sx={{ mb: 2 }}>
-              Debe contener al menos 1 letra mayúscula, 1 número y mínimo 8 caracteres.
-            </Typography>
             <TextField
               variant="outlined"
               margin="normal"
