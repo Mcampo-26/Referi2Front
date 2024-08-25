@@ -23,6 +23,7 @@ import {PlanSelector} from './componentes/PlanSelector'
 import {RestaurarPassword} from './componentes/RestaurarPassword'
 import {PaymentResultPage} from './pages/PaymentResultPage'
 import {UserPlanDetails} from './pages/UserPlanDetails'
+import { VerifyAccount } from '../src/componentes/VerifyAccount'
 
 // Aquí defines los temas
 const lightTheme = createTheme({
@@ -118,6 +119,8 @@ function App() {
           <Route path="/restaurarPass/:token" element={<RestaurarPassword />} />
           <Route path="/payment-result/:status" element={<PaymentResultPage />} />
           <Route path="/UserPlan" element={<UserPlanDetails />} />
+          <Route path="/verify" element={<VerifyAccount />} />
+
         </Routes>
       </div>
     </ThemeProvider>

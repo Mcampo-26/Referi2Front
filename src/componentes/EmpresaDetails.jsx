@@ -205,7 +205,7 @@ export const EmpresaDetails = () => {
             Servicios
           </Typography>
           <Button variant="contained" color="primary" onClick={handleCreate}>
-            + Agregar Servicio
+            + Agregar Productos y/o Servicios 
           </Button>
           <Paper elevation={3} sx={{ p: 2, borderRadius: 1, mt: 2 }}>
             {servicios && servicios.length > 0 ? (
