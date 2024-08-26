@@ -195,7 +195,7 @@ export const QrList = () => {
         <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
         <TextField
             variant="outlined"
-            placeholder="Buscar Empresas..."
+            placeholder="Buscar ..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{

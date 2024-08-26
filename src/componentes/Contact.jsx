@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Footer } from "./Footer";
+import emailjs from 'emailjs-com';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import {
   Container,
   Grid,
@@ -10,9 +12,9 @@ import {
   Box,
   FormControlLabel,
   useTheme,
-  useMediaQuery
 } from "@mui/material";
-import {PlanSelector} from './PlanSelector'
+
+const MySwal = withReactContent(Swal);
 
 const nameRegex = /^[A-Za-z0-9\s]+$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -63,36 +65,65 @@ export const Contact = () => {
     e.preventDefault();
 
     if (!nameRegex.test(formData.name)) {
-      alert(
-        "Por favor, introduce un nombre válido (solo se permiten letras, números y espacios)."
-      );
+      Swal.fire("Error", "Por favor, introduce un nombre válido (solo se permiten letras, números y espacios).", "error");
       return;
     }
     if (formData.name.length !== maxNameLength) {
-      alert(`El nombre debe tener exactamente ${maxNameLength} caracteres.`);
+      Swal.fire("Error", `El nombre debe tener exactamente ${maxNameLength} caracteres.`, "error");
       return;
     }
     if (!emailRegex.test(formData.email) || !formData.email.endsWith(".com")) {
-      alert('Por favor, introduce una dirección de correo válida que termine en ".com".');
+      Swal.fire("Error", 'Por favor, introduce una dirección de correo válida que termine en ".com".', "error");
       return;
     }
+
+    // Mostrar spinner de carga antes de comenzar el proceso de envío
+    const loadingAlert = await MySwal.fire({
+      title: 'Enviando mensaje...',
+      text: 'Por favor espera mientras enviamos tu mensaje.',
+      allowOutsideClick: false,
+      didOpen: () => {
+        MySwal.showLoading();
+      },
+    });
+
     try {
-      await emailjs.sendForm(
+      const templateParams = {
+        from_name: "REFERI2",  // Cambia el nombre del remitente a "REFERI2"
+        name: formData.name,
+        email: formData.email,
+        inquiry: formData.inquiry,
+      };
+
+      await emailjs.send(
         "service_bxl40rs",
         "template_goi94t2",
-        e.target,
+        templateParams,
         "h3yy4ICYJmisn2ANM"
       );
+
       setFormData({
         name: "",
         email: "",
         inquiry: "",
         subscribe: true,
       });
-      alert("¡El formulario se envió correctamente!");
+
+      // Cerrar el spinner y mostrar mensaje de éxito
+      await loadingAlert.close(); // Cerramos el loading alert
+      MySwal.fire({
+        icon: 'success',
+        title: 'Mensaje enviado',
+        text: '¡Tu mensaje ha sido enviado correctamente!',
+      });
     } catch (error) {
-      console.error("Error al enviar el formulario:", error);
-      alert("Ocurrió un error al enviar el formulario. Por favor, inténtalo de nuevo.");
+      // Cerrar el spinner y mostrar mensaje de error
+      await loadingAlert.close(); // Cerramos el loading alert
+      MySwal.fire({
+        icon: 'error',
+        title: 'Error al enviar el mensaje',
+        text: 'Ocurrió un error al enviar el formulario. Por favor, inténtalo de nuevo.',
+      });
     }
   };
 
@@ -110,18 +141,14 @@ export const Contact = () => {
 
   return (
     <>
-
-   
-    <Box>
-       <Typography variant="h4" align="center" gutterBottom>
-                Envíanos un mensaje
-              </Typography>
-              </Box>
+      <Box>
+        <Typography variant="h4" align="center" gutterBottom>
+          Envíanos un mensaje
+        </Typography>
+      </Box>
       <Container maxWidth="lg" sx={{ py: 5, mt: 10 }}>
-   
         <Grid container spacing={4}>
           <Grid item xs={12} md={6}>
-       
             <Box
               bgcolor={isDarkMode ? "grey.900" : "grey.100"}
               color={isDarkMode ? "white" : "black"}
@@ -129,7 +156,6 @@ export const Contact = () => {
               borderRadius={2}
               sx={{ fontSize: { xs: "1rem", md: "1.2rem" } }}
             >
-              
               <form id="contact-form" onSubmit={handleSubmit}>
                 <Box mb={2}>
                   <TextField
@@ -216,36 +242,10 @@ export const Contact = () => {
               </form>
             </Box>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <Box
-              bgcolor={isDarkMode ? "grey.900" : "grey.100"}
-              color={isDarkMode ? "white" : "black"}
-              p={3}
-              borderRadius={2}
-              sx={{ fontSize: { xs: "1rem", md: "1.2rem" } }}
-            >
-              <Typography variant="h4" align="center" gutterBottom>
-                E-Shop
-              </Typography>
-              <Typography variant="body2" paragraph>
-                Dirección para llegar a nuestra sede a hacer los trámites personalmente, te esperamos para brindarte la mejor información y nuestra ayuda.
-              </Typography>
-              <Box mt={2}>
-                <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3560.1022202999184!2d-65.209390485688!3d-26.83670088316032!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94225d3ad7f30f1d%3A0xf8606cd659b8e3e4!2sRollingCode%20School!5e0!3m2!1ses-419!2sar!4v1616643393539!5m2!1ses-419!2sar"
-                  width="100%"
-                  height="290"
-                  style={{ border: "0" }}
-                  allowFullScreen=""
-                  loading="lazy"
-                ></iframe>
-              </Box>
-            </Box>
-          </Grid>
+          
         </Grid>
       </Container>
-      <Footer />
-      <PlanSelector/>
+
     </>
   );
 };

@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import useUsuariosStore from '../store/useUsuariosStore'; 
-import Swal from 'sweetalert2';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
@@ -9,17 +7,25 @@ import {
   TextField,
   Button,
   Paper,
-  IconButton
+  IconButton,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import useUsuariosStore from '../store/useUsuariosStore';
+
+const MySwal = withReactContent(Swal);
 
 export const Register = () => {
+  const navigate = useNavigate();
   const location = useLocation();
+  const { createUsuario } = useUsuariosStore();
+
+  // Extraemos la información de la ubicación para saber si venimos de UserList
+  const fromUserList = location.state?.fromUserList || false;
   const showEmpresa = location.state?.showEmpresa || false;
   const preselectedEmpresa = location.state?.empresaName || '';
   const role = localStorage.getItem('role');
-
-  const { createUsuario } = useUsuariosStore();
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -29,23 +35,29 @@ export const Register = () => {
     telefono: '',
     empresa: preselectedEmpresa,
   });
-  const navigate = useNavigate();
 
   const validateInputs = () => {
-    const nameRegex = /^[a-zA-Z\s]{1,50}$/;
+    const nameRegex = /^[a-zA-ZÀ-ÿ\s]{1,50}$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^[0-9]{0,15}$/;
 
     if (!formData.nombre.trim()) return 'El nombre completo es requerido.';
-    if (!nameRegex.test(formData.nombre)) return 'El nombre completo debe contener solo letras y espacios, con un máximo de 50 caracteres.';
+    if (!nameRegex.test(formData.nombre))
+      return 'El nombre completo debe contener solo letras y espacios, con un máximo de 50 caracteres.';
     if (!formData.email.trim()) return 'El correo electrónico es requerido.';
-    if (!emailRegex.test(formData.email)) return 'El correo electrónico no es válido.';
+    if (!emailRegex.test(formData.email))
+      return 'El correo electrónico no es válido.';
     if (!formData.password.trim()) return 'La contraseña es requerida.';
-    if (formData.password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
-    if (!/[A-Z]/.test(formData.password)) return 'La contraseña debe contener al menos una letra mayúscula.';
-    if (!/\d/.test(formData.password)) return 'La contraseña debe contener al menos un número.';
-    if (formData.password !== formData.confirmPassword) return 'Las contraseñas no coinciden.';
-    if (!phoneRegex.test(formData.telefono)) return 'El número de teléfono debe contener solo números y un máximo de 15 caracteres.';
+    if (formData.password.length < 8)
+      return 'La contraseña debe tener al menos 8 caracteres.';
+    if (!/[A-Z]/.test(formData.password))
+      return 'La contraseña debe contener al menos una letra mayúscula.';
+    if (!/\d/.test(formData.password))
+      return 'La contraseña debe contener al menos un número.';
+    if (formData.password !== formData.confirmPassword)
+      return 'Las contraseñas no coinciden.';
+    if (formData.telefono && !phoneRegex.test(formData.telefono))
+      return 'El número de teléfono debe contener solo números y un máximo de 15 caracteres.';
     return null;
   };
 
@@ -53,54 +65,67 @@ export const Register = () => {
     e.preventDefault();
     const validationError = validateInputs();
     if (validationError) {
-      Swal.fire({
+      MySwal.fire({
         icon: 'error',
-        title: 'Por favor complete los campos',
+        title: 'Error en el formulario',
         text: validationError,
       });
       return;
     }
-  
+
+    // Mostrar spinner de carga
+    MySwal.fire({
+      title: 'Creando usuario...',
+      text: 'Por favor espera mientras procesamos tu solicitud.',
+      allowOutsideClick: false,
+      didOpen: () => {
+        MySwal.showLoading();
+      },
+    });
+
     try {
       const userData = {
         nombre: formData.nombre,
         email: formData.email,
         password: formData.password,
-        telefono: formData.telefono,
-        empresa: formData.empresa,
+        telefono: formData.telefono || undefined,
+        empresa: formData.empresa || undefined,
       };
-  
+
       await createUsuario(userData);
-      Swal.fire({
+
+      // Cerrar spinner de carga y mostrar mensaje de éxito
+      MySwal.fire({
         icon: 'success',
-        title: 'Código de verificación enviado',
-        text: 'Por favor, revisa tu correo electrónico para verificar tu cuenta.',
+        title: 'Registro exitoso',
+        text: 'Se ha enviado un código de verificación a tu correo electrónico.',
+        confirmButtonText: 'Aceptar',
       }).then(() => {
-        navigate(`/verify?email=${formData.email}`);
+        // Navegar a la página de verificación y pasar el estado para regresar a la lista de usuarios después
+        navigate(`/verify?email=${formData.email}`, { state: { fromUserList } });
       });
     } catch (error) {
-      if (error.message.includes('Ya se ha enviado un código de verificación')) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Código ya enviado',
-          text: 'Ya se ha enviado un código de verificación recientemente. Por favor, espera 30 minutos antes de solicitar uno nuevo.',
-        });
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error al registrar usuario',
-          text: error.message,
-        });
-      }
+      MySwal.fire({
+        icon: 'error',
+        title: 'Error al registrar usuario',
+        text: error.response?.data?.msg || 'Ocurrió un error inesperado.',
+      });
     }
   };
-  
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prevState) => ({
+      ...prevState,
       [e.target.name]: e.target.value,
-    });
+    }));
+  };
+
+  const handleClose = () => {
+    if (fromUserList) {
+      navigate(-1); // Regresar a la página anterior (UserList)
+    } else {
+      navigate('/login'); // Navegar a la página de inicio de sesión
+    }
   };
 
   return (
@@ -108,16 +133,22 @@ export const Register = () => {
       <Paper elevation={3} sx={{ p: 4, mt: 4, position: 'relative' }}>
         <IconButton
           aria-label="close"
-          onClick={() => navigate('/')}
+          onClick={handleClose}
           sx={{ position: 'absolute', right: 8, top: 8 }}
         >
           <CloseIcon />
         </IconButton>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
           <Typography component="h1" variant="h5">
-            Crea una nueva cuenta
+            Crear nueva cuenta
           </Typography>
-          <form onSubmit={handleSubmit} noValidate>
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             {showEmpresa && (
               <TextField
                 variant="outlined"
@@ -167,7 +198,7 @@ export const Register = () => {
               label="Contraseña"
               type="password"
               id="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
               value={formData.password}
               onChange={handleChange}
             />
@@ -180,6 +211,7 @@ export const Register = () => {
               label="Confirmar Contraseña"
               type="password"
               id="confirmPassword"
+              autoComplete="new-password"
               value={formData.confirmPassword}
               onChange={handleChange}
             />
@@ -199,11 +231,11 @@ export const Register = () => {
               fullWidth
               variant="contained"
               color="primary"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ mt: 3 }}
             >
-              Registrarse
+              Crear Cuenta
             </Button>
-          </form>
+          </Box>
         </Box>
       </Paper>
     </Container>
