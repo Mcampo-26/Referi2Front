@@ -16,6 +16,7 @@ export const VerifyAccount = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const email = new URLSearchParams(location.search).get('email');
+  const fromUserList = location.state?.fromUserList || false;  // Detecta si proviene de UserList
   const { verifyUsuario } = useUsuariosStore();
 
   const handleSubmit = async (e) => {
@@ -28,7 +29,11 @@ export const VerifyAccount = () => {
         title: 'Cuenta verificada',
         text: 'Tu cuenta ha sido verificada exitosamente.',
       }).then(() => {
-        navigate('/login');
+        if (fromUserList) {
+          navigate('/Users');  // Redirige a la lista de usuarios
+        } else {
+          navigate('/login');  // Redirige al login
+        }
       });
     } catch (error) {
       Swal.fire({

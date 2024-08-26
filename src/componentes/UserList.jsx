@@ -199,7 +199,7 @@ export const UserList = () => {
 
         <TextField
             variant="outlined"
-            placeholder="Buscar Empresas..."
+            placeholder="Buscar ..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
@@ -237,18 +237,18 @@ export const UserList = () => {
         </Box>
 
         <Button
-          variant="contained"
-          color="primary"
-          onClick={() => {
-            console.log("Empresa del usuario logueado:", empresaName); // Debería mostrar el nombre de la empresa
-            navigate("/register", {
-              state: { showEmpresa: true, empresaName },
-            });
-          }}
-          sx={{ mt: { xs: 2, sm: 0 } }}
-        >
-          Nuevo Usuario
-        </Button>
+  variant="contained"
+  color="primary"
+  onClick={() => {
+    navigate('/register', {
+      state: { fromUserList: true, showEmpresa: true, empresaName },
+    });
+  }}
+  sx={{ mt: { xs: 2, sm: 0 } }}
+>
+  Nuevo Usuario
+</Button>
+
       </Box>
 
       {sortedUsers.length ? (
