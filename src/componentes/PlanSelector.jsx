@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Box, Grid, Card, CardContent, Typography, Button, ToggleButton, ToggleButtonGroup, useTheme, useMediaQuery } from "@mui/material";
 import usePaymentStore from '../store/usePaymentStore';
-import PaymentWidget from './PaymentWidget';
 
 export const PlanSelector = () => {
   const [billingType, setBillingType] = useState("month");
@@ -22,39 +21,51 @@ export const PlanSelector = () => {
   };
 
   const handleBuyClick = async (plan) => {
-    const price = billingType === 'month' ? plan.monthPrice : plan.yearPrice;
-    const email = localStorage.getItem('userEmail'); // Cambia esto según el usuario autenticado
-    const userId = localStorage.getItem('userId'); // Obtén el userId desde localStorage
-    
-    if (!userId) {
-      console.error('No se pudo obtener el ID del usuario desde localStorage');
+  let userId = localStorage.getItem('userId'); // Obtén el userId desde localStorage
+  let email = localStorage.getItem('userEmail'); // Cambia esto según el usuario autenticado
+  
+  console.log('User ID:', userId);
+  console.log('Email:', email);
+
+  if (!userId || !email) {
+    console.error('No se pudo obtener el ID del usuario o el correo electrónico desde localStorage');
+    // Intenta obtenerlo de nuevo antes de abortar la operación
+    userId = localStorage.getItem('userId');
+    email = localStorage.getItem('userEmail');
+
+    if (!userId || !email) {
+      // Si aún así no se puede obtener, entonces abortar la operación
       return;
     }
-  
-    try {
-      const initPointUrl = await createPayment(plan.name, price, null, email);
-  
-      const paymentDetails = {
-        userId: userId,
-        planName: plan.name,
-        amount: price,
-        paymentId: 'simulated_payment_id',
-        expiryDate: new Date(new Date().setMonth(new Date().getMonth() + (billingType === 'month' ? 1 : 12))),
-        items: plan.items  // Envía los ítems del plan
-      };
-  
-      await savePaymentDetails(paymentDetails);
-  
-      if (initPointUrl) {
-        window.location.href = initPointUrl;
-      } else {
-        console.error('No se recibió un init_point en la respuesta');
-      }
-    } catch (error) {
-      console.error('Error al procesar el pago:', error);
+  }
+
+  const price = billingType === 'month' ? plan.monthPrice : plan.yearPrice;
+
+  try {
+    const initPointUrl = await createPayment(plan.name, price, null, email);
+
+    const paymentDetails = {
+      userId: userId,
+      planName: plan.name,
+      amount: price,
+      paymentId: 'simulated_payment_id',
+      expiryDate: new Date(new Date().setMonth(new Date().getMonth() + (billingType === 'month' ? 1 : 12))),
+      items: plan.items  // Envía los ítems del plan
+    };
+
+    await savePaymentDetails(paymentDetails);
+
+    if (initPointUrl) {
+      window.location.href = initPointUrl;
+    } else {
+      console.error('No se recibió un init_point en la respuesta');
     }
-  };
-  
+  } catch (error) {
+    console.error('Error al procesar el pago:', error);
+  }
+};
+
+
   return (
     <Box
       sx={{
