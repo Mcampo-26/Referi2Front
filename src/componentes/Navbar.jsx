@@ -67,49 +67,50 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
   };
   
   const generateNavItems = (roleId) => {
-    const role = roleMap[roleId] || ""; // Convertir el id al nombre usando el mapa
-  
-    const commonItems = [
-      { id: 4, text: "Mis QR", to: "/Referidos" },
-      { id: 12, text: "Contacto", to: "/contacto" },
-      { id: 5, text: "Cerrar Sesión", action: handleLogout },
-    ];
-  
-    switch (role) {
-      case "SuperAdmin":
-        return [
-          { id: 1, text: "Inicio", to: "/" },
-          { id: 8, text: "Crear", to: "/QrMain" },
-          { id: 6, text: "Usuarios", to: "/Users" },
-          { id: 10, text: "Empresas", to: "/Empresas" },
-          { id: 9, text: "Roles", to: "/roles" },
-          { id: 11, text: "Planes de Pago", to: "/planSelector" },
-          { id: 13, text: "Cuenta", to: "/UserPlan" },
-          ...commonItems,
-        ];
-      case "Admin":
-        return [
-          { id: 8, text: "Crear", to: "/QrMain" },
-          { id: 2, text: "Escanear QR", to: "/Escanear" },
-          { id: 6, text: "Usuarios", to: "/Users" },
-          { id: 10, text: "Empresa", action: handleEmpresasClick },
-          ...commonItems,
-        ];
-      case "Referidor":
-        return commonItems;
-      case "Vendedor":
-        return commonItems.slice(0, 2);
-      default:
-        return [{ id: 5, text: "Cerrar Sesión", action: handleLogout }];
-    }
-  };
-  
-  const navItems = isAuthenticated && role
-    ? generateNavItems(role) // Pasa el id del rol, no necesitas acceder a ._id si ya lo tienes en role
-    : [
-        { id: 6, text: "Iniciar Sesión", to: "/Login" },
-        { id: 7, text: "Registrarse", to: "/Register" },
+  const role = roleMap[roleId] || ""; // Convertir el id al nombre usando el mapa
+
+  const commonItems = [
+    { id: 4, text: "Mis QR", to: "/Referidos" },
+    { id: 12, text: "Contacto", to: "/contacto" },
+    { id: 5, text: "Cerrar Sesión", action: handleLogout },
+  ];
+
+  switch (role) {
+    case "SuperAdmin":
+      return [
+        { id: 1, text: "Inicio", to: "/" },
+        { id: 8, text: "Crear", to: "/QrMain" },
+        { id: 6, text: "Usuarios", to: "/Users" },
+        { id: 10, text: "Empresas", to: "/Empresas" },
+        { id: 9, text: "Roles", to: "/roles" },
+        { id: 11, text: "Planes de Pago", to: "/planSelector" },
+        { id: 13, text: "Cuenta", to: "/UserPlan" },
+        ...commonItems,
       ];
+    case "Admin":
+      return [
+        { id: 8, text: "Crear", to: "/QrMain" },
+        { id: 2, text: "Escanear QR", to: "/Escanear" },
+        { id: 6, text: "Usuarios", to: "/Users" },
+        { id: 10, text: "Empresa", action: handleEmpresasClick },
+        ...commonItems,
+      ];
+    case "Referidor":
+      return [
+        { id: 4, text: "Mis QR", to: "/Referidos" },
+        { id: 12, text: "Contacto", to: "/contacto" },
+        { id: 5, text: "Cerrar Sesión", action: handleLogout },
+      ];
+    case "Vendedor":
+      return [
+        { id: 4, text: "Mis QR", to: "/Referidos" },
+        { id: 12, text: "Contacto", to: "/contacto" },
+        { id: 5, text: "Cerrar Sesión", action: handleLogout },
+      ];
+    default:
+      return [{ id: 5, text: "Cerrar Sesión", action: handleLogout }];
+  }
+};
 
   const theme = createTheme({
     palette: {
