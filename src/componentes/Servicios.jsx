@@ -194,16 +194,19 @@ export const Servicios = () => {
           )}
         </Box>
         <Button variant="contained" color="primary" onClick={handleCreate}>
-          + Agregar Servicio
+          + Agregar Producto y/o Servicios
+          
         </Button>
       </Box>
 
       <Dialog open={showModal} onClose={toggleModal}>
-        <DialogTitle>{isEditing ? 'Editar Servicio' : 'Agregar Nuevo Servicio'}</DialogTitle>
+      <DialogTitle>{isEditing ? 'Editar Producto y/o Servicio' : 'Agregar Nuevo Producto y/o Servicio'}</DialogTitle>
+
         <DialogContent>
-          <DialogContentText>
-            {isEditing ? 'Edita el nombre del servicio y selecciona la empresa.' : 'Ingresa el nombre del nuevo servicio y selecciona la empresa.'}
-          </DialogContentText>
+        <DialogContentText>
+  {isEditing ? 'Edita el nombre del producto y/o servicio y selecciona la empresa.' : 'Ingresa el nombre del nuevo producto y/o servicio y selecciona la empresa.'}
+</DialogContentText>
+
           <TextField
             autoFocus
             margin="dense"

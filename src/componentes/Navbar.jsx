@@ -17,7 +17,7 @@ import Brightness7 from "@mui/icons-material/Brightness7";
 import CloseIcon from '@mui/icons-material/Close';
 import MenuItem from "@mui/material/MenuItem";
 import useUsuariosStore from "../store/useUsuariosStore";
-import Brand from '../assets/Brand.jpg'; // Usa la importación por defecto
+import Brand from '../assets/Brand.jpg';
 
 export const Navbar = ({ toggleDarkMode, darkMode }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -31,22 +31,20 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const nombre = localStorage.getItem('empresaName');
-    if (nombre) {
-      setEmpresaNombre(nombre);
-    } else {
-      console.error("No se encontró el nombre de la empresa en localStorage");
+    if (isAuthenticated) {
+      const nombre = localStorage.getItem('empresaName');
+      if (nombre) {
+        setEmpresaNombre(nombre);
+      }
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
-    closeMenu(); 
+    closeMenu();
     Swal.fire({
       title: 'Cerrando sesión...',
       timer: 2000,
-      didOpen: () => {
-        Swal.showLoading();
-      }
+      didOpen: () => Swal.showLoading(),
     }).then(() => {
       logoutUsuario();
       navigate('/');
@@ -54,54 +52,60 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
   };
 
   const handleEmpresasClick = () => {
-    const empresaId = localStorage.getItem('empresaId'); 
+    const empresaId = localStorage.getItem('empresaId');
     if (empresaId) {
       navigate(`/empresaDetails/${empresaId}`);
-    } else {
-      console.error("No se encontró un ID de empresa en localStorage");
     }
-    closeMenu(); 
+    closeMenu();
   };
 
-  // Determinar el menú basado en el rol del usuario
-  const navItems = isAuthenticated
-    ? usuario.role
-      ? role === "SuperAdmin"
-        ? [
-            { id: 1, text: "Inicio", to: "/" },
-            { id: 8, text: "Crear", to: "/QrMain" },       
-            { id: 4, text: "Mis QR", to: "/Referidos" },
-            { id: 6, text: "Usuarios", to: "/Users" },
-            { id: 10, text: "Empresas", to: "/Empresas" },
-            { id: 9, text: "Roles", to: "/roles" },
-            { id: 11, text: "Planes de Pago", to: "/planSelector" }, 
-            { id: 12, text: "Contacto", to: "/contacto" },
-            { id: 13, text: "Cuenta", to: "/UserPlan" },
-            { id: 5, text: "Cerrar Sesión", action: handleLogout },
-          ]
-        : role === "Admin"
-        ? [
-            { id: 8, text: "Crear", to: "/QrMain" },
-            { id: 2, text: "Escanear QR", to: "/Escanear" },
-            { id: 4, text: "Mis QR", to: "/Referidos" },
-            { id: 6, text: "Usuarios", to: "/Users" },
-            { id: 10, text: "Empresa", action: handleEmpresasClick },
-            { id: 12, text: "Contacto", to: "/contacto" },
-            { id: 5, text: "Cerrar Sesión", action: handleLogout },
-          ]
-        : role === "Referidor"
-        ? [
-            { id: 4, text: "Mis QR", to: "/Referidos" },
-            { id: 6, text: "Usuarios", to: "/Users" },
-            { id: 5, text: "Cerrar Sesión", action: handleLogout },
-          ]
-        : role === "Vendedor"
-        ? [
-            { id: 4, text: "Mis QR", to: "/Referidos" },
-            { id: 5, text: "Cerrar Sesión", action: handleLogout },
-          ]
-        : [{ id: 5, text: "Cerrar Sesión", action: handleLogout }]
-      : [{ id: 5, text: "Cerrar Sesión", action: handleLogout }]
+  const roleMap = {
+    "668692d09bbe1e9ff25a4826": "SuperAdmin",
+    "66aba1fc753d20ba639d2aaf": "Admin",
+    "668697449bbe1e9ff25a4889": "Referidor",
+    "6686d371d64d18acf5ba6bb5": "Vendedor",
+  };
+  
+  const generateNavItems = (roleId) => {
+    const role = roleMap[roleId] || ""; // Convertir el id al nombre usando el mapa
+  
+    const commonItems = [
+      { id: 4, text: "Mis QR", to: "/Referidos" },
+      { id: 12, text: "Contacto", to: "/contacto" },
+      { id: 5, text: "Cerrar Sesión", action: handleLogout },
+    ];
+  
+    switch (role) {
+      case "SuperAdmin":
+        return [
+          { id: 1, text: "Inicio", to: "/" },
+          { id: 8, text: "Crear", to: "/QrMain" },
+          { id: 6, text: "Usuarios", to: "/Users" },
+          { id: 10, text: "Empresas", to: "/Empresas" },
+          { id: 9, text: "Roles", to: "/roles" },
+          { id: 11, text: "Planes de Pago", to: "/planSelector" },
+          { id: 13, text: "Cuenta", to: "/UserPlan" },
+          ...commonItems,
+        ];
+      case "Admin":
+        return [
+          { id: 8, text: "Crear", to: "/QrMain" },
+          { id: 2, text: "Escanear QR", to: "/Escanear" },
+          { id: 6, text: "Usuarios", to: "/Users" },
+          { id: 10, text: "Empresa", action: handleEmpresasClick },
+          ...commonItems,
+        ];
+      case "Referidor":
+        return commonItems;
+      case "Vendedor":
+        return commonItems.slice(0, 2);
+      default:
+        return [{ id: 5, text: "Cerrar Sesión", action: handleLogout }];
+    }
+  };
+  
+  const navItems = isAuthenticated && role
+    ? generateNavItems(role) // Pasa el id del rol, no necesitas acceder a ._id si ya lo tienes en role
     : [
         { id: 6, text: "Iniciar Sesión", to: "/Login" },
         { id: 7, text: "Registrarse", to: "/Register" },
@@ -120,15 +124,11 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
   });
 
   const toggleDrawer = (open) => (event) => {
-    if (event.type === "keydown" && (event.key === "Tab" || event.key === "Shift")) {
-      return;
-    }
+    if (event.type === "keydown" && (event.key === "Tab" || event.key === "Shift")) return;
     setDrawerOpen(open);
   };
 
-  const closeMenu = () => {
-    setDrawerOpen(false);
-  };
+  const closeMenu = () => setDrawerOpen(false);
 
   return (
     <ThemeProvider theme={theme}>
@@ -144,23 +144,22 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
           </Box>
 
           {isAuthenticated && (
-  <Typography 
-    variant="body1" 
-    sx={{ 
-      color: 'inherit', 
-      fontSize: { xs: '1rem', md: '1.25rem' }, 
-      textAlign: { xs: 'center', md: 'left' },
-      width: { xs: '100%', md: 'auto' },
-      mb: { xs: 1, md: 0 }
-    }}
-  >
-    {`Hola, ${usuario.nombre}${usuario.role ? `! eres ${usuario.role.name} de ${empresaNombre}` : ''}`}
-  </Typography>
-)}
-
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'inherit', 
+                fontSize: { xs: '1rem', md: '1.25rem' }, 
+                textAlign: { xs: 'center', md: 'left' },
+                width: { xs: '100%', md: 'auto' },
+                mb: { xs: 1, md: 0 }
+              }}
+            >
+              {`Hola, ${usuario.nombre}${usuario.role ? `! eres ${roleMap[role]} de ${empresaNombre}` : ''}`}
+            </Typography>
+          )}
 
           <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}>
-            {Array.isArray(navItems) && navItems.map((item) =>
+            {navItems.map((item) =>
               item.to ? (
                 <MenuItem
                   key={item.id}
@@ -215,7 +214,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
             <CloseIcon />
           </IconButton>
           <List>
-            {Array.isArray(navItems) && navItems.map((item) =>
+            {navItems.map((item) =>
               item.to ? (
                 <ListItem
                   button

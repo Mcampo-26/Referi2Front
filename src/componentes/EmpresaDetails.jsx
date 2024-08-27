@@ -256,11 +256,9 @@ export const EmpresaDetails = () => {
       </Box>
 
       <Dialog open={showModal} onClose={toggleModal}>
-        <DialogTitle>{isEditing ? 'Editar Servicio' : 'Agregar Nuevo Servicio'}</DialogTitle>
+       
         <DialogContent>
-          <DialogContentText>
-            {isEditing ? 'Edita el nombre del servicio.' : 'Ingresa el nombre del nuevo servicio.'}
-          </DialogContentText>
+            <DialogTitle>{isEditing ? 'Editar Producto y/o Servicio' : 'Agregar Nuevo Producto y/o Servicio'}</DialogTitle>
           <TextField
             autoFocus
             margin="dense"
