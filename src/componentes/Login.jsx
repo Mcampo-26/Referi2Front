@@ -16,11 +16,11 @@ export const Login = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const isSuccess = await loginUsuario(email, password);
-
+  
     if (isSuccess) {
       console.log('Inicio de sesión exitoso');
       setIsAlertActive(true); // Activar el desenfoque del fondo
-
+  
       // Mostrar el SweetAlert con la animación y redirección
       MySwal.fire({
         title: '¡Bienvenido a Referidos!',
@@ -43,17 +43,20 @@ export const Login = () => {
             swalPopup.classList.add('animate-fadeOut');
           }
           setIsAlertActive(false); // Desactivar el desenfoque del fondo
-
-          // Redirigir según el rol del usuario después de que SweetAlert se haya cerrado
-          setTimeout(() => {
-            navigate('/home');
-          }, 500); // Tiempo de espera para asegurar la finalización de la animación
+  
+          // Redirigir a la página principal después de que SweetAlert se haya cerrado
+          navigate('/'); // Navegar a la página de inicio
         },
       });
     } else {
-      alert('Error en el inicio de sesión');
+      MySwal.fire({
+        title: 'Error',
+        text: 'Credenciales inválidas',
+        icon: 'error',
+      });
     }
   };
+  
 
   const handleForgotPassword = () => {
     MySwal.fire({

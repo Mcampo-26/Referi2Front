@@ -102,7 +102,8 @@ export const useUsuariosStore = create((set, get) => ({
       if (response.status === 200) {
         const usuario = response.data.usuario;
         const token = response.data.token;
-        const role = usuario.role ? usuario.role.name : null;
+        const role = usuario.role ? usuario.role._id : null;  // Almacena el ID del rol en lugar del nombre
+
         const empresaId = usuario.empresa ? usuario.empresa._id : null;
         const empresaName = usuario.empresa ? usuario.empresa.name : null;
 
@@ -151,15 +152,12 @@ export const useUsuariosStore = create((set, get) => ({
   },
 
   logoutUsuario: () => {
-    localStorage.removeItem('usuario');
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('role');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName'); // Elimina el nombre almacenado
-    localStorage.removeItem('userEmail'); // Elimina el email almacenado
+    localStorage.clear(); // Elimina todo del localStorage
     set({ usuario: null, userId: null, isAuthenticated: false, role: null });
-  },
+   // window.location.reload(); // Recarga la página completa
+},
+
+
 
   getUsuariosByEmpresa: async (empresaId) => {
     if (!empresaId || typeof empresaId !== 'string' || empresaId.trim() === '') {

@@ -57,6 +57,9 @@ export const UserList = () => {
   const empresaId = localStorage.getItem("empresaId");
   const empresaName = localStorage.getItem("empresaName");
 
+  const superAdminRoleId = "668692d09bbe1e9ff25a4826"; // ID de SuperAdmin
+  const adminRoleId = "66aba1fc753d20ba639d2aaf"; // ID de Admin
+
   const {
     getUsuarios,
     getUsuariosByEmpresa,
@@ -71,11 +74,9 @@ export const UserList = () => {
   const theme = useTheme();
 
   useEffect(() => {
-    if (role === "SuperAdmin") {
-      // Si es SuperAdmin, obtener todos los usuarios
+    if (role === superAdminRoleId) {
       getUsuarios(currentPage);
-    } else if (role === "Admin" && empresaId) {
-      // Si es Admin y tiene empresa, obtener solo los usuarios de esa empresa
+    } else if (role === adminRoleId && empresaId) {
       getUsuariosByEmpresa(empresaId);
     }
   }, [role, empresaId, getUsuarios, getUsuariosByEmpresa, currentPage]);
@@ -89,12 +90,14 @@ export const UserList = () => {
     }
   };
 
-  const handleDelete = (_id, email) => {
-    if (email === "admin@admin.com") {
+  const handleDelete = (_id, usuarioRole) => {
+    const isUserSuperAdmin = usuarioRole === superAdminRoleId;
+
+    if (role !== superAdminRoleId && isUserSuperAdmin) {
       Swal.fire({
         icon: "warning",
         title: "No permitido",
-        text: "No se puede eliminar al administrador.",
+        text: "No se puede eliminar a un SuperAdmin.",
       });
       return;
     }
@@ -118,7 +121,7 @@ export const UserList = () => {
               confirmButtonColor: "#3085d6",
               confirmButtonText: "Ok",
             });
-            getUsuarios(currentPage); // Refrescar la lista de usuarios
+            getUsuarios(currentPage);
           })
           .catch((error) => {
             Swal.fire({
@@ -133,8 +136,19 @@ export const UserList = () => {
   };
 
   const handleEdit = (usuario) => {
-    setEditedUser(usuario); // Establece el usuario seleccionado
-    setShowModal(true); // Abre el modal
+    const isUserSuperAdmin = usuario.role?._id === superAdminRoleId;
+
+    if (role !== superAdminRoleId && isUserSuperAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "No permitido",
+        text: "No se puede editar a un SuperAdmin.",
+      });
+      return;
+    }
+
+    setEditedUser(usuario);
+    setShowModal(true);
   };
 
   const handleClear = () => {
@@ -142,8 +156,8 @@ export const UserList = () => {
   };
 
   const handleCloseEditModal = () => {
-    setEditedUser(null); // Limpia el estado de usuario editado
-    setShowModal(false); // Cierra el modal
+    setEditedUser(null);
+    setShowModal(false);
   };
 
   const handlePreviousPage = () => {
@@ -196,31 +210,29 @@ export const UserList = () => {
         flexWrap="wrap"
       >
         <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
-
-        <TextField
+          <TextField
             variant="outlined"
             placeholder="Buscar ..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
-              width: { xs: '100%', sm: '300px' },
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  borderColor: 'white',
+              width: { xs: "100%", sm: "300px" },
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  borderColor: "white",
                 },
-                '&:hover fieldset': {
-                  borderColor: 'white',
+                "&:hover fieldset": {
+                  borderColor: "white",
                 },
-                '&.Mui-focused fieldset': {
-                  borderColor: 'white',
+                "&.Mui-focused fieldset": {
+                  borderColor: "white",
                 },
               },
-              '& .MuiInputBase-input': {
-                color: 'white',
+              "& .MuiInputBase-input": {
+                color: "white",
               },
-              '& .MuiInputLabel-root': {
-                color: 'white'
-        
+              "& .MuiInputLabel-root": {
+                color: "white",
               },
             }}
           />
@@ -237,18 +249,17 @@ export const UserList = () => {
         </Box>
 
         <Button
-  variant="contained"
-  color="primary"
-  onClick={() => {
-    navigate('/register', {
-      state: { fromUserList: true, showEmpresa: true, empresaName },
-    });
-  }}
-  sx={{ mt: { xs: 2, sm: 0 } }}
->
-  Nuevo Usuario
-</Button>
-
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            navigate("/register", {
+              state: { fromUserList: true, showEmpresa: true, empresaName },
+            });
+          }}
+          sx={{ mt: { xs: 2, sm: 0 } }}
+        >
+          Nuevo Usuario
+        </Button>
       </Box>
 
       {sortedUsers.length ? (
@@ -300,70 +311,73 @@ export const UserList = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-  {sortedUsers.map((usuario) => {
-    const isAdmin = usuario.email === "admin@admin.com";
-    const isSuperAdmin = usuario.role?.name === "SuperAdmin"; // Verifica si el usuario tiene rol de SuperAdmin
+              {sortedUsers.map((usuario) => {
+                const isUserSuperAdmin =
+                  usuario.role?._id === superAdminRoleId;
+                const canEdit =
+                  role === superAdminRoleId ||
+                  (!isUserSuperAdmin &&
+                    usuario.empresa?._id === empresaId);
 
-    return (
-      <TableRow key={usuario._id}>
-        <TableCell>{usuario.nombre || "Nombre no disponible"}</TableCell>
-        <TableCell>{usuario.email || "Email no disponible"}</TableCell>
-        <TableCell>{usuario.empresa ? usuario.empresa.name : "Empresa no disponible"}</TableCell>
-        <TableCell>{usuario.role?.name || "Rol no disponible"}</TableCell>
-        <TableCell>
-          {/* Botón de Editar */}
-          <FontAwesomeIcon
-            icon={faPenToSquare}
-            className={`h-6 w-5 ${
-              isAdmin || (role === "Admin" && isSuperAdmin)
-                ? 'text-gray-500'
-                : 'text-blue-400 hover:text-blue-700 cursor-pointer'
-            }`}
-            onClick={() => {
-              if (isAdmin || (role === "Admin" && isSuperAdmin)) {
-                Swal.fire({
-                  icon: 'warning',
-                  title: 'No permitido',
-                  text: 'No se puede editar a este usuario.',
-                });
-              } else {
-                handleEdit(usuario);
-              }
-            }}
-            style={{
-              cursor: isAdmin || (role === "Admin" && isSuperAdmin) ? 'not-allowed' : 'pointer'
-            }}
-          />
-          {/* Botón de Eliminar */}
-          <FontAwesomeIcon
-            icon={faTrash}
-            className={`h-4 w-4 ${
-              isAdmin || (role === "Admin" && isSuperAdmin)
-                ? 'text-gray-500'
-                : 'text-red-600 hover:text-red-800 cursor-pointer'
-            }`}
-            onClick={() => {
-              if (isAdmin || (role === "Admin" && isSuperAdmin)) {
-                Swal.fire({
-                  icon: 'warning',
-                  title: 'No permitido',
-                  text: 'No se puede eliminar a este usuario.',
-                });
-              } else {
-                handleDelete(usuario._id, usuario.email);
-              }
-            }}
-            style={{
-              marginLeft: '10px',
-              cursor: isAdmin || (role === "Admin" && isSuperAdmin) ? 'not-allowed' : 'pointer'
-            }}
-          />
-        </TableCell>
-      </TableRow>
-    );
-  })}
-</TableBody>
-
+                return (
+                  <TableRow key={usuario._id}>
+                    <TableCell>{usuario.nombre || "Nombre no disponible"}</TableCell>
+                    <TableCell>{usuario.email || "Email no disponible"}</TableCell>
+                    <TableCell>{usuario.empresa ? usuario.empresa.name : "Empresa no disponible"}</TableCell>
+                    <TableCell>{usuario.role?.name || "Rol no disponible"}</TableCell>
+                    <TableCell>
+                      {/* Botón de Editar */}
+                      <FontAwesomeIcon
+                        icon={faPenToSquare}
+                        className={`h-6 w-5 ${
+                          canEdit
+                            ? "text-blue-400 hover:text-blue-700 cursor-pointer"
+                            : "text-gray-500 cursor-not-allowed"
+                        }`}
+                        onClick={() => {
+                          if (!canEdit) {
+                            Swal.fire({
+                              icon: "warning",
+                              title: "No permitido",
+                              text: "No se puede editar a un SuperAdmin.",
+                            });
+                          } else {
+                            handleEdit(usuario);
+                          }
+                        }}
+                        style={{
+                          pointerEvents: "auto", // Permite que el botón sea clickeable incluso si parece deshabilitado
+                        }}
+                      />
+                      {/* Botón de Eliminar */}
+                      <FontAwesomeIcon
+                        icon={faTrash}
+                        className={`h-4 w-4 ${
+                          canEdit
+                            ? "text-red-600 hover:text-red-800 cursor-pointer"
+                            : "text-gray-500 cursor-not-allowed"
+                        }`}
+                        onClick={() => {
+                          if (!canEdit) {
+                            Swal.fire({
+                              icon: "warning",
+                              title: "No permitido",
+                              text: "No se puede eliminar a un SuperAdmin.",
+                            });
+                          } else {
+                            handleDelete(usuario._id, usuario.role?._id);
+                          }
+                        }}
+                        style={{
+                          pointerEvents: "auto", // Permite que el botón sea clickeable incluso si parece deshabilitado
+                          marginLeft: "10px",
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
           </Table>
         </TableContainer>
       ) : (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { Navbar } from './componentes/Navbar';
 import './index.css';
 import { Home } from "./pages/Home";
@@ -19,11 +19,12 @@ import PdfManager from "./componentes/PdfManager";
 import { Error404 } from './pages/Error404';
 import { Contacto } from './pages/Contacto';
 import useUsuariosStore from './store/useUsuariosStore';
-import {PlanSelector} from './componentes/PlanSelector'
-import {RestaurarPassword} from './componentes/RestaurarPassword'
-import {PaymentResultPage} from './pages/PaymentResultPage'
-import {UserPlanDetails} from './pages/UserPlanDetails'
-import { VerifyAccount } from '../src/componentes/VerifyAccount'
+import { PlanSelector } from './componentes/PlanSelector';
+import { RestaurarPassword } from './componentes/RestaurarPassword';
+import { PaymentResultPage } from './pages/PaymentResultPage';
+import { UserPlanDetails } from './pages/UserPlanDetails';
+import { VerifyAccount } from '../src/componentes/VerifyAccount';
+import {ProtectedRoute} from './componentes/ProtectedRoute';
 
 // Aquí defines los temas
 const lightTheme = createTheme({
@@ -72,10 +73,6 @@ const darkTheme = createTheme({
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
-  const { isAuthenticated, role } = useUsuariosStore((state) => ({
-    isAuthenticated: state.isAuthenticated,
-    role: state.role,
-  }));
 
   useEffect(() => {
     if (darkMode) {
@@ -99,28 +96,24 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/QrMain" element={<QrMain />} />
-          <Route 
-            path="/Escanear" element={ <ScanPage />} />
-          
+          <Route path="/Escanear" element={<ProtectedRoute element={<ScanPage />} />} />
           <Route path="/Login" element={<Login />} />
           <Route path="/Register" element={<Register />} />
-          <Route path="/Users" element={<Users />} />
-          <Route path="/Referidos" element={<Referidos />} />
-          <Route path="/QrDetails/:id" element={<QrDetails />} />
-          <Route path="/roles" element={<Roles />} />
-          <Route path="/empresas" element={<Empresas />} />
-          <Route path="/servicios" element={<Servicios />} />
-          <Route path="/empresaDetails/:id" element={<EmpresaDetails />} />
-          <Route path="/pdfs" element={<PdfManager />} />
-          <Route path="/reportes" element={<Error404 />} />
+          <Route path="/Users" element={<ProtectedRoute element={<Users />} allowedRoles={['Admin', 'SuperAdmin']} />} />
+          <Route path="/Referidos" element={<ProtectedRoute element={<Referidos />} />} />
+          <Route path="/QrDetails/:id" element={<ProtectedRoute element={<QrDetails />} />} />
+          <Route path="/roles" element={<ProtectedRoute element={<Roles />} allowedRoles={['SuperAdmin']} />} />
+          <Route path="/empresas" element={<ProtectedRoute element={<Empresas />} />} />
+          <Route path="/servicios" element={<ProtectedRoute element={<Servicios />} />} />
+          <Route path="/empresaDetails/:id" element={<ProtectedRoute element={<EmpresaDetails />} />} />
+          <Route path="/pdfs" element={<ProtectedRoute element={<PdfManager />} />} />
+          <Route path="/reportes" element={<ProtectedRoute element={<Error404 />} />} />
           <Route path="/contacto" element={<Contacto />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/planSelector" element={<PlanSelector />} />
+          <Route path="/planSelector" element={<ProtectedRoute element={<PlanSelector />} />} />
           <Route path="/restaurarPass/:token" element={<RestaurarPassword />} />
-          <Route path="/payment-result/:status" element={<PaymentResultPage />} />
-          <Route path="/UserPlan" element={<UserPlanDetails />} />
+          <Route path="/payment-result/:status" element={<ProtectedRoute element={<PaymentResultPage />} />} />
+          <Route path="/UserPlan" element={<ProtectedRoute element={<UserPlanDetails />} />} />
           <Route path="/verify" element={<VerifyAccount />} />
-
         </Routes>
       </div>
     </ThemeProvider>
