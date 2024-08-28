@@ -65,7 +65,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
     "668697449bbe1e9ff25a4889": "Referidor",
     "6686d371d64d18acf5ba6bb5": "Vendedor",
   };
-  
+
   const generateNavItems = (roleId) => {
     const role = roleMap[roleId] || ""; // Convertir el id al nombre usando el mapa
   
@@ -96,16 +96,15 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
           ...commonItems,
         ];
       case "Referidor":
-        return commonItems;
       case "Vendedor":
-        return commonItems.slice(0, 2);
+        return commonItems;
       default:
         return [{ id: 5, text: "Cerrar Sesión", action: handleLogout }];
     }
   };
-  
+
   const navItems = isAuthenticated && role
-    ? generateNavItems(role) // Pasa el id del rol, no necesitas acceder a ._id si ya lo tienes en role
+    ? generateNavItems(role) 
     : [
         { id: 6, text: "Iniciar Sesión", to: "/Login" },
         { id: 7, text: "Registrarse", to: "/Register" },
@@ -154,7 +153,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
                 mb: { xs: 1, md: 0 }
               }}
             >
-              {`Hola, ${usuario.nombre}${usuario.role ? `! eres ${roleMap[role]} de ${empresaNombre}` : ''}`}
+              {`Hola, ${usuario.nombre}${role ? `! eres ${roleMap[role]} de ${empresaNombre}` : ''}`}
             </Typography>
           )}
 
