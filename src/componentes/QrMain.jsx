@@ -3,14 +3,14 @@ import {
   Button, TextField, Grid, Typography, Card, CardContent,
   Paper, Box, MenuItem, Select, InputLabel, FormControl
 } from '@mui/material';
-import useQrStore from '../store/useQrStore'
+import useQrStore from '../store/useQrStore';
 import useEmpresasStore from '../store/useEmpresaStore';
 import useUsuariosStore from '../store/useUsuariosStore';
 import { WhatsApp } from '@mui/icons-material';
 import { useTheme, ThemeProvider, CssBaseline, useMediaQuery } from '@mui/material';
 import { styled } from '@mui/system';
 import Swal from 'sweetalert2';
-import './Css/QrMain.css'
+import './Css/QrMain.css';
 
 const StyledBox = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
@@ -39,17 +39,19 @@ export const QrMain = () => {
 
   const createQr = useQrStore((state) => state.createQr);
   const { empresas, getAllEmpresas } = useEmpresasStore();
-  const { usuario, role, getUsuariosByEmpresa, usuarios, loading } = useUsuariosStore((state) => ({
-    usuario: state.usuario,
-    role: state.role,
+  const { getUsuariosByEmpresa, usuarios, usuario } = useUsuariosStore((state) => ({
     getUsuariosByEmpresa: state.getUsuariosByEmpresa,
     usuarios: state.usuarios,
-    loading: state.loading,
+    usuario: state.usuario,
   }));
 
   const theme = useTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('md'));
 
+  // ID del rol SuperAdmin
+  const superAdminRoleId = "668692d09bbe1e9ff25a4826";  // Cambia esto por el ID correcto
+
+  // Cargar todas las empresas cuando el componente se monta
   useEffect(() => {
     const cargarDatos = async () => {
       try {
@@ -57,21 +59,15 @@ export const QrMain = () => {
           await getAllEmpresas();
           console.log('Empresas cargadas:', empresas);
         }
-    
-        if (role === 'Admin' && usuario.empresa) {
-          console.log('Usuario empresa ID:', usuario.empresa); // Verifica el ID de la empresa del usuario
-  
-          // Accede al _id de la empresa
+
+        if (usuario.roleId !== superAdminRoleId && usuario.empresa) {
+          // Preseleccionar la empresa del Admin
           const empresaSeleccionada = empresas.find(e => e._id === usuario.empresa._id);
-          console.log('Empresa seleccionada:', empresaSeleccionada); // Verifica si se encontró la empresa
-  
           if (empresaSeleccionada) {
             setEmpresaId(empresaSeleccionada._id);
             setNombreEmpresa(empresaSeleccionada.name);
-  
             await getUsuariosByEmpresa(empresaSeleccionada._id);
-          } else {
-            console.error('Empresa no encontrada para el usuario Admin.');
+            setFilteredUsuarios(usuarios.filter(u => u.empresa && u.empresa._id === empresaSeleccionada._id));
           }
         }
       } catch (error) {
@@ -80,24 +76,34 @@ export const QrMain = () => {
     };
   
     cargarDatos();
-  }, [role, usuario, getAllEmpresas, getUsuariosByEmpresa, empresas]);
-  
-  
-  useEffect(() => {
-    if (role === 'SuperAdmin' && empresaId) {
-      getUsuariosByEmpresa(empresaId).catch(error => {
-        console.error('Error al obtener usuarios por empresa:', error);
-      });
+  }, [getAllEmpresas, empresas, usuario, getUsuariosByEmpresa, usuarios]);
+
+  // Manejar el cambio de empresa solo si es SuperAdmin
+  const handleEmpresaChange = async (e) => {
+    if (usuario.roleId === superAdminRoleId) {
+      const selectedEmpresaId = e.target.value;
+      setEmpresaId(selectedEmpresaId);
+
+      const selectedEmpresa = empresas.find(e => e._id === selectedEmpresaId);
+      if (selectedEmpresa) {
+        setNombreEmpresa(selectedEmpresa.name);
+        try {
+          await getUsuariosByEmpresa(selectedEmpresaId);
+          setFilteredUsuarios(usuarios.filter(usuario => usuario.empresa && usuario.empresa._id === selectedEmpresaId));
+        } catch (error) {
+          console.error('Error al obtener usuarios por empresa:', error);
+        }
+      }
     }
-  }, [empresaId, role, getUsuariosByEmpresa]);
-  
+  };
+
+  // Filtrar los usuarios basados en la empresa seleccionada
   useEffect(() => {
     if (empresaId) {
       setFilteredUsuarios(usuarios.filter(usuario => usuario.empresa && usuario.empresa._id === empresaId));
     }
   }, [empresaId, usuarios]);
-  
-  
+
   const validateFields = () => {
     if (!empresaId || !nombre || !telefono || !mail || !date || !startTime || !endTime || !assignedTo || !maxUsageCount) {
       Swal.fire('Error', 'Por favor, complete todos los campos', 'error');
@@ -132,7 +138,7 @@ export const QrMain = () => {
     }
   
     const userId = localStorage.getItem('userId');
-    const token = localStorage.getItem('token'); // Asumiendo que el token está almacenado bajo la clave 'token'
+    const token = localStorage.getItem('token');
     
     if (!userId || !token) {
       console.error("User ID or token is missing");
@@ -156,7 +162,7 @@ export const QrMain = () => {
     try {
       const newQr = await createQr(qrData, {
         headers: {
-          Authorization: `Bearer ${token}` // Incluir el token en los encabezados
+          Authorization: `Bearer ${token}`
         }
       });
   
@@ -169,8 +175,7 @@ export const QrMain = () => {
       Swal.fire('Error', 'Hubo un problema al crear el QR', 'error');
     }
   };
-  
-  
+
   const handleWhatsAppShare = () => {
     if (!base64Image) {
       alert('No hay código QR para compartir.');
@@ -211,40 +216,34 @@ export const QrMain = () => {
             <Grid container spacing={4} mt={4}>
               <Grid item xs={12} md={6}>
                 <Box mt={-5} className="p-4 rounded-md shadow-md">
-                <FormControl fullWidth variant="outlined" className="custom-margin">
-  <InputLabel>Empresa</InputLabel>
-  <Select
-        labelId="empresa-select-label"
-        value={empresaId || ''}
-        onChange={(e) => setEmpresaId(e.target.value)}
-        label="Empresa"
-        disabled={role === "Admin"} // Deshabilitar si el rol es Admin
-        sx={{
-          color: theme.palette.mode === 'dark' ? '#fff' : '#111', // Mucho más oscuro en tema claro
-          '.MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.palette.mode === 'dark' ? '#fff' : '#444', // Borde aún más oscuro en tema claro
-          },
-          '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.palette.primary.main,
-          },
-          '.MuiSvgIcon-root': {
-            color: theme.palette.mode === 'dark' ? '#fff' : '#000', // Cambia el color del icono del selector según el tema
-          },
-        }}
-      >
-    {role === "SuperAdmin" ? (
-      empresas.map((empresa) => (
-        <MenuItem key={empresa._id} value={empresa._id} sx={{ color: 'black' }}>
-          {empresa.name}
-        </MenuItem>
-      ))
-    ) : (
-      <MenuItem key={empresaId} value={empresaId} sx={{ color: 'black' }}>
-        {nombreEmpresa || "Empresa no encontrada"}
-      </MenuItem>
-    )}
-  </Select>
-</FormControl>
+                  <FormControl fullWidth variant="outlined" className="custom-margin">
+                    <InputLabel>Empresa</InputLabel>
+                    <Select
+                      labelId="empresa-select-label"
+                      value={empresaId || ''}
+                      onChange={handleEmpresaChange}
+                      label="Empresa"
+                      disabled={usuario.roleId !== superAdminRoleId}
+                      sx={{
+                        color: theme.palette.mode === 'dark' ? '#fff' : '#111',
+                        '.MuiOutlinedInput-notchedOutline': {
+                          borderColor: theme.palette.mode === 'dark' ? '#fff' : '#444',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: theme.palette.primary.main,
+                        },
+                        '.MuiSvgIcon-root': {
+                          color: theme.palette.mode === 'dark' ? '#fff' : '#000',
+                        },
+                      }}
+                    >
+                      {empresas.map((empresa) => (
+                        <MenuItem key={empresa._id} value={empresa._id} sx={{ color: 'black' }}>
+                          {empresa.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
 
                   <FormControl fullWidth variant="outlined" className="custom-margin">
                     <InputLabel>Asignar a usuario</InputLabel>
