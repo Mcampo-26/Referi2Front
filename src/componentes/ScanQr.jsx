@@ -440,18 +440,18 @@ export const ScanQr = () => {
             onChange={handleFileChange}
             style={{ display: "none" }}
           />
-  
-          {/* Contenedor para el lector de QR */}
-          <Box
-            id="reader"
-            width="100%"
-            maxWidth="600px"
-            mb={4}
-            mt={4}
-            className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md"
-          />
         </Container>
       )}
+  
+      {/* Contenedor para el lector de QR (siempre debe estar presente en el DOM) */}
+      <Box
+        id="reader"
+        width="100%"
+        maxWidth="600px"
+        mb={4}
+        mt={4}
+        className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md"
+      />
   
       {scannedData && (
         <Fade in={!fadeOut} timeout={100}>
