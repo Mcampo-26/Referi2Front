@@ -188,7 +188,7 @@ export const QrMain = () => {
     }
   
     // Crear un mensaje personalizado
-    const mensaje = `¡Hola! 🎉\n\nTe invitamos a usar este QR para obtener beneficios exclusivos con ${nombreEmpresa}.\n\nDetalles:\n- Nombre: ${nombre}\n- Teléfono: ${telefono}\n- Correo: ${mail}\n\n`;
+    const mensaje = `¡Hola! 🎉\n\nTe invitamos a usar este QR para obtener beneficios exclusivos con ${nombreEmpresa}.`;
   
     // Crear un canvas
     const canvas = document.createElement('canvas');
@@ -198,14 +198,15 @@ export const QrMain = () => {
   
     img.onload = () => {
       // Ajustar el tamaño del canvas según el tamaño de la imagen y el texto
-      canvas.width = img.width;
-      canvas.height = img.height + 100; // Espacio adicional para el texto
+      const padding = 50; // Margen adicional alrededor del texto
+      canvas.width = img.width + padding * 2;
+      canvas.height = img.height + 200 + padding; // Espacio adicional para el texto y margen
   
-      // Dibujar la imagen del QR en el canvas
-      ctx.drawImage(img, 0, 0);
+      // Dibujar la imagen del QR en el canvas con margen superior
+      ctx.drawImage(img, padding, padding);
   
       // Configurar el estilo del texto
-      ctx.font = '25px Arial';
+      ctx.font = '20px Arial'; // Tamaño de fuente ajustado
       ctx.fillStyle = '#000';
       ctx.textAlign = 'center';
   
@@ -214,7 +215,7 @@ export const QrMain = () => {
   
       // Dibujar cada línea del mensaje en el canvas
       messageLines.forEach((line, index) => {
-        ctx.fillText(line, canvas.width / 2, img.height + 25 * (index + 1));
+        ctx.fillText(line, canvas.width / 2, img.height + padding + 30 * (index + 1));
       });
   
       // Convertir el canvas a una imagen base64
@@ -258,6 +259,7 @@ export const QrMain = () => {
       alert('Error al cargar la imagen del QR');
     };
   };
+  
    
 
   return (
