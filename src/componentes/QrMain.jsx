@@ -188,8 +188,11 @@ export const QrMain = () => {
     }
   
     // Crear un mensaje personalizado
-    const mensaje = `¡Hola! 🎉\n\nTe invitamos a usar este QR para obtener beneficios exclusivos con ${nombreEmpresa}.`;
-  
+    c const mensaje = [
+        "¡Hola! 🎉", 
+        "Te invitamos a usar este QR para obtener beneficios exclusivos", 
+        `con ${nombreEmpresa}.`
+    ];
     // Crear un canvas
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
