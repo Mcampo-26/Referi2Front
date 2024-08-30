@@ -214,7 +214,7 @@ export const QrMain = () => {
       ctx.drawImage(img, padding, 0);
 
       // Configurar el estilo del texto
-      ctx.font = '25px Arial';
+      ctx.font = '35px Arial';
       ctx.fillStyle = '#000';
       ctx.textAlign = 'center';
       
