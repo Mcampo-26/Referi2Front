@@ -119,8 +119,7 @@ export const ScanQr = () => {
       scannerRef.current
         .start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: 280 },
-
+          { fps: 10, qrbox: 280 }, // Ajusta `fps` a un valor adecuado para reducir la frecuencia de escaneo
           handleScan,
           handleError
         )
@@ -131,6 +130,8 @@ export const ScanQr = () => {
         });
     }
   };
+  
+  
 
   // Función para manejar el resultado del escaneo
   const handleScan = async (data) => {
@@ -141,36 +142,28 @@ export const ScanQr = () => {
         const parsedData = parseData(data);
         console.log("Datos escaneados:", parsedData);
   
+        // Detener el escaneo inmediatamente después de una detección exitosa
+        stopScan();
+  
         // Obtén los datos del QR desde el backend
         const qrFromDb = await getQrById(parsedData.id);
   
         if (!qrFromDb) {
-          stopScan(); // Detener el escaneo
           if (!Swal.isVisible()) { // Verificar si SweetAlert ya está visible
             await Swal.fire({
               title: "QR no encontrado",
-              text: "no puede leer un qr de otra empresa ",
+              text: "No puede leer un QR de otra empresa",
               icon: "error",
               confirmButtonText: "Aceptar",
             });
           }
-          stopScan(); // Detener el escaneo
-          if (!Swal.isVisible()) { // Verificar si SweetAlert ya está visible
-            await Swal.fire({
-              title: "QR no encontrado",
-              text: "no puede leer un qr de otra empresa ",
-              icon: "error",
-              confirmButtonText: "Aceptar",
-            });
-          }
-          return;
+          return; // No reanudar el escaneo
         }
   
         const userRole = localStorage.getItem('role'); // Obtener el rol del usuario desde localStorage
   
         // Si el usuario no es Superadmin, verificar si el QR está usado o excedido
         if (userRole !== 'Superadmin' && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
-          stopScan(); // Detener el escaneo inmediatamente si el QR ya está usado
           if (!Swal.isVisible()) { // Verificar si SweetAlert ya está visible
             await Swal.fire({
               title: "QR no usable",
@@ -179,7 +172,7 @@ export const ScanQr = () => {
               confirmButtonText: "Aceptar",
             });
           }
-          return;
+          return; // No reanudar el escaneo
         }
   
         // Actualiza los datos escaneados con información del backend
@@ -211,29 +204,31 @@ export const ScanQr = () => {
         if (!Swal.isVisible()) { 
           await Swal.fire({
             title: "Error",
-            text: "No se puede usar un qr de otra empresa",
+            text: "No se puede usar un QR de otra empresa",
             icon: "error",
             confirmButtonText: "Aceptar",
           });
         }
-      } finally {
-        stopScan(); // Detener el escaneo al final del bloque try/catch
       }
+      // No se reanuda el escaneo aquí para mantenerlo detenido después de una detección exitosa
     }
   };
   
   
-  
-  
-  // Manejo de errores en el escaneo
+
   const handleError = (err) => {
-    if (err.name === "NotFoundException") {
-      console.warn("QR code not found. Retrying...");
+    if (err.name === "NotFoundException" || err.message.includes("No MultiFormat Readers were able to detect the code")) {
+      // Ignorar el error de "No se encontró el código QR"
+      return; // No hacer nada si es un NotFoundException
     } else {
-      console.error("Error during scan:", err);
+      console.error("Error durante el escaneo:", err);
       setError(err);
     }
   };
+  
+  
+  
+  
   
   // Función para detener el escaneo
   const stopScan = () => {
@@ -244,6 +239,7 @@ export const ScanQr = () => {
       setIsScanning(false); // Indicar que el escaneo ha sido detenido
     }
   };
+  
   
   // Manejo de selección de archivo para escanear QR desde una imagen
   const handleFileChange = async (event) => {
@@ -361,11 +357,11 @@ export const ScanQr = () => {
   ? scannedData.maxUsageCount - scannedData.usageCount
   : 0;
   
+
   return (
     <Container
       key={refreshKey} // Añade esta key para forzar re-render
       maxWidth="md"
-      className="flex flex-col items-center justify-center mt-20"
       sx={{
         paddingBottom: "40px",
         minHeight: "100vh",
@@ -375,7 +371,8 @@ export const ScanQr = () => {
         alignItems: "center",
       }}
     >
-      {isSmallScreen && (
+      {isSmallScreen ? (
+        // Para dispositivos móviles, solo mostrar el botón de escanear
         <Container>
           {!isScanning && !scannedData && (
             <Box className="flex justify-center mb-4" onClick={startScan}>
@@ -393,10 +390,49 @@ export const ScanQr = () => {
             </Typography>
           </Box>
         </Container>
-      )}
-      {!isSmallScreen && (
-        <Container>
-          <Box id="reader" width="100%" maxWidth="600px" mb={4} mt={4} />
+      ) : (
+        // Para dispositivos grandes, mostrar los botones solo cuando no se esté escaneando
+        <Container
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "100vh",
+          }}
+        >
+          {/* Mostrar botones solo si no está escaneando o actualizando */}
+          {!isScanning && !scannedData && (
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              width="100%"
+              mb={4}
+            >
+              {/* Botón de escanear */}
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={startScan}
+                sx={{ marginBottom: 2 }}
+              >
+                Escanear QR
+              </Button>
+  
+              {/* Botón de subir archivo */}
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => fileInputRef.current.click()}
+              >
+                Subir Archivo
+              </Button>
+            </Box>
+          )}
+  
+          {/* Input para cargar archivos, oculto */}
           <input
             type="file"
             accept="image/*"
@@ -404,53 +440,18 @@ export const ScanQr = () => {
             onChange={handleFileChange}
             style={{ display: "none" }}
           />
+  
+          {/* Contenedor para el lector de QR */}
+          <Box
+            id="reader"
+            width="100%"
+            maxWidth="600px"
+            mb={4}
+            mt={4}
+            className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md"
+          />
         </Container>
       )}
-      <Box
-        id="reader"
-        width="100%"
-        maxWidth="600px"
-        mb={4}
-        mt={4}
-        className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md"
-      ></Box>
-      {isSmallScreen && (
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          mb={4}
-          gap={2}
-        >
-          {isScanning && (
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={stopScan}
-              className="mb-6"
-            >
-              Detener Escaneo
-            </Button>
-          )}
-        </Box>
-      )}
-      {!isSmallScreen && (
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => fileInputRef.current.click()}
-          className="mb-2 mt={4}"
-        >
-          Subir Archivo
-        </Button>
-      )}
-      <input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        style={{ display: "none" }}
-      />
   
       {scannedData && (
         <Fade in={!fadeOut} timeout={100}>
@@ -618,4 +619,4 @@ export const ScanQr = () => {
       )}
     </Container>
   );
-};
+}

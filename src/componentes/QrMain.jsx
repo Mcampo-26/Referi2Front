@@ -59,14 +59,17 @@ export const QrMain = () => {
           await getAllEmpresas();
           console.log('Empresas cargadas:', empresas);
         }
-
+  
         if (usuario.roleId !== superAdminRoleId && usuario.empresa) {
-          // Preseleccionar la empresa del Admin
           const empresaSeleccionada = empresas.find(e => e._id === usuario.empresa._id);
           if (empresaSeleccionada) {
             setEmpresaId(empresaSeleccionada._id);
             setNombreEmpresa(empresaSeleccionada.name);
-            await getUsuariosByEmpresa(empresaSeleccionada._id);
+  
+            // Verifica si ya tienes los usuarios cargados antes de hacer la llamada
+            if (!usuarios.length || !usuarios.some(u => u.empresa._id === empresaSeleccionada._id)) {
+              await getUsuariosByEmpresa(empresaSeleccionada._id);
+            }
             setFilteredUsuarios(usuarios.filter(u => u.empresa && u.empresa._id === empresaSeleccionada._id));
           }
         }
@@ -77,6 +80,7 @@ export const QrMain = () => {
   
     cargarDatos();
   }, [getAllEmpresas, empresas, usuario, getUsuariosByEmpresa, usuarios]);
+  
 
   // Manejar el cambio de empresa solo si es SuperAdmin
   const handleEmpresaChange = async (e) => {
@@ -100,7 +104,8 @@ export const QrMain = () => {
   // Filtrar los usuarios basados en la empresa seleccionada
   useEffect(() => {
     if (empresaId) {
-      setFilteredUsuarios(usuarios.filter(usuario => usuario.empresa && usuario.empresa._id === empresaId));
+      const usuariosFiltrados = usuarios.filter(usuario => usuario.empresa && usuario.empresa._id === empresaId);
+      setFilteredUsuarios(usuariosFiltrados);
     }
   }, [empresaId, usuarios]);
 
@@ -181,28 +186,79 @@ export const QrMain = () => {
       alert('No hay código QR para compartir.');
       return;
     }
-
-    const byteCharacters = atob(base64Image);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'image/png' });
-    const file = new File([blob], 'qr-code.png', { type: 'image/png' });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({
-        files: [file],
-        title: 'Código QR',
-        text: 'Aquí tienes el código QR',
-      })
-      .then(() => console.log('Compartido con éxito'))
-      .catch((error) => console.log('Error al compartir', error));
-    } else {
-      alert('Tu navegador no soporta compartir archivos.');
-    }
+  
+    // Crear un mensaje personalizado
+    const mensaje = `¡Hola! 🎉\n\nTe invitamos a usar este QR para obtener beneficios exclusivos con ${nombreEmpresa}.\n\nDetalles:\n- Nombre: ${nombre}\n- Teléfono: ${telefono}\n- Correo: ${mail}\n\n`;
+  
+    // Crear un canvas
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.src = `data:image/png;base64,${base64Image}`;
+  
+    img.onload = () => {
+      // Ajustar el tamaño del canvas según el tamaño de la imagen y el texto
+      canvas.width = img.width;
+      canvas.height = img.height + 100; // Espacio adicional para el texto
+  
+      // Dibujar la imagen del QR en el canvas
+      ctx.drawImage(img, 0, 0);
+  
+      // Configurar el estilo del texto
+      ctx.font = '25px Arial';
+      ctx.fillStyle = '#000';
+      ctx.textAlign = 'center';
+  
+      // Dividir el mensaje en líneas
+      const messageLines = mensaje.split('\n');
+  
+      // Dibujar cada línea del mensaje en el canvas
+      messageLines.forEach((line, index) => {
+        ctx.fillText(line, canvas.width / 2, img.height + 25 * (index + 1));
+      });
+  
+      // Convertir el canvas a una imagen base64
+      const combinedImage = canvas.toDataURL('image/png');
+  
+      // Crear un archivo Blob con la imagen combinada
+      const byteCharacters = atob(combinedImage.split(',')[1]);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'image/png' });
+      const file = new File([blob], 'qr-code-with-message.png', { type: 'image/png' });
+  
+      // Detectar si es un dispositivo móvil o de escritorio
+      const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  
+      if (isMobile) {
+        // Para dispositivos móviles, compartir la imagen combinada usando la API de compartir nativa
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({
+            files: [file],
+            title: 'Código QR con mensaje',
+            text: mensaje,
+          })
+          .then(() => console.log('Compartido con éxito'))
+          .catch((error) => console.log('Error al compartir', error));
+        } else {
+          alert('Tu navegador no soporta compartir archivos o texto.');
+        }
+      } else {
+        // Para dispositivos de escritorio, abrir la imagen combinada en una nueva pestaña
+        const imageUrl = URL.createObjectURL(blob);
+        window.open(imageUrl, '_blank');
+      }
+    };
+  
+    img.onerror = () => {
+      console.error('Error al cargar la imagen del QR');
+      alert('Error al cargar la imagen del QR');
+    };
   };
+   
 
   return (
     <ThemeProvider theme={theme}>
