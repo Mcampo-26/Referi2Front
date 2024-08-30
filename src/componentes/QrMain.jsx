@@ -188,7 +188,7 @@ export const QrMain = () => {
     }
   
     // Crear un mensaje personalizado
-    const mensaje = `¡Hola! 🎉\n\nTe invitamos a usar este QR para obtener beneficios exclusivos con ${nombreEmpresa}.\n\nDetalles:\n- Nombre: ${nombre}\n- Teléfono: ${telefono}\n- Correo: ${mail}\n\n`;
+    const mensaje = `¡Hola! 🎉\n\nTe invitamos a usar este QR para obtener beneficios exclusivos con ${nombreEmpresa}.`;
   
     // Crear un canvas
     const canvas = document.createElement('canvas');
@@ -214,7 +214,7 @@ export const QrMain = () => {
       ctx.drawImage(img, padding, 0);
 
       // Configurar el estilo del texto
-      ctx.font = '20px Arial';
+      ctx.font = '25px Arial';
       ctx.fillStyle = '#000';
       ctx.textAlign = 'center';
       
