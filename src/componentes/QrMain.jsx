@@ -188,7 +188,7 @@ export const QrMain = () => {
     }
   
     // Crear un mensaje personalizado
-    c const mensaje = [
+    const mensaje = [
         "¡Hola! 🎉", 
         "Te invitamos a usar este QR para obtener beneficios exclusivos", 
         `con ${nombreEmpresa}.`
