@@ -113,24 +113,48 @@ export const ScanQr = () => {
 
   // Función para iniciar el escaneo
   const startScan = () => {
-    if (scannerRef.current && !scannerRef.current.isScanning) {
-      setError(null); // Limpiar el error al iniciar un nuevo escaneo
-      setIsScanning(true); // Indicar que se está escaneando
-      scannerRef.current
-        .start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: 280 }, // Ajusta `fps` a un valor adecuado para reducir la frecuencia de escaneo
-          handleScan,
-          handleError
-        )
-        .catch((err) => {
-          console.error("Failed to start scanning.", err);
-          setError(err);
-          setIsScanning(false); // Indicar que el escaneo ha fallado
-        });
-    }
-  };
-  
+  if (scannerRef.current && !scannerRef.current.isScanning) {
+    setError(null); // Limpiar el error al iniciar un nuevo escaneo
+    setIsScanning(true); // Indicar que se está escaneando
+    scannerRef.current
+      .start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 280 },
+        handleScan,
+        handleError
+      )
+      .catch((err) => {
+        console.error("Failed to start scanning.", err);
+        setError(err);
+        setIsScanning(false); // Indicar que el escaneo ha fallado
+
+        // Mostrar mensaje específico si el error es de permisos de cámara
+        if (err.name === 'NotAllowedError') {
+          Swal.fire({
+            title: "Permiso denegado",
+            text: "Permite el acceso a la cámara para escanear el código QR.",
+            icon: "warning",
+            confirmButtonText: "Aceptar",
+          });
+        } else if (err.name === 'AbortError') {
+          Swal.fire({
+            title: "Error de cámara",
+            text: "No se pudo iniciar la cámara. Asegúrate de que otra aplicación no esté usándola.",
+            icon: "error",
+            confirmButtonText: "Aceptar",
+          });
+        } else {
+          Swal.fire({
+            title: "Error al iniciar el escaneo",
+            text: "Ocurrió un error inesperado al intentar acceder a la cámara.",
+            icon: "error",
+            confirmButtonText: "Aceptar",
+          });
+        }
+      });
+  }
+};
+
   
 
   // Función para manejar el resultado del escaneo
