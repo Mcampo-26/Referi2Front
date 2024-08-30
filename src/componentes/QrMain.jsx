@@ -187,8 +187,14 @@ export const QrMain = () => {
     return;
   }
 
-  // Crear un mensaje personalizado
-  const mensaje = `¡Hola! 🎉\nTe invitamos a usar este QR\npara obtener beneficios exclusivos con ${nombreEmpresa}.`;
+  // Crear el mensaje con partes en azul
+  const mensaje = [
+    { text: '¡Hola! 🎉', color: '#000' }, // Color negro
+    { text: 'Te invitamos a usar este ', color: '#000' },
+    { text: 'QR', color: 'blue' }, // Texto en azul
+    { text: ' para obtener beneficios exclusivos con ', color: '#000' },
+    { text: `${nombreEmpresa}.`, color: 'blue' }, // Texto en azul
+  ];
 
   // Crear un canvas
   const canvas = document.createElement('canvas');
@@ -197,28 +203,25 @@ export const QrMain = () => {
   img.src = `data:image/png;base64,${base64Image}`;
 
   img.onload = () => {
-    // Ajustar el tamaño del canvas según el tamaño de la imagen y el texto
     const padding = 50; // Margen adicional alrededor del texto
-    const lineHeight = 30; // Altura de línea para el texto
     canvas.width = img.width + padding * 2;
-    canvas.height = img.height + lineHeight * 3 + padding * 2; // Espacio adicional para el texto y margen
+    canvas.height = img.height + 200 + padding; // Espacio adicional para el texto y margen
 
     // Dibujar la imagen del QR en el canvas con margen superior
-    ctx.fillStyle = '#fff'; // Fondo blanco
-    ctx.fillRect(0, 0, canvas.width, canvas.height); // Fondo del canvas
-    ctx.drawImage(img, padding, padding); // Dibuja la imagen del QR
+    ctx.drawImage(img, padding, padding);
 
     // Configurar el estilo del texto
-    ctx.font = '25px Arial'; // Tamaño de fuente ajustado
-    ctx.fillStyle = '#000';
+    ctx.font = '30px Arial'; // Tamaño de fuente ajustado
     ctx.textAlign = 'center';
 
-    // Dividir el mensaje en líneas
-    const messageLines = mensaje.split('\n');
+    // Posición de inicio para el texto
+    let startY = img.height + padding + 30;
 
-    // Dibujar cada línea del mensaje en el canvas
-    messageLines.forEach((line, index) => {
-      ctx.fillText(line, canvas.width / 2, img.height + padding + lineHeight * (index + 1));
+    // Dibujar cada parte del mensaje con su color correspondiente
+    mensaje.forEach((part, index) => {
+      ctx.fillStyle = part.color; // Cambiar el color del texto
+      ctx.fillText(part.text, canvas.width / 2, startY);
+      startY += 30; // Incrementar la posición Y para la siguiente línea
     });
 
     // Convertir el canvas a una imagen base64
@@ -243,10 +246,10 @@ export const QrMain = () => {
         navigator.share({
           files: [file],
           title: 'Código QR con mensaje',
-          text: mensaje,
+          text: mensaje.map(part => part.text).join(''),
         })
-          .then(() => console.log('Compartido con éxito'))
-          .catch((error) => console.log('Error al compartir', error));
+        .then(() => console.log('Compartido con éxito'))
+        .catch((error) => console.log('Error al compartir', error));
       } else {
         alert('Tu navegador no soporta compartir archivos o texto.');
       }
@@ -262,7 +265,6 @@ export const QrMain = () => {
     alert('Error al cargar la imagen del QR');
   };
 };
-
 
    
 
