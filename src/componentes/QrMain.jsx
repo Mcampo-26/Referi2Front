@@ -210,6 +210,9 @@ export const QrMain = () => {
     // Dibujar la imagen del QR en el canvas con margen superior
     ctx.drawImage(img, padding, padding);
 
+    // Limpiar el área de texto antes de dibujar para evitar un fondo negro
+    ctx.clearRect(0, img.height + padding, canvas.width, canvas.height);
+
     // Configurar el estilo del texto
     ctx.font = '30px Arial'; // Tamaño de fuente ajustado
     ctx.textAlign = 'center';
