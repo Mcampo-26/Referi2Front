@@ -182,92 +182,87 @@ export const QrMain = () => {
   };
 
   const handleWhatsAppShare = () => {
-    if (!base64Image) {
-      alert('No hay código QR para compartir.');
-      return;
+  if (!base64Image) {
+    alert('No hay código QR para compartir.');
+    return;
+  }
+
+  // Crear un mensaje personalizado
+  const mensaje = `¡Hola! 🎉\nTe invitamos a usar este QR\npara obtener beneficios exclusivos con ${nombreEmpresa}.`;
+
+  // Crear un canvas
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  img.src = `data:image/png;base64,${base64Image}`;
+
+  img.onload = () => {
+    // Ajustar el tamaño del canvas según el tamaño de la imagen y el texto
+    const padding = 50; // Margen adicional alrededor del texto
+    const lineHeight = 30; // Altura de línea para el texto
+    canvas.width = img.width + padding * 2;
+    canvas.height = img.height + lineHeight * 3 + padding * 2; // Espacio adicional para el texto y margen
+
+    // Dibujar la imagen del QR en el canvas con margen superior
+    ctx.fillStyle = '#fff'; // Fondo blanco
+    ctx.fillRect(0, 0, canvas.width, canvas.height); // Fondo del canvas
+    ctx.drawImage(img, padding, padding); // Dibuja la imagen del QR
+
+    // Configurar el estilo del texto
+    ctx.font = '25px Arial'; // Tamaño de fuente ajustado
+    ctx.fillStyle = '#000';
+    ctx.textAlign = 'center';
+
+    // Dividir el mensaje en líneas
+    const messageLines = mensaje.split('\n');
+
+    // Dibujar cada línea del mensaje en el canvas
+    messageLines.forEach((line, index) => {
+      ctx.fillText(line, canvas.width / 2, img.height + padding + lineHeight * (index + 1));
+    });
+
+    // Convertir el canvas a una imagen base64
+    const combinedImage = canvas.toDataURL('image/png');
+
+    // Crear un archivo Blob con la imagen combinada
+    const byteCharacters = atob(combinedImage.split(',')[1]);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
-  
-    // Crear un mensaje personalizado
-    const mensaje = [
-        "¡Hola! 🎉", 
-        "Te invitamos a usar este QR para obtener beneficios exclusivos", 
-        `con ${nombreEmpresa}.`
-    ];
-    // Crear un canvas
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    img.src = `data:image/png;base64,${base64Image}`;
-  
-    img.onload = () => {
-      // Ajustar el tamaño del canvas según el tamaño de la imagen y el texto
-      const padding = 50; // Espacio adicional alrededor del texto
-      const lineHeight = 30; // Altura de línea para el texto
-  
-      // Ajustar el ancho del canvas para que sea un poco más ancho que la imagen
-      canvas.width = img.width + padding * 2;
-      // Ajustar la altura del canvas para incluir la imagen y espacio suficiente para el texto
-      canvas.height = img.height + padding + lineHeight * mensaje.split('\n').length;
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
+    const file = new File([blob], 'qr-code-with-message.png', { type: 'image/png' });
 
-      // Dibujar un fondo blanco para la imagen y el texto
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Detectar si es un dispositivo móvil o de escritorio
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
-      // Dibujar la imagen del QR en el canvas
-      ctx.drawImage(img, padding, 0);
-
-      // Configurar el estilo del texto
-      ctx.font = '35px Arial';
-      ctx.fillStyle = '#000';
-      ctx.textAlign = 'center';
-      
-      // Dibujar cada línea del mensaje en el canvas
-      const messageLines = mensaje.split('\n');
-      messageLines.forEach((line, index) => {
-        ctx.fillText(line, canvas.width / 2, img.height + padding + lineHeight * index);
-      });
-
-      // Convertir el canvas a una imagen base64
-      const combinedImage = canvas.toDataURL('image/png');
-
-      // Crear un archivo Blob con la imagen combinada
-      const byteCharacters = atob(combinedImage.split(',')[1]);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'image/png' });
-      const file = new File([blob], 'qr-code-with-message.png', { type: 'image/png' });
-
-      // Detectar si es un dispositivo móvil o de escritorio
-      const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
-      if (isMobile) {
-        // Para dispositivos móviles, compartir la imagen combinada usando la API de compartir nativa
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({
-            files: [file],
-            title: 'Código QR con mensaje',
-            text: mensaje,
-          })
+    if (isMobile) {
+      // Para dispositivos móviles, compartir la imagen combinada usando la API de compartir nativa
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({
+          files: [file],
+          title: 'Código QR con mensaje',
+          text: mensaje,
+        })
           .then(() => console.log('Compartido con éxito'))
           .catch((error) => console.log('Error al compartir', error));
-        } else {
-          alert('Tu navegador no soporta compartir archivos o texto.');
-        }
       } else {
-        // Para dispositivos de escritorio, abrir la imagen combinada en una nueva pestaña
-        const imageUrl = URL.createObjectURL(blob);
-        window.open(imageUrl, '_blank');
+        alert('Tu navegador no soporta compartir archivos o texto.');
       }
-    };
-  
-    img.onerror = () => {
-      console.error('Error al cargar la imagen del QR');
-      alert('Error al cargar la imagen del QR');
-    };
+    } else {
+      // Para dispositivos de escritorio, abrir la imagen combinada en una nueva pestaña
+      const imageUrl = URL.createObjectURL(blob);
+      window.open(imageUrl, '_blank');
+    }
   };
+
+  img.onerror = () => {
+    console.error('Error al cargar la imagen del QR');
+    alert('Error al cargar la imagen del QR');
+  };
+};
+
 
    
 
