@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button, Box, Typography, Container, TextField, Grid, Paper, FormControl, InputLabel, Select, MenuItem, Fade } from '@mui/material';
 import { Html5Qrcode } from 'html5-qrcode';
 import { useTheme } from '@mui/material/styles';
-import useQrStore from '../store/UseQrStore';
+import useQrStore from '../store/useQrStore';
 import useServiciosStore from '../store/useServiciosStore';
 import Swal from 'sweetalert2';
 import 'tailwindcss/tailwind.css';
