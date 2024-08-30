@@ -5,10 +5,11 @@
 //export const URL = 'https://referido2back.onrender.com'
 
 
+<<<<<<< HEAD
  export const URL = "http://localhost:8080"
+=======
+>>>>>>> a47ec444bdd3259fb067a76f212698aa64388b08
 
-
-//export const URL = "http://localhost:8080"
 
 
 
