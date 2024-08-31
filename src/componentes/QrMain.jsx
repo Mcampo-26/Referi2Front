@@ -1,86 +1,114 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
-  Button, TextField, Grid, Typography, Card, CardContent,
-  Paper, Box, MenuItem, Select, InputLabel, FormControl
-} from '@mui/material';
-import useQrStore from '../store/useQrStore';
-import useEmpresasStore from '../store/useEmpresaStore';
-import useUsuariosStore from '../store/useUsuariosStore';
-import { WhatsApp } from '@mui/icons-material';
-import { useTheme, ThemeProvider, CssBaseline, useMediaQuery } from '@mui/material';
-import { styled } from '@mui/system';
-import Swal from 'sweetalert2';
-import './Css/QrMain.css';
+  Button,
+  TextField,
+  Grid,
+  Typography,
+  Card,
+  CardContent,
+  Paper,
+  Box,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+} from "@mui/material";
+import useQrStore from "../store/useQrStore";
+import useEmpresasStore from "../store/useEmpresaStore";
+import useUsuariosStore from "../store/useUsuariosStore";
+import { WhatsApp } from "@mui/icons-material";
+import {
+  useTheme,
+  ThemeProvider,
+  CssBaseline,
+  useMediaQuery,
+} from "@mui/material";
+import { styled } from "@mui/system";
+import Swal from "sweetalert2";
+import "./Css/QrMain.css";
 
 const StyledBox = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
+  backgroundColor:
+    theme.palette.mode === "dark"
+      ? theme.palette.grey[800]
+      : theme.palette.grey[200],
   color: theme.palette.text.primary,
-  transition: 'background-color 0.3s ease, color 0.3s ease',
-  height: '100vh',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
+  transition: "background-color 0.3s ease, color 0.3s ease",
+  height: "100vh",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
   padding: theme.spacing(2),
 }));
 
 export const QrMain = () => {
-  const [empresaId, setEmpresaId] = useState('');
-  const [nombreEmpresa, setNombreEmpresa] = useState('');
-  const [nombre, setNombre] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [mail, setMail] = useState('');
-  const [date, setDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [base64Image, setBase64Image] = useState('');
-  const [assignedTo, setAssignedTo] = useState('');
-  const [maxUsageCount, setMaxUsageCount] = useState('');
+  const [empresaId, setEmpresaId] = useState("");
+  const [nombreEmpresa, setNombreEmpresa] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [mail, setMail] = useState("");
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [base64Image, setBase64Image] = useState("");
+  const [assignedTo, setAssignedTo] = useState("");
+  const [maxUsageCount, setMaxUsageCount] = useState("");
   const [filteredUsuarios, setFilteredUsuarios] = useState([]);
 
   const createQr = useQrStore((state) => state.createQr);
   const { empresas, getAllEmpresas } = useEmpresasStore();
-  const { getUsuariosByEmpresa, usuarios, usuario } = useUsuariosStore((state) => ({
-    getUsuariosByEmpresa: state.getUsuariosByEmpresa,
-    usuarios: state.usuarios,
-    usuario: state.usuario,
-  }));
+  const { getUsuariosByEmpresa, usuarios, usuario } = useUsuariosStore(
+    (state) => ({
+      getUsuariosByEmpresa: state.getUsuariosByEmpresa,
+      usuarios: state.usuarios,
+      usuario: state.usuario,
+    })
+  );
 
   const theme = useTheme();
-  const isLargeScreen = useMediaQuery(theme.breakpoints.up('md'));
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("md"));
 
   // ID del rol SuperAdmin
-  const superAdminRoleId = "668692d09bbe1e9ff25a4826";  // Cambia esto por el ID correcto
+  const superAdminRoleId = "668692d09bbe1e9ff25a4826"; // Cambia esto por el ID correcto
 
   // Cargar todas las empresas cuando el componente se monta
   useEffect(() => {
     const cargarDatos = async () => {
       try {
+        // Verifica si las empresas ya están cargadas
         if (empresas.length === 0) {
           await getAllEmpresas();
-          console.log('Empresas cargadas:', empresas);
+        
         }
-  
+
+        // Verifica si el usuario no es SuperAdmin y tiene una empresa asignada
         if (usuario.roleId !== superAdminRoleId && usuario.empresa) {
-          const empresaSeleccionada = empresas.find(e => e._id === usuario.empresa._id);
+          const empresaSeleccionada = empresas.find(
+            (e) => e._id === usuario.empresa._id
+          );
           if (empresaSeleccionada) {
             setEmpresaId(empresaSeleccionada._id);
             setNombreEmpresa(empresaSeleccionada.name);
-  
-            // Verifica si ya tienes los usuarios cargados antes de hacer la llamada
-            if (!usuarios.length || !usuarios.some(u => u.empresa._id === empresaSeleccionada._id)) {
-              await getUsuariosByEmpresa(empresaSeleccionada._id);
-            }
-            setFilteredUsuarios(usuarios.filter(u => u.empresa && u.empresa._id === empresaSeleccionada._id));
+
+            // Carga de usuarios
+            await getUsuariosByEmpresa(empresaSeleccionada._id); // Espera a que los usuarios se carguen
+            // Verifica si los usuarios están correctamente cargados
+            if (usuarios && usuarios.length > 0) {
+              setFilteredUsuarios(
+                usuarios.filter(
+                  (u) => u.empresa && u.empresa._id === empresaSeleccionada._id
+                )
+              );
+            } 
           }
         }
       } catch (error) {
-        console.error('Error en cargarDatos:', error);
+        console.error("Error en cargarDatos:", error);
       }
     };
-  
+
     cargarDatos();
-  }, [getAllEmpresas, empresas, usuario, getUsuariosByEmpresa, usuarios]);
-  
+  }, [getAllEmpresas, empresas, usuario, getUsuariosByEmpresa]); // Ajusta las dependencias adecuadamente
 
   // Manejar el cambio de empresa solo si es SuperAdmin
   const handleEmpresaChange = async (e) => {
@@ -88,14 +116,19 @@ export const QrMain = () => {
       const selectedEmpresaId = e.target.value;
       setEmpresaId(selectedEmpresaId);
 
-      const selectedEmpresa = empresas.find(e => e._id === selectedEmpresaId);
+      const selectedEmpresa = empresas.find((e) => e._id === selectedEmpresaId);
       if (selectedEmpresa) {
         setNombreEmpresa(selectedEmpresa.name);
         try {
           await getUsuariosByEmpresa(selectedEmpresaId);
-          setFilteredUsuarios(usuarios.filter(usuario => usuario.empresa && usuario.empresa._id === selectedEmpresaId));
+          setFilteredUsuarios(
+            usuarios.filter(
+              (usuario) =>
+                usuario.empresa && usuario.empresa._id === selectedEmpresaId
+            )
+          );
         } catch (error) {
-          console.error('Error al obtener usuarios por empresa:', error);
+          console.error("Error al obtener usuarios por empresa:", error);
         }
       }
     }
@@ -104,34 +137,66 @@ export const QrMain = () => {
   // Filtrar los usuarios basados en la empresa seleccionada
   useEffect(() => {
     if (empresaId) {
-      const usuariosFiltrados = usuarios.filter(usuario => usuario.empresa && usuario.empresa._id === empresaId);
+      const usuariosFiltrados = usuarios.filter(
+        (usuario) => usuario.empresa && usuario.empresa._id === empresaId
+      );
       setFilteredUsuarios(usuariosFiltrados);
     }
   }, [empresaId, usuarios]);
 
   const validateFields = () => {
-    if (!empresaId || !nombre || !telefono || !mail || !date || !startTime || !endTime || !assignedTo || !maxUsageCount) {
-      Swal.fire('Error', 'Por favor, complete todos los campos', 'error');
+    if (
+      !empresaId ||
+      !nombre ||
+      !telefono ||
+      !mail ||
+      !date ||
+      !startTime ||
+      !endTime ||
+      !assignedTo ||
+      !maxUsageCount
+    ) {
+      Swal.fire("Error", "Por favor, complete todos los campos", "error");
       return false;
     }
     if (nombre.length > 20) {
-      Swal.fire('Error', 'El nombre no debe exceder los 20 caracteres', 'error');
+      Swal.fire(
+        "Error",
+        "El nombre no debe exceder los 20 caracteres",
+        "error"
+      );
       return false;
     }
-    if (telefono.length < 10 || telefono.length > 15 || !/^\d+$/.test(telefono)) {
-      Swal.fire('Error', 'El teléfono debe tener entre 10 y 15 caracteres y solo debe contener números', 'error');
+    if (
+      telefono.length < 10 ||
+      telefono.length > 15 ||
+      !/^\d+$/.test(telefono)
+    ) {
+      Swal.fire(
+        "Error",
+        "El teléfono debe tener entre 10 y 15 caracteres y solo debe contener números",
+        "error"
+      );
       return false;
     }
     if (!/\S+@\S+\.\S+/.test(mail)) {
-      Swal.fire('Error', 'El correo no es válido', 'error');
+      Swal.fire("Error", "El correo no es válido", "error");
       return false;
     }
     if (!/^\d+$/.test(maxUsageCount) || parseInt(maxUsageCount, 10) < 1) {
-      Swal.fire('Error', 'La cantidad máxima de usos debe ser un número entero mayor que 0', 'error');
+      Swal.fire(
+        "Error",
+        "La cantidad máxima de usos debe ser un número entero mayor que 0",
+        "error"
+      );
       return false;
     }
     if (new Date(`${date}T${startTime}`) >= new Date(`${date}T${endTime}`)) {
-      Swal.fire('Error', 'La hora de inicio debe ser anterior a la hora de fin', 'error');
+      Swal.fire(
+        "Error",
+        "La hora de inicio debe ser anterior a la hora de fin",
+        "error"
+      );
       return false;
     }
     return true;
@@ -141,130 +206,137 @@ export const QrMain = () => {
     if (!validateFields()) {
       return;
     }
-  
-    const userId = localStorage.getItem('userId');
-    const token = localStorage.getItem('token');
-    
+
+    const userId = localStorage.getItem("userId");
+    const token = localStorage.getItem("token");
+
     if (!userId || !token) {
       console.error("User ID or token is missing");
       return;
     }
-  
-    const empresa = empresas.find(e => e._id === empresaId);
+
+    const empresa = empresas.find((e) => e._id === empresaId);
     const qrData = {
       userId,
-      assignedTo: { _id: assignedTo, nombre: usuarios.find(u => u._id === assignedTo)?.nombre },
-      empresaId: { _id: empresaId, name: empresa?.name || 'N/A' },
+      assignedTo: {
+        _id: assignedTo,
+        nombre: usuarios.find((u) => u._id === assignedTo)?.nombre,
+      },
+      empresaId: { _id: empresaId, name: empresa?.name || "N/A" },
       nombre,
       telefono,
       mail,
       date,
       startTime,
       endTime,
-      maxUsageCount: parseInt(maxUsageCount, 10)
+      maxUsageCount: parseInt(maxUsageCount, 10),
     };
-  
+
     try {
       const newQr = await createQr(qrData, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-  
+
       if (newQr && newQr.base64Image) {
         setBase64Image(newQr.base64Image);
-        Swal.fire('QR creado', 'QR creado exitosamente', 'success');
+        Swal.fire("QR creado", "QR creado exitosamente", "success");
       }
     } catch (error) {
       console.error("Error al crear QR:", error);
-      Swal.fire('Error', 'Hubo un problema al crear el QR', 'error');
+      Swal.fire("Error", "Hubo un problema al crear el QR", "error");
     }
   };
 
   const handleWhatsAppShare = () => {
-  if (!base64Image) {
-    alert('No hay código QR para compartir.');
-    return;
-  }
-
-  // Crear un mensaje personalizado
-  const mensaje = `¡Hola! 🎉\nTe invitamos a usar este QR\npara obtener beneficios exclusivos con ${nombreEmpresa}.`;
-
-  // Crear un canvas
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const img = new Image();
-  img.src = `data:image/png;base64,${base64Image}`;
-
-  img.onload = () => {
-    // Ajustar el tamaño del canvas según el tamaño de la imagen y el texto
-    const padding = 50; // Margen adicional alrededor del texto
-    const lineHeight = 30; // Altura de línea para el texto
-    canvas.width = img.width + padding * 2;
-    canvas.height = img.height + lineHeight * 3 + padding * 2; // Espacio adicional para el texto y margen
-
-    // Dibujar la imagen del QR en el canvas con margen superior
-    ctx.fillStyle = '#fff'; // Fondo blanco
-    ctx.fillRect(0, 0, canvas.width, canvas.height); // Fondo del canvas
-    ctx.drawImage(img, padding, padding); // Dibuja la imagen del QR
-
-    // Configurar el estilo del texto
-    ctx.font = '30px Arial'; // Tamaño de fuente ajustado
-    ctx.fillStyle = '#000';
-    ctx.textAlign = 'center';
-
-    // Dividir el mensaje en líneas
-    const messageLines = mensaje.split('\n');
-
-    // Dibujar cada línea del mensaje en el canvas
-    messageLines.forEach((line, index) => {
-      ctx.fillText(line, canvas.width / 2, img.height + padding + lineHeight * (index + 1));
-    });
-
-    // Convertir el canvas a una imagen base64
-    const combinedImage = canvas.toDataURL('image/png');
-
-    // Crear un archivo Blob con la imagen combinada
-    const byteCharacters = atob(combinedImage.split(',')[1]);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    if (!base64Image) {
+      alert("No hay código QR para compartir.");
+      return;
     }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'image/png' });
-    const file = new File([blob], 'qr-code-with-message.png', { type: 'image/png' });
 
-    // Detectar si es un dispositivo móvil o de escritorio
-    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    // Crear un mensaje personalizado
+    const mensaje = `¡Hola! 🎉\nTe invitamos a usar este QR\npara obtener beneficios exclusivos con ${nombreEmpresa}.`;
 
-    if (isMobile) {
-      // Para dispositivos móviles, compartir la imagen combinada usando la API de compartir nativa
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({
-          files: [file],
-          title: 'Código QR con mensaje',
-          text: mensaje,
-        })
-          .then(() => console.log('Compartido con éxito'))
-          .catch((error) => console.log('Error al compartir', error));
-      } else {
-        alert('Tu navegador no soporta compartir archivos o texto.');
+    // Crear un canvas
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.src = `data:image/png;base64,${base64Image}`;
+
+    img.onload = () => {
+      // Ajustar el tamaño del canvas según el tamaño de la imagen y el texto
+      const padding = 50; // Margen adicional alrededor del texto
+      const lineHeight = 30; // Altura de línea para el texto
+      canvas.width = img.width + padding * 2;
+      canvas.height = img.height + lineHeight * 3 + padding * 2; // Espacio adicional para el texto y margen
+
+      // Dibujar la imagen del QR en el canvas con margen superior
+      ctx.fillStyle = "#fff"; // Fondo blanco
+      ctx.fillRect(0, 0, canvas.width, canvas.height); // Fondo del canvas
+      ctx.drawImage(img, padding, padding); // Dibuja la imagen del QR
+
+      // Configurar el estilo del texto
+      ctx.font = "30px Arial"; // Tamaño de fuente ajustado
+      ctx.fillStyle = "#000";
+      ctx.textAlign = "center";
+
+      // Dividir el mensaje en líneas
+      const messageLines = mensaje.split("\n");
+
+      // Dibujar cada línea del mensaje en el canvas
+      messageLines.forEach((line, index) => {
+        ctx.fillText(
+          line,
+          canvas.width / 2,
+          img.height + padding + lineHeight * (index + 1)
+        );
+      });
+
+      // Convertir el canvas a una imagen base64
+      const combinedImage = canvas.toDataURL("image/png");
+
+      // Crear un archivo Blob con la imagen combinada
+      const byteCharacters = atob(combinedImage.split(",")[1]);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
-    } else {
-      // Para dispositivos de escritorio, abrir la imagen combinada en una nueva pestaña
-      const imageUrl = URL.createObjectURL(blob);
-      window.open(imageUrl, '_blank');
-    }
-  };
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: "image/png" });
+      const file = new File([blob], "qr-code-with-message.png", {
+        type: "image/png",
+      });
 
-  img.onerror = () => {
-    console.error('Error al cargar la imagen del QR');
-    alert('Error al cargar la imagen del QR');
-  };
-};
+      // Detectar si es un dispositivo móvil o de escritorio
+      const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
-  
-   
+      if (isMobile) {
+        // Para dispositivos móviles, compartir la imagen combinada usando la API de compartir nativa
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator
+            .share({
+              files: [file],
+              title: "Código QR con mensaje",
+              text: mensaje,
+            })
+            .then(() => console.log("Compartido con éxito"))
+            .catch((error) => console.log("Error al compartir", error));
+        } else {
+          alert("Tu navegador no soporta compartir archivos o texto.");
+        }
+      } else {
+        // Para dispositivos de escritorio, abrir la imagen combinada en una nueva pestaña
+        const imageUrl = URL.createObjectURL(blob);
+        window.open(imageUrl, "_blank");
+      }
+    };
+
+    img.onerror = () => {
+      console.error("Error al cargar la imagen del QR");
+      alert("Error al cargar la imagen del QR");
+    };
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -278,36 +350,50 @@ export const QrMain = () => {
             <Grid container spacing={4} mt={4}>
               <Grid item xs={12} md={6}>
                 <Box mt={-5} className="p-4 rounded-md shadow-md">
-                  <FormControl fullWidth variant="outlined" className="custom-margin">
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    className="custom-margin"
+                  >
                     <InputLabel>Empresa</InputLabel>
                     <Select
                       labelId="empresa-select-label"
-                      value={empresaId || ''}
+                      value={empresaId || ""}
                       onChange={handleEmpresaChange}
                       label="Empresa"
                       disabled={usuario.roleId !== superAdminRoleId}
                       sx={{
-                        color: theme.palette.mode === 'dark' ? '#fff' : '#111',
-                        '.MuiOutlinedInput-notchedOutline': {
-                          borderColor: theme.palette.mode === 'dark' ? '#fff' : '#444',
+                        color: theme.palette.mode === "dark" ? "#fff" : "#111",
+                        ".MuiOutlinedInput-notchedOutline": {
+                          borderColor:
+                            theme.palette.mode === "dark" ? "#fff" : "#444",
                         },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
                           borderColor: theme.palette.primary.main,
                         },
-                        '.MuiSvgIcon-root': {
-                          color: theme.palette.mode === 'dark' ? '#fff' : '#000',
+                        ".MuiSvgIcon-root": {
+                          color:
+                            theme.palette.mode === "dark" ? "#fff" : "#000",
                         },
                       }}
                     >
                       {empresas.map((empresa) => (
-                        <MenuItem key={empresa._id} value={empresa._id} sx={{ color: 'black' }}>
+                        <MenuItem
+                          key={empresa._id}
+                          value={empresa._id}
+                          sx={{ color: "black" }}
+                        >
                           {empresa.name}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
 
-                  <FormControl fullWidth variant="outlined" className="custom-margin">
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    className="custom-margin"
+                  >
                     <InputLabel>Asignar a usuario</InputLabel>
                     <Select
                       value={assignedTo}
@@ -351,7 +437,11 @@ export const QrMain = () => {
                     fullWidth
                     className="custom-margin"
                   />
-                  <Box display="flex" alignItems="center" className="custom-margin">
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    className="custom-margin"
+                  >
                     <TextField
                       label="Fecha"
                       type="date"
@@ -424,17 +514,25 @@ export const QrMain = () => {
                   )}
                 </Box>
               </Grid>
-              <Grid item xs={12} md={6} className="flex justify-center items-center">
+              <Grid
+                item
+                xs={12}
+                md={6}
+                className="flex justify-center items-center"
+              >
                 {base64Image && (
-                  <Paper elevation={3} className="p-0 bg-white dark:bg-gray-800 rounded-md shadow-md flex justify-center items-center w-full h-full">
+                  <Paper
+                    elevation={3}
+                    className="p-0 bg-white dark:bg-gray-800 rounded-md shadow-md flex justify-center items-center w-full h-full"
+                  >
                     <img
                       src={`data:image/png;base64,${base64Image}`}
                       alt="Generated QR Code"
                       className="w-full h-full max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg"
                       style={{
-                        width: '300%',
-                        height: '50%',
-                        maxWidth: '450px',
+                        width: "300%",
+                        height: "50%",
+                        maxWidth: "450px",
                       }}
                     />
                   </Paper>
