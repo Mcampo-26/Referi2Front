@@ -85,6 +85,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
           { id: 9, text: "Roles", to: "/roles" },
           { id: 11, text: "Planes de Pago", to: "/planSelector" },
           { id: 13, text: "Cuenta", to: "/UserPlan" },
+          { id: 14, text: "Mensajes", to: "/mensajes" },
           ...commonItems,
         ];
       case "Admin":
@@ -92,6 +93,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
           { id: 8, text: "Crear", to: "/QrMain" },
           { id: 2, text: "Escanear QR", to: "/Escanear" },
           { id: 6, text: "Usuarios", to: "/Users" },
+          { id: 14, text: "Mensajes", to: "/mensajes" },
           { id: 10, text: "Empresa", action: handleEmpresasClick },
           ...commonItems,
         ];

@@ -1,10 +1,11 @@
-import {create} from 'zustand';
+import { create } from 'zustand';
 import axios from 'axios';
 import { URL } from '../utilities/config';
 
 const useEmpresasStore = create((set) => ({
   empresa: null,
   empresas: [],
+  usuarios: [], 
   loading: false,
   error: null,
 
@@ -12,10 +13,11 @@ const useEmpresasStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await axios.get(`${URL}/empresa/all`);
-      set({
+      set((state) => ({
+        ...state,
         empresas: response.data,
         loading: false,
-      });
+      }));
     } catch (error) {
       console.error('Error al obtener todas las empresas:', error.response || error.message);
       set({ loading: false, error: 'Error al obtener todas las empresas' });
@@ -26,10 +28,11 @@ const useEmpresasStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await axios.get(`${URL}/empresa/${id}`);
-      set({
+      set((state) => ({
+        ...state,
         empresa: response.data,
         loading: false,
-      });
+      }));
     } catch (error) {
       console.error('Error al obtener la empresa:', error.response || error.message);
       set({ loading: false, error: 'Error al obtener la empresa' });
@@ -42,6 +45,7 @@ const useEmpresasStore = create((set) => ({
       const response = await axios.post(`${URL}/empresa/create`, empresa);
       const nuevaEmpresa = response.data;
       set((state) => ({
+        ...state,
         empresas: [...state.empresas, nuevaEmpresa],
         loading: false,
       }));
@@ -57,6 +61,7 @@ const useEmpresasStore = create((set) => ({
     try {
       await axios.delete(`${URL}/empresa/delete/${id}`);
       set((state) => ({
+        ...state,
         empresas: state.empresas.filter((empresa) => empresa._id !== id),
         loading: false,
       }));
@@ -72,6 +77,7 @@ const useEmpresasStore = create((set) => ({
       const response = await axios.put(`${URL}/empresa/update/${empresaId}`, updatedEmpresa);
       const updatedEmpresaData = response.data;
       set((state) => ({
+        ...state,
         empresas: state.empresas.map((empresa) =>
           empresa._id === empresaId ? updatedEmpresaData : empresa
         ),
