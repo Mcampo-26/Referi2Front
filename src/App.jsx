@@ -25,6 +25,7 @@ import { PaymentResultPage } from './pages/PaymentResultPage';
 import { UserPlanDetails } from './pages/UserPlanDetails';
 import { VerifyAccount } from '../src/componentes/VerifyAccount';
 import {ProtectedRoute} from './componentes/ProtectedRoute';
+import { Mensajes } from "./componentes/Mensajes";
 
 // Aquí defines los temas
 const lightTheme = createTheme({
@@ -114,6 +115,7 @@ function App() {
           <Route path="/payment-result/:status" element={<ProtectedRoute element={<PaymentResultPage />} />} />
           <Route path="/UserPlan" element={<ProtectedRoute element={<UserPlanDetails />} />} />
           <Route path="/verify" element={<VerifyAccount />} />
+          <Route path="/mensajes" element={<Mensajes />} />
         </Routes>
       </div>
     </ThemeProvider>
