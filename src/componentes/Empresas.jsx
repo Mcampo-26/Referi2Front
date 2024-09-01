@@ -36,28 +36,30 @@ export const Empresas = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingEmpresaId, setEditingEmpresaId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filteredEmpresas, setFilteredEmpresas] = useState([]);
 
-  const role = localStorage.getItem('role');
+  const superAdminRoleId = "668692d09bbe1e9ff25a4826";
+  const roleId = localStorage.getItem('role'); // Obtén el roleId desde el localStorage
   const empresaId = localStorage.getItem('empresaId');
 
   useEffect(() => {
-    if (role === 'SuperAdmin') {
+    if (roleId === superAdminRoleId) {
+      // Si el usuario tiene el rol de SuperAdmin, obtiene todas las empresas
       getAllEmpresas();
-    } else if (role === 'Admin' && empresaId) {
+    } else if (roleId === 'Admin' && empresaId) {
+      // Si el usuario es Admin, obtiene solo la empresa asignada
       getEmpresaById(empresaId);
     }
-  }, [role, empresaId, getAllEmpresas, getEmpresaById]);
+  }, [roleId, empresaId, getAllEmpresas, getEmpresaById]);
 
   useEffect(() => {
-    if (role === 'Admin' && empresa) {
+    if (roleId === 'Admin' && empresa) {
       // Si es Admin, y hay una empresa cargada, la agregamos al array para que se renderice
       setFilteredEmpresas([empresa]);
     } else {
       setFilteredEmpresas(empresas);
     }
-  }, [role, empresa, empresas]);
-
-  const [filteredEmpresas, setFilteredEmpresas] = useState([]);
+  }, [roleId, empresa, empresas]);
 
   const toggleModal = () => {
     setShowModal(!showModal);
@@ -97,9 +99,9 @@ export const Empresas = () => {
               confirmButtonColor: "#3085d6",
               confirmButtonText: "Ok",
             });
-            if (role === 'SuperAdmin') {
+            if (roleId === superAdminRoleId) {
               getAllEmpresas();
-            } else if (role === 'Admin' && empresaId) {
+            } else if (roleId === 'Admin' && empresaId) {
               getEmpresaById(empresaId);
             }
           })
@@ -127,9 +129,9 @@ export const Empresas = () => {
           await createEmpresa({ name: newEmpresaName });
         }
 
-        if (role === 'SuperAdmin') {
+        if (roleId === superAdminRoleId) {
           getAllEmpresas();
-        } else if (role === 'Admin' && empresaId) {
+        } else if (roleId === 'Admin' && empresaId) {
           getEmpresaById(empresaId);
         }
       } catch (error) {

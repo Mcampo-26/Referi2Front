@@ -27,7 +27,6 @@ const useMensajesStore = create((set) => ({
   createMessage: async (message) => {
     set({ loading: true, error: null });
     try {
-      // Ajusta la URL para que coincida con la ruta del backend
       const response = await axios.post(`${URL}/Mensajes/create`, message); 
       const newMessage = response.data;
       set((state) => ({
@@ -39,6 +38,22 @@ const useMensajesStore = create((set) => ({
     } catch (error) {
       console.error('Error al crear mensaje:', error.response || error.message);
       set({ loading: false, error: 'Error al crear mensaje' });
+    }
+  },
+
+  // Obtener el conteo de mensajes no leídos para un usuario específico
+  getUnreadMessagesCountByUser: async (userId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axios.get(`${URL}/Mensajes/${userId}?page=1&limit=1000`); // Obtener todos los mensajes
+      const unreadMessagesCount = response.data.messages.filter(
+        (message) => message.recipient._id === userId && !message.read
+      ).length;
+      return unreadMessagesCount;
+    } catch (error) {
+      console.error('Error al obtener el conteo de mensajes no leídos:', error.response || error.message);
+      set({ loading: false, error: 'Error al obtener el conteo de mensajes no leídos' });
+      return 0;
     }
   },
 

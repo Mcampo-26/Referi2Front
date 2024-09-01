@@ -16,18 +16,22 @@ import Brightness4 from "@mui/icons-material/Brightness4";
 import Brightness7 from "@mui/icons-material/Brightness7";
 import CloseIcon from '@mui/icons-material/Close';
 import MenuItem from "@mui/material/MenuItem";
+import Badge from "@mui/material/Badge"; // Importa Badge
 import useUsuariosStore from "../store/useUsuariosStore";
+import useMensajesStore from "../store/useMensajesStore"; // Importa useMensajesStore
 import Brand from '../assets/Brand.jpg';
 
 export const Navbar = ({ toggleDarkMode, darkMode }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [empresaNombre, setEmpresaNombre] = useState('');
+  const [unreadCount, setUnreadCount] = useState(0);
   const { usuario, isAuthenticated, role, logoutUsuario } = useUsuariosStore((state) => ({
     usuario: state.usuario,
     isAuthenticated: state.isAuthenticated,
     role: state.role,
     logoutUsuario: state.logoutUsuario,
   }));
+  const { getUnreadMessagesCountByUser } = useMensajesStore(); // Usa la función correcta del store
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,8 +40,10 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
       if (nombre) {
         setEmpresaNombre(nombre);
       }
+      // Obtiene la cantidad de mensajes no leídos
+      getUnreadMessagesCountByUser(usuario._id).then(count => setUnreadCount(count));
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, getUnreadMessagesCountByUser, usuario]);
 
   const handleLogout = () => {
     closeMenu();
@@ -94,6 +100,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
           { id: 2, text: "Escanear QR", to: "/Escanear" },
           { id: 6, text: "Usuarios", to: "/Users" },
           { id: 14, text: "Mensajes", to: "/mensajes" },
+          { id: 13, text: "Cuenta", to: "/UserPlan" },
           { id: 10, text: "Empresa", action: handleEmpresasClick },
           ...commonItems,
         ];
@@ -169,7 +176,13 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
                   onClick={closeMenu}
                   sx={{ color: "inherit" }}
                 >
-                  {item.text}
+                  {item.text === "Mensajes" ? (
+                    <Badge badgeContent={unreadCount} color="secondary">
+                      {item.text}
+                    </Badge>
+                  ) : (
+                    item.text
+                  )}
                 </MenuItem>
               ) : (
                 <MenuItem

@@ -193,33 +193,33 @@ export const QrList = () => {
         flexWrap="wrap"
       >
         <Box display="flex" alignItems="center" mt={{ xs: 2, sm: 0 }}>
-        <TextField
+          <TextField
             variant="outlined"
             placeholder="Buscar ..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
-              width: { xs: '100%', sm: '300px' },
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  borderColor: 'white',
+              width: { xs: "100%", sm: "300px" },
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  borderColor: "white",
                 },
-                '&:hover fieldset': {
-                  borderColor: 'white',
+                "&:hover fieldset": {
+                  borderColor: "white",
                 },
-                '&.Mui-focused fieldset': {
-                  borderColor: 'white',
+                "&.Mui-focused fieldset": {
+                  borderColor: "white",
                 },
               },
-              '& .MuiInputBase-input': {
-                color: 'white',
+              "& .MuiInputBase-input": {
+                color: "white",
               },
-              '& .MuiInputLabel-root': {
-                color: 'white',
+              "& .MuiInputLabel-root": {
+                color: "white",
               },
             }}
           />
-        
+
           {searchTerm && (
             <Button
               variant="contained"
@@ -318,6 +318,18 @@ export const QrList = () => {
                 >
                   Correo
                 </StyledTableCell>
+                {/* Agregando la columna de fecha */}
+                <StyledTableCell
+                  onClick={() => handleSort("createdAt")}
+                  orderBy={orderBy}
+                  column="createdAt"
+                  orderDirection={orderDirection}
+                  className={`${
+                    theme.palette.mode === "dark" ? "text-white" : "text-black"
+                  }`}
+                >
+                  Fecha
+                </StyledTableCell>
                 <TableCell
                   className={`${
                     theme.palette.mode === "dark" ? "text-white" : "text-black"
@@ -379,6 +391,8 @@ export const QrList = () => {
                     <TableCell>{qr.nombre}</TableCell>
                     <TableCell>{qr.telefono}</TableCell>
                     <TableCell>{qr.mail}</TableCell>
+                    {/* Mostrar la fecha de creación */}
+                    <TableCell>{qr.createdAt ? new Date(qr.createdAt).toLocaleDateString() : "N/A"}</TableCell>
                     <TableCell sx={{ display: "flex", alignItems: "center" }}>
                       <Avatar
                         src={qrMini}
@@ -509,5 +523,3 @@ export const QrList = () => {
     </Container>
   );
 };
-
-

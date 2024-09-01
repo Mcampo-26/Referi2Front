@@ -1,10 +1,19 @@
 import React from 'react';
-import { Paper, Typography, IconButton } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Paper, Typography, IconButton, Button } from '@mui/material';
+import ReplyIcon from '@mui/icons-material/Reply';
 
-const MensajeDetails = ({ selectedMessage, handleDeleteMessage }) => {
+const MensajeDetails = ({ selectedMessage, handleReply }) => {
   return (
-    <Paper className="p-4 bg-white dark:bg-gray-800 shadow-md" style={{ height: 'calc(60vh - 50px)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+    <Paper
+      className="p-4 bg-white dark:bg-gray-800 shadow-md"
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        overflowY: 'auto',
+      }}
+    >
       {selectedMessage ? (
         <>
           <div className="flex justify-between items-center mb-4">
@@ -16,19 +25,29 @@ const MensajeDetails = ({ selectedMessage, handleDeleteMessage }) => {
                 {selectedMessage.sender ? selectedMessage.sender.email : 'Correo desconocido'}
               </Typography>
             </div>
-            <IconButton
-              color="secondary"
-              onClick={() => handleDeleteMessage(selectedMessage._id)}
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<ReplyIcon />}
+              onClick={() => handleReply(selectedMessage.sender?._id)}
             >
-              <DeleteIcon />
-            </IconButton>
+              Responder
+            </Button>
           </div>
-          <Typography variant="body1" className="text-gray-800 dark:text-white mb-4" style={{ flexGrow: 1 }}>
+          <Typography
+            variant="body1"
+            className="text-gray-800 dark:text-white mb-4"
+            style={{ flexGrow: 1 }}
+          >
             {selectedMessage.content}
           </Typography>
         </>
       ) : (
-        <Typography variant="body1" className="text-gray-600 dark:text-gray-300" style={{ flexGrow: 1 }}>
+        <Typography
+          variant="body1"
+          className="text-gray-600 dark:text-gray-300"
+          style={{ flexGrow: 1 }}
+        >
           Selecciona un mensaje para verlo
         </Typography>
       )}

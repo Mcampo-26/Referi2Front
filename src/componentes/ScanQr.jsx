@@ -15,6 +15,7 @@ export const ScanQr = () => {
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 768);
   const [selectedService, setSelectedService] = useState('');
   const [details, setDetails] = useState('');
+  const [discount, setDiscount] = useState(''); // Estado para el descuento
   const [fadeOut, setFadeOut] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -145,6 +146,7 @@ export const ScanQr = () => {
       stopScan();
     }
   };
+
   const handleError = (err) => {
     if (
       err.name === "NotFoundException" ||
@@ -160,7 +162,6 @@ export const ScanQr = () => {
     }
   };
 
-  
   const stopScan = () => {
     if (scannerRef.current && scannerRef.current.isScanning) {
       scannerRef.current.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
@@ -218,6 +219,7 @@ export const ScanQr = () => {
     const qrData = {
       service: selectedService,
       details,
+      discount, // Incluir el descuento
       updatedAt: new Date().toISOString(),
     };
   
@@ -248,6 +250,7 @@ export const ScanQr = () => {
         setScannedData(null);
         setSelectedService('');
         setDetails('');
+        setDiscount('');
         setFadeOut(false);
       });
     } catch (error) {
@@ -263,7 +266,9 @@ export const ScanQr = () => {
       });
     }
   };
+
   const usosRestantes = scannedData ? scannedData.maxUsageCount - scannedData.usageCount : 0;
+  
   return (
     <Container
       maxWidth="md"
@@ -391,6 +396,7 @@ export const ScanQr = () => {
                     <Typography variant="body1"><strong>Usos restantes:</strong> {usosRestantes >= 0 ? usosRestantes : 'N/A'}</Typography>
                   </Grid>
                 </Grid>
+                
                 <FormControl fullWidth margin="normal" variant="outlined">
                   <InputLabel>Servicio</InputLabel>
                   <Select
@@ -407,12 +413,24 @@ export const ScanQr = () => {
                 </FormControl>
                 <TextField
                   fullWidth
+                  label="Descuento"
+                  variant="outlined"
+                  value={discount}
+                  onChange={(e) => setDiscount(e.target.value)}
+                  margin="normal"
+                  InputProps={{
+                    endAdornment: <Typography>%</Typography>, // Añadir el símbolo de porcentaje
+                  }}
+                />
+                <TextField
+                  fullWidth
                   label="Detalles"
                   variant="outlined"
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
                   margin="normal"
                 />
+                
                 <Button
                   variant="contained"
                   color="primary"
@@ -474,4 +492,4 @@ export const ScanQr = () => {
       )}
     </Container>
   );
-}  
+};
