@@ -1,7 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Editor, EditorState, RichUtils, Modifier } from 'draft-js';
 import 'draft-js/dist/Draft.css';
-import { Grid, Paper, Typography, IconButton, MenuItem, Select, FormControl, InputLabel, Button, List, ListItem, ListItemText, Divider } from '@mui/material';
+import { 
+  Grid, 
+  Paper, 
+  Typography, 
+  IconButton, 
+  MenuItem, 
+  Select, 
+  FormControl, 
+  InputLabel, 
+  Button, 
+  List, 
+  ListItem, 
+  ListItemText, 
+  Divider, 
+  Hidden 
+} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InboxIcon from '@mui/icons-material/Inbox';
 import SendIcon from '@mui/icons-material/Send';
@@ -9,7 +24,8 @@ import useMensajesStore from '../store/useMensajesStore';
 import useUsuariosStore from '../store/useUsuariosStore';
 import Swal from 'sweetalert2';
 import MensajeDetails from './MensajeDetails';
-import EmojiPickerButton from './EmojiPickerButton'; // Asegúrate de importar el componente de la barra de herramientas
+import EmojiPickerButton from './EmojiPickerButton';
+import { useTheme } from '@mui/material/styles';
 
 export const Mensajes = () => {
   const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
@@ -24,6 +40,11 @@ export const Mensajes = () => {
   const { messages, getMessagesByUser, createMessage, deleteMessage, markMessageAsRead, loading: loadingMensajes, error: errorMensajes } = useMensajesStore();
   const { usuarios, getUsuariosByEmpresa, loading: loadingUsuarios, error: errorUsuarios } = useUsuariosStore();
 
+  const theme = useTheme(); // Obtener el tema actual
+
+  // Referencia para el editor de mensajes
+  const editorRef = useRef(null);
+
   useEffect(() => {
     if (userId) getMessagesByUser(userId);
     if (empresaId) getUsuariosByEmpresa(empresaId);
@@ -34,6 +55,13 @@ export const Mensajes = () => {
     if (!content.trim() || !selectedRecipient) return;
     await createMessage({ sender: userId, recipient: selectedRecipient, content });
     setEditorState(EditorState.createEmpty());
+  };
+
+  const handleReply = (senderId) => {
+    setSelectedRecipient(senderId); // Establece el destinatario del mensaje seleccionado
+    setTimeout(() => {
+      editorRef.current.focus(); // Enfoca el editor de mensajes
+    }, 0);
   };
 
   const handleDeleteMessage = async (messageId) => {
@@ -79,37 +107,39 @@ export const Mensajes = () => {
   };
 
   return (
-    <Grid container spacing={2} className="p-2 sm:p-4 max-w-5xl mx-auto">
+    <Grid container spacing={2} className="p-2 sm:p-4 max-w-5xl mx-auto h-full">
       {/* Columna Izquierda: Navegación y Listado de Mensajes */}
-      <Grid item xs={12} md={4} className="border-r dark:border-gray-700">
-        <Paper className="p-4 bg-white dark:bg-gray-800 shadow-md h-full">
-          <div className="flex items-center justify-between mb-4">
-            <Button
-              fullWidth
-              variant={messageType === 'received' ? 'contained' : 'outlined'}
-              size="small"
-              startIcon={<InboxIcon />}
-              onClick={() => handleSelectMessageType('received')}
-              color="primary"
-              className="mb-2"
-            >
-              Recibidos
-            </Button>
-            <Button
-              fullWidth
-              variant={messageType === 'sent' ? 'contained' : 'outlined'}
-              size="small"
-              startIcon={<SendIcon />}
-              onClick={() => handleSelectMessageType('sent')}
-              color="primary"
-            >
-              Enviados
-            </Button>
-          </div>
+      <Grid item xs={12} md={3} sx={{ borderRight: `1px solid ${theme.palette.divider}`, height: '100%' }}>
+        <Paper sx={{ p: 4, bgcolor: theme.palette.background.paper, boxShadow: 3, height: '100%' }}>
+        <div className="flex flex-col items-center justify-between mb-4">
+  <Button
+    fullWidth
+    variant={messageType === 'received' ? 'contained' : 'outlined'}
+    size="small"
+    startIcon={<InboxIcon />}
+    onClick={() => handleSelectMessageType('received')}
+    color="primary"
+    sx={{ mb: 2 }} // Añade más margen inferior para separar los botones
+  >
+    Recibidos
+  </Button>
+  <Button
+    fullWidth
+    variant={messageType === 'sent' ? 'contained' : 'outlined'}
+    size="small"
+    startIcon={<SendIcon />}
+    onClick={() => handleSelectMessageType('sent')}
+    color="primary"
+    sx={{ mt: 2 }} // Añade margen superior para separar los botones
+  >
+    Enviados
+  </Button>
+</div>
+
           {loadingMensajes ? (
-            <Typography variant="body2" className="p-4 text-gray-600 dark:text-gray-300">Cargando mensajes...</Typography>
+            <Typography variant="body2" sx={{ p: 4, color: theme.palette.text.secondary }}>Cargando mensajes...</Typography>
           ) : errorMensajes ? (
-            <Typography variant="body2" className="p-4 text-red-500">{errorMensajes}</Typography>
+            <Typography variant="body2" sx={{ p: 4, color: theme.palette.error.main }}>{errorMensajes}</Typography>
           ) : (
             <List>
               {messages && messages
@@ -117,31 +147,37 @@ export const Mensajes = () => {
                 .map((message) => (
                   <React.Fragment key={message._id}>
                     <ListItem
-                      button
-                      className={`flex justify-between items-center ${
-                        messageType === 'received'
-                          ? (message.read ? 'bg-gray-100' : 'bg-blue-50')
-                          : (message.read ? 'bg-gray-200' : 'bg-green-50')
-                      } dark:bg-gray-700`}
-                      onClick={() => handleSelectMessage(message)}
-                    >
-                      <ListItemText
-                        primary={message.sender && message.sender._id === userId ? userName : message.sender ? message.sender.nombre : 'Remitente desconocido'}
-                        secondary={message.content}
-                        primaryTypographyProps={{ className: 'text-sm font-bold text-gray-900 dark:text-white' }}
-                        secondaryTypographyProps={{ className: 'text-xs text-gray-700 dark:text-gray-300' }}
-                      />
-                      <IconButton
-                        color="secondary"
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteMessage(message._id);
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </ListItem>
+  button
+  sx={{
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    bgcolor: messageType === 'received'
+      ? (message.read ? theme.palette.background.default : '#e0e0e0') // Gris claro para mensajes no leídos
+      : (message.read ? theme.palette.background.paper : '#f0f0f0'), // Gris muy claro para los enviados no leídos
+    '&:hover': {
+      bgcolor: theme.palette.action.hover,
+    }
+  }}
+  onClick={() => handleSelectMessage(message)}
+>
+  <ListItemText
+    primary={message.sender && message.sender._id === userId ? userName : message.sender ? message.sender.nombre : 'Remitente desconocido'}
+    secondary={message.content}
+    primaryTypographyProps={{ sx: { fontSize: '0.875rem', fontWeight: 'bold', color: theme.palette.text.primary } }}
+    secondaryTypographyProps={{ sx: { fontSize: '0.75rem', color: theme.palette.text.secondary } }}
+  />
+  <IconButton
+    color="secondary"
+    size="small"
+    onClick={(e) => {
+      e.stopPropagation();
+      handleDeleteMessage(message._id);
+    }}
+  >
+    <DeleteIcon fontSize="small" />
+  </IconButton>
+</ListItem>
+
                     <Divider />
                   </React.Fragment>
                 ))}
@@ -151,44 +187,69 @@ export const Mensajes = () => {
       </Grid>
 
       {/* Columna Derecha: Vista Detallada del Mensaje Seleccionado y Envío de Mensajes */}
-      <Grid item xs={12} md={8}>
-        <FormControl fullWidth variant="outlined" className="mb-4">
-          <InputLabel>Seleccionar destinatario</InputLabel>
-          <Select
-            value={selectedRecipient}
-            onChange={(e) => setSelectedRecipient(e.target.value)}
-            label="Seleccionar destinatario"
-            className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white"
-          >
-            {loadingUsuarios ? (
-              <MenuItem disabled>Cargando usuarios...</MenuItem>
-            ) : errorUsuarios ? (
-              <MenuItem disabled>{errorUsuarios}</MenuItem>
-            ) : (
-              usuarios.map((usuario) => (
-                <MenuItem key={usuario._id} value={usuario._id}>
-                  {usuario.nombre}
-                </MenuItem>
-              ))
-            )}
-          </Select>
-        </FormControl>
-        <Paper className="p-4 bg-white dark:bg-gray-800 shadow-md h-full">
-          {selectedMessage ? (
-            <MensajeDetails message={selectedMessage} />
-          ) : (
-            <Typography variant="body2" className="text-gray-600 dark:text-gray-300">Selecciona un mensaje para ver los detalles.</Typography>
-          )}
-          <div className="flex flex-col mt-4">
+      <Grid item xs={12} md={9} className="flex flex-col h-full">
+        {/* Contenedor de Vista Detallada y Formulario de Envío */}
+        <div className="flex flex-col h-full w-full">
+          {/* Vista Detallada del Mensaje Seleccionado */}
+          <Paper sx={{ p: 4, bgcolor: theme.palette.background.paper, boxShadow: 3, mb: 4, flexGrow: 1, overflow: 'auto' }}>
+            <MensajeDetails 
+              selectedMessage={selectedMessage} 
+              handleReply={handleReply} // Pasamos la función handleReply para responder
+            />
+          </Paper>
+
+          {/* Formulario de Envío de Mensajes */}
+          <Paper sx={{ p: 4, bgcolor: theme.palette.background.paper, boxShadow: 3 }}>
+            <FormControl fullWidth variant="outlined" sx={{ mb: 6 }}>
+              <InputLabel sx={{ bgcolor: theme.palette.background.paper, color: theme.palette.text.primary }}>Seleccionar destinatario</InputLabel>
+              <Select
+                value={selectedRecipient}
+                onChange={(e) => setSelectedRecipient(e.target.value)}
+                label="Seleccionar destinatario"
+                sx={{
+                  bgcolor: theme.palette.background.paper,
+                  color: theme.palette.text.primary,
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: theme.palette.divider,
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: theme.palette.text.primary,
+                  }
+                }}
+              >
+                {loadingUsuarios ? (
+                  <MenuItem disabled>Cargando usuarios...</MenuItem>
+                ) : errorUsuarios ? (
+                  <MenuItem disabled>{errorUsuarios}</MenuItem>
+                ) : (
+                  usuarios.map((usuario) => (
+                    <MenuItem key={usuario._id} value={usuario._id}>
+                      {usuario.nombre}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
+
             <Editor
+              ref={editorRef} // Referencia al editor
               editorState={editorState}
               onChange={setEditorState}
               handleKeyCommand={handleKeyCommand}
               placeholder="Escribe tu mensaje aquí..."
-              className="border rounded-lg p-2 bg-white dark:bg-gray-800"
+              className="border rounded-lg p-4 w-full mb-8"
+              style={{
+                minHeight: '250px',
+                backgroundColor: theme.palette.background.paper,
+                color: theme.palette.text.primary,
+                borderColor: theme.palette.divider,
+              }}
             />
-            <div className="flex justify-between items-center mt-2">
-              <EmojiPickerButton onEmojiSelect={handleInsertEmoji} />
+
+            <div className="flex justify-between items-center mt-10 w-full gap-8">
+              <Hidden smDown>
+                <EmojiPickerButton onEmojiSelect={handleInsertEmoji} />
+              </Hidden>
               <Button
                 variant="contained"
                 color="primary"
@@ -198,11 +259,10 @@ export const Mensajes = () => {
                 Enviar
               </Button>
             </div>
-          </div>
-        </Paper>
+          </Paper>
+
+        </div>
       </Grid>
     </Grid>
   );
 };
-
-
