@@ -283,7 +283,7 @@ export const QrMain = () => {
     img.onload = () => {
       // Ajustar el tamaño del canvas para incluir espacio para el texto
       const padding = 10; // Espacio adicional alrededor del texto
-      const fontSize = 10; // Tamaño de la fuente
+      const fontSize = 9; // Tamaño de la fuente
       const lineHeight = fontSize + 4; // Altura de cada línea de texto
       const maxWidth = 300; // Ancho máximo del texto
       const textHeight = 80; // Altura estimada para el texto (ajusta según el mensaje)
