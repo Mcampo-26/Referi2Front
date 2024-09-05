@@ -311,73 +311,71 @@ export const UserList = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedUsers.map((usuario) => {
-                const isUserSuperAdmin =
-                  usuario.role?._id === superAdminRoleId;
-                const canEdit =
-                  role === superAdminRoleId ||
-                  (!isUserSuperAdmin &&
-                    usuario.empresa?._id === empresaId);
+  {sortedUsers.map((usuario) => {
+    const isUserSuperAdmin = usuario.role?._id === superAdminRoleId;
 
-                return (
-                  <TableRow key={usuario._id}>
-                    <TableCell>{usuario.nombre || "Nombre no disponible"}</TableCell>
-                    <TableCell>{usuario.email || "Email no disponible"}</TableCell>
-                    <TableCell>{usuario.empresa ? usuario.empresa.name : "Empresa no disponible"}</TableCell>
-                    <TableCell>{usuario.role?.name || "Rol no disponible"}</TableCell>
-                    <TableCell>
-                      {/* Botón de Editar */}
-                      <FontAwesomeIcon
-                        icon={faPenToSquare}
-                        className={`h-6 w-5 ${
-                          canEdit
-                            ? "text-blue-400 hover:text-blue-700 cursor-pointer"
-                            : "text-gray-500 cursor-not-allowed"
-                        }`}
-                        onClick={() => {
-                          if (!canEdit) {
-                            Swal.fire({
-                              icon: "warning",
-                              title: "No permitido",
-                              text: "No se puede editar a un SuperAdmin.",
-                            });
-                          } else {
-                            handleEdit(usuario);
-                          }
-                        }}
-                        style={{
-                          pointerEvents: "auto", // Permite que el botón sea clickeable incluso si parece deshabilitado
-                        }}
-                      />
-                      {/* Botón de Eliminar */}
-                      <FontAwesomeIcon
-                        icon={faTrash}
-                        className={`h-4 w-4 ${
-                          canEdit
-                            ? "text-red-600 hover:text-red-800 cursor-pointer"
-                            : "text-gray-500 cursor-not-allowed"
-                        }`}
-                        onClick={() => {
-                          if (!canEdit) {
-                            Swal.fire({
-                              icon: "warning",
-                              title: "No permitido",
-                              text: "No se puede eliminar a un SuperAdmin.",
-                            });
-                          } else {
-                            handleDelete(usuario._id, usuario.role?._id);
-                          }
-                        }}
-                        style={{
-                          pointerEvents: "auto", // Permite que el botón sea clickeable incluso si parece deshabilitado
-                          marginLeft: "10px",
-                        }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
+    return (
+      <TableRow key={usuario._id}>
+        <TableCell>{usuario.nombre || "Nombre no disponible"}</TableCell>
+        <TableCell>{usuario.email || "Email no disponible"}</TableCell>
+        <TableCell>
+          {usuario.empresa ? usuario.empresa.name : "Empresa no disponible"}
+        </TableCell>
+        <TableCell>{usuario.role?.name || "Rol no disponible"}</TableCell>
+        <TableCell>
+          {/* Botón de Editar */}
+          <FontAwesomeIcon
+            icon={faPenToSquare}
+            className={`h-6 w-5 ${
+              isUserSuperAdmin
+                ? "text-gray-500 cursor-not-allowed"
+                : "text-blue-400 hover:text-blue-700 cursor-pointer"
+            }`}
+            onClick={() => {
+              if (isUserSuperAdmin) {
+                Swal.fire({
+                  icon: "warning",
+                  title: "No permitido",
+                  text: "No se puede editar a un SuperAdmin.",
+                });
+              } else {
+                handleEdit(usuario);
+              }
+            }}
+            style={{
+              pointerEvents: isUserSuperAdmin ? "none" : "auto", // Deshabilita la posibilidad de clic
+            }}
+          />
+          {/* Botón de Eliminar */}
+          <FontAwesomeIcon
+            icon={faTrash}
+            className={`h-4 w-4 ${
+              isUserSuperAdmin
+                ? "text-gray-500 cursor-not-allowed"
+                : "text-red-600 hover:text-red-800 cursor-pointer"
+            }`}
+            onClick={() => {
+              if (isUserSuperAdmin) {
+                Swal.fire({
+                  icon: "warning",
+                  title: "No permitido",
+                  text: "No se puede eliminar a un SuperAdmin.",
+                });
+              } else {
+                handleDelete(usuario._id, usuario.role?._id);
+              }
+            }}
+            style={{
+              pointerEvents: isUserSuperAdmin ? "none" : "auto", // Deshabilita la posibilidad de clic
+              marginLeft: "10px",
+            }}
+          />
+        </TableCell>
+      </TableRow>
+    );
+  })}
+</TableBody>
+
           </Table>
         </TableContainer>
       ) : (
