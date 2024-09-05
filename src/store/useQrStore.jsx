@@ -11,6 +11,26 @@ export const useQrStore = create((set) => ({
   currentPage: 1,
   empresa: null, // Añadir estado para la empresa
 
+
+
+  createQr: async (qr) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosInstance.post('/Qr/create', qr);
+      const nuevoQr = response.data.newQr;
+      set((state) => ({
+        qrs: [...state.qrs, nuevoQr],
+        loading: false,
+      }));
+      return nuevoQr;
+    } catch (error) {
+      console.error('Error al crear QR:', error.response || error.message);
+      set({ loading: false, error: 'Error al crear QR' });
+      throw error; // Asegúrate de lanzar el error para manejarlo en handleGenerateClick
+    }
+  },
+
+  
   getQrs: async (page = 1, limit = 10) => {
     set({ loading: true, error: null });
     const userRole = localStorage.getItem('userRole');
@@ -90,22 +110,7 @@ export const useQrStore = create((set) => ({
     }
   },
 
-  createQr: async (qr) => {
-    set({ loading: true, error: null });
-    try {
-      const response = await axiosInstance.post('/Qr/create', qr);
-      const nuevoQr = response.data.newQr;
-      set((state) => ({
-        qrs: [...state.qrs, nuevoQr],
-        loading: false,
-      }));
-      return nuevoQr;
-    } catch (error) {
-      console.error('Error al crear QR:', error.response || error.message);
-      set({ loading: false, error: 'Error al crear QR' });
-      throw error; // Asegúrate de lanzar el error para manejarlo en handleGenerateClick
-    }
-  },
+
 
   updateQr: async (id, data) => {
     set({ loading: true, error: null });
@@ -128,7 +133,7 @@ export const useQrStore = create((set) => ({
   deleteQr: async (id) => {
     set({ loading: true, error: null });
     try {
-      await axiosInstance.delete(`/Qr/delete/${id}`);
+      await axiosInstance.delete(`/Qr/${id}`); // Usa la ruta correcta
       set((state) => ({
         qrs: state.qrs.filter((qr) => qr._id !== id),
         loading: false,
@@ -138,6 +143,7 @@ export const useQrStore = create((set) => ({
       set({ loading: false, error: 'Error al eliminar QR' });
     }
   },
+  
 
   useQr: async (id) => {
     set({ loading: true, error: null });
@@ -189,7 +195,37 @@ export const useQrStore = create((set) => ({
       throw error;
     }
   },
-
+  generateQrFromBackend: async (qrId) => {
+    set({ loading: true, error: null });
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Token no encontrado');
+      }
+  
+      const response = await axiosInstance.post('/Qr/generate', { qrId }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      if (response.data && response.data.base64Image) {
+        set({ loading: false });
+        return response.data.base64Image;
+      } else {
+        throw new Error('Respuesta del servidor no contiene la imagen QR');
+      }
+    } catch (error) {
+      console.error('Error al generar la imagen del QR desde el backend:', error.response || error.message);
+      set({ loading: false, error: 'Error al generar la imagen del QR desde el backend' });
+      throw error;
+    }
+  }
+  
+  
+  
+  
+  
 }));
 
 export default useQrStore;

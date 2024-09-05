@@ -25,9 +25,10 @@ export const ScanQr = () => {
     loading: state.loading,
     error: state.error,
   }));
-  const { updateQr, getQrById } = useQrStore((state) => ({
+  const { updateQr, getQrById, getQrsByAssignedUser } = useQrStore((state) => ({
     updateQr: state.updateQr,
     getQrById: state.getQrById,
+    getQrsByAssignedUser: state.getQrsByAssignedUser, // Asegúrate de que esta línea esté presente
   }));
   const theme = useTheme();
   const scannerRef = useRef(null);
@@ -60,31 +61,45 @@ export const ScanQr = () => {
   }, []);
 
   const parseData = (data) => {
-    const parsedData = JSON.parse(data);
-    console.log('Datos recibidos para parsear:', parsedData);
-    const fullData = {
-      id: parsedData.id || 'N/A',
-      userId: parsedData.uId || 'N/A',
-      assignedTo: { _id: parsedData.aId || 'N/A' },
-      empresaId: {
-        _id: parsedData.eId || 'N/A',
-        name: parsedData.eName || 'N/A'
-      },
-      value: parsedData.v || 'N/A',
-      nombre: parsedData.n || 'N/A',
-      telefono: parsedData.t || 'N/A',
-      mail: parsedData.m || 'N/A',
-      startTime: parsedData.sT || 'N/A',
-      endTime: parsedData.eT || 'N/A',
-      date: parsedData.d || 'N/A',
-      maxUsageCount: parsedData.mUC || 0,
-      usageCount: parsedData.uC || 0,
-      isUsed: parsedData.isUsed || false,
-      updates: parsedData.updates || [],
-    };
-    console.log('Datos parseados:', fullData);
-    return fullData;
+    try {
+      const parsed = JSON.parse(data); // Si los datos son JSON válidos, los parsea.
+      return {
+        id: parsed._id || 'N/A',
+        userId: parsed.userId || 'N/A',
+        assignedTo: parsed.assignedTo || 'N/A',
+        empresaId: parsed.empresaId || { _id: 'N/A', name: 'N/A' },
+        nombre: parsed.nombre || 'N/A',
+        telefono: parsed.telefono || 'N/A',
+        mail: parsed.mail || 'N/A',
+        startTime: parsed.startTime || 'N/A',
+        endTime: parsed.endTime || 'N/A',
+        usageCount: parsed.usageCount || 0,
+        maxUsageCount: parsed.maxUsageCount || 0,
+        isUsed: parsed.isUsed || false,
+        updates: parsed.updates || [],
+        date: parsed.date ? new Date(parsed.date).toISOString() : 'N/A',
+      };
+    } catch (error) {
+      console.error('Error al parsear los datos:', error);
+      return {
+        id: 'N/A',
+        userId: 'N/A',
+        assignedTo: 'N/A',
+        empresaId: { _id: 'N/A', name: 'N/A' },
+        nombre: 'N/A',
+        telefono: 'N/A',
+        mail: 'N/A',
+        startTime: 'N/A',
+        endTime: 'N/A',
+        usageCount: 0,
+        maxUsageCount: 0,
+        isUsed: false,
+        updates: [],
+        date: 'N/A',
+      };
+    }
   };
+  
 
   const startScan = () => {
     if (scannerRef.current && !scannerRef.current.isScanning) {
@@ -92,7 +107,7 @@ export const ScanQr = () => {
       setIsScanning(true);
       scannerRef.current.start(
         { facingMode: "environment" },
-        { fps: 20, qrbox: 280 },
+        { fps: 10, qrbox: 300 },
         handleScan,
         handleError
       ).catch(err => {
@@ -107,11 +122,35 @@ export const ScanQr = () => {
     if (data) {
       setError(null);
       console.log('Datos escaneados crudos:', data);
-      const parsedData = parseData(data);
-      console.log('Datos escaneados:', parsedData);
   
+      const parsedData = parseData(data);
+  
+      if (!parsedData.id || parsedData.id === 'N/A') {
+        console.error('ID de QR inválido:', parsedData.id);
+        Swal.fire({
+          title: 'Error',
+          text: 'El QR escaneado no contiene un ID válido.',
+          icon: 'error',
+          confirmButtonText: 'Aceptar'
+        });
+        return;
+      }
+  
+      console.log('Datos escaneados:', parsedData);
       const qrFromDb = await getQrById(parsedData.id);
-      if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
+  
+      if (!qrFromDb) {
+        console.error('QR no encontrado en la base de datos');
+        Swal.fire({
+          title: 'Error',
+          text: 'El QR no se encontró en la base de datos.',
+          icon: 'error',
+          confirmButtonText: 'Aceptar'
+        });
+        return;
+      }
+  
+      if (qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
         stopScan();
         Swal.fire({
           title: 'QR no usable',
@@ -119,9 +158,8 @@ export const ScanQr = () => {
           icon: 'warning',
           confirmButtonText: 'Aceptar'
         }).then(() => {
-          // Restablecer los estados cuando el QR no es usable
-          setIsUpdating(false); 
-          setIsScanning(false); 
+          setIsUpdating(false);
+          setIsScanning(false);
           setScannedData(null);
         });
         return;
@@ -139,6 +177,7 @@ export const ScanQr = () => {
       if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
         console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
         await getServiciosByEmpresaId(parsedData.empresaId._id);
+        console.log('Servicios obtenidos:', servicios);
       } else {
         console.error('Empresa ID no válido:', parsedData.empresaId._id);
       }
@@ -146,6 +185,8 @@ export const ScanQr = () => {
       stopScan();
     }
   };
+  
+  
 
   const handleError = (err) => {
     if (
@@ -210,9 +251,11 @@ export const ScanQr = () => {
     setIsUpdating(true); // Establecer el estado como "actualizando"
     console.log('handleUpdateQr called');
     console.log('scannedData:', scannedData);
+    console.log('Servicio seleccionado para guardar:', selectedService);
     if (!scannedData.id) {
       setError(new Error("No QR code ID found."));
       console.log("No QR code ID found");
+     
       return;
     }
   
@@ -237,6 +280,10 @@ export const ScanQr = () => {
       }
   
       setFadeOut(true);
+      const storedUserId = localStorage.getItem("userId");
+      if (storedUserId) {
+        await getQrsByAssignedUser(storedUserId);
+      }
   
       Swal.fire({
         title: 'QR actualizado',
@@ -365,9 +412,7 @@ export const ScanQr = () => {
                   Información del QR:
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Descuento :</strong> {scannedData.value} %</Typography>
-                  </Grid>
+                  
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body1"><strong>Nombre:</strong> {scannedData.nombre}</Typography>
                   </Grid>
@@ -398,19 +443,23 @@ export const ScanQr = () => {
                 </Grid>
                 
                 <FormControl fullWidth margin="normal" variant="outlined">
-                  <InputLabel>Servicio</InputLabel>
-                  <Select
-                    value={selectedService}
-                    onChange={(e) => setSelectedService(e.target.value)}
-                    label="Servicio"
-                  >
-                    {servicios.map((servicio) => (
-                      <MenuItem key={servicio._id} value={servicio._id}>
-                        {servicio.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+  <InputLabel>Servicio</InputLabel>
+  <Select
+    value={selectedService}
+    onChange={(e) => {
+      setSelectedService(e.target.value);
+      console.log('Servicio seleccionado:', e.target.value); // Verifica que el valor se actualice correctamente
+    }}
+    label="Servicio"
+  >
+    {servicios.map((servicio) => (
+      <MenuItem key={servicio._id} value={servicio._id}>
+        {servicio.name}
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
+
                 <TextField
                   fullWidth
                   label="Descuento"

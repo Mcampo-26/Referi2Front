@@ -96,11 +96,12 @@ export const Contact = () => {
       };
 
       await emailjs.send(
-        "service_bxl40rs",
-        "template_goi94t2",
+        "service_bleijrb",
+        "template_u9eu08w",
         templateParams,
-        "h3yy4ICYJmisn2ANM"
+        "r9ublrR1Go282bOlc"
       );
+      
 
       setFormData({
         name: "",

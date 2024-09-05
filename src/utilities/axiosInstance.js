@@ -12,11 +12,16 @@ axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('Token agregado a la solicitud:', token); // Agrega un log para verificar el token
+  } else {
+    console.log('No hay token en el localStorage');
   }
 
   return config;
 }, (error) => {
   return Promise.reject(error);
 });
+
+
 
 export default axiosInstance;
