@@ -50,26 +50,35 @@ const StyledTableCell = ({
     className={`${className} cursor-pointer font-bold`}
     style={{ cursor: onClick ? "pointer" : "default", fontSize: "1rem" }}
   >
-    <Typography
-      variant="subtitle1"
-      component="div"
-      sx={{ fontWeight: "bold" }}
-    >
+    <Typography variant="subtitle1" component="div" sx={{ fontWeight: "bold" }}>
       {children}
       {orderBy === column && (orderDirection === "asc" ? "▲" : "▼")}
     </Typography>
   </TableCell>
 );
 
-const UpdateRow = ({ update, index, theme }) => (
-  <TableRow>
-    <TableCell>{index + 1}</TableCell>
-    <TableCell>{new Date(update.updatedAt).toLocaleString()}</TableCell>
-    <TableCell>{update.service?.name || "N/A"}</TableCell>
-    <TableCell>{update.details}</TableCell>
-    <TableCell>{update.discount} %</TableCell>
-  </TableRow>
-);
+const UpdateRow = ({ update, index, theme }) => {
+  // Verifica aquí los datos
+  console.log("Datos del update en UpdateRow:", update);
+
+  // Ajusta el acceso al nombre del servicio
+  const serviceName = update.service?.name || update.service || "N/A";
+
+  return (
+    <TableRow>
+      <TableCell>{index + 1}</TableCell>
+      <TableCell>
+        {update.updatedAt ? new Date(update.updatedAt).toLocaleDateString() : "N/A"}
+      </TableCell>
+      <TableCell>{serviceName}</TableCell>
+      <TableCell>{update.details || "N/A"}</TableCell>
+      <TableCell>
+        {update.discount !== undefined ? `${update.discount}%` : "N/A"}
+      </TableCell>
+    </TableRow>
+  );
+};
+
 
 export const QrList = () => {
   const theme = useTheme();
@@ -81,13 +90,17 @@ export const QrList = () => {
   const [openRow, setOpenRow] = useState(null);
   const navigate = useNavigate();
   const role = localStorage.getItem("role");
+  const [loaded, setLoaded] = useState(false); //
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
-    if (storedUserId) {
-      getQrsByAssignedUser(storedUserId);
+    if (storedUserId && !loaded) {
+      getQrsByAssignedUser(storedUserId).then(() => {
+        setLoaded(true);
+        console.log(qrs); // Verifica la estructura aquí
+      });
     }
-  }, [getQrsByAssignedUser]);
+  }, [getQrsByAssignedUser, loaded, qrs]);
 
   const handleSort = (column) => {
     if (column === orderBy) {
@@ -318,7 +331,6 @@ export const QrList = () => {
                 >
                   Correo
                 </StyledTableCell>
-                {/* Agregando la columna de fecha */}
                 <StyledTableCell
                   onClick={() => handleSort("createdAt")}
                   orderBy={orderBy}
@@ -372,149 +384,158 @@ export const QrList = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedQrs.map((qr, index) => (
-                <React.Fragment key={qr._id}>
-                  <TableRow
-                    className={`${
-                      theme.palette.mode === "dark"
-                        ? "hover:bg-gray-700"
-                        : "hover:bg-gray-100"
-                    }`}
+  {sortedQrs.map((qr, index) => {
+    console.log("Datos del QR en el mapeo:", qr); // Verifica la estructura aquí
+
+    return (
+      <React.Fragment key={qr._id}>
+        <TableRow
+          className={`${
+            theme.palette.mode === "dark"
+              ? "hover:bg-gray-700"
+              : "hover:bg-gray-100"
+          }`}
+          onClick={() => handleRowClick(qr._id)} // Maneja el clic en la fila si es necesario
+        >
+          <TableCell>{index + 1}</TableCell>
+          <TableCell>
+            {qr.assignedTo ? qr.assignedTo.nombre : "N/A"}
+          </TableCell>
+          <TableCell>
+            {qr.empresaId ? qr.empresaId.name : "N/A"}
+          </TableCell>
+          <TableCell>{qr.nombre}</TableCell>
+          <TableCell>{qr.telefono}</TableCell>
+          <TableCell>{qr.mail}</TableCell>
+          <TableCell>
+            {qr.createdAt
+              ? new Date(qr.createdAt).toLocaleDateString()
+              : "N/A"}
+          </TableCell>
+          <TableCell sx={{ display: "flex", alignItems: "center" }}>
+            <Avatar
+              src={qrMini}
+              alt="QR Code"
+              sx={{
+                width: 30,
+                height: 30,
+                marginRight: 2,
+                cursor: "pointer",
+              }}
+              onClick={() => handleQrClick(qr._id)}
+              variant="square"
+            />
+
+            {role !== "Vendedor" && role !== "Ref" && (
+              <IconButton
+                color="secondary"
+                onClick={() => handleDelete(qr._id)}
+              >
+                <FontAwesomeIcon icon={faTrash} />
+              </IconButton>
+            )}
+
+            {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
+              <IconButton
+                color="primary"
+                onClick={() => handleGeneratePdf(qr)}
+              >
+                <FontAwesomeIcon icon={faFilePdf} />
+              </IconButton>
+            )}
+          </TableCell>
+          <TableCell align="center">
+            <FontAwesomeIcon
+              icon={qr.isUsed ? faCheckCircle : faCircle}
+              color={qr.isUsed ? "red" : "green"}
+            />
+          </TableCell>
+          <TableCell align="center">
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
+                <IconButton
+                  color="secondary"
+                  onClick={() => handleRowClick(qr._id)}
+                >
+                  <FontAwesomeIcon
+                    icon={
+                      openRow === qr._id ? faChevronUp : faChevronDown
+                    }
+                  />
+                </IconButton>
+              )}
+              <Typography
+                variant="body2"
+                component="div"
+                sx={{ fontWeight: "bold", ml: 1 }}
+              >
+                {qr.usageCount}/{qr.maxUsageCount}
+              </Typography>
+            </Box>
+          </TableCell>
+        </TableRow>
+        {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
+          <TableRow>
+            <TableCell
+              style={{ paddingBottom: 0, paddingTop: 0 }}
+              colSpan={11}
+            >
+              <Collapse
+                in={openRow === qr._id}
+                timeout="auto"
+                unmountOnExit
+              >
+                <Box
+                  margin={1}
+                  className={`p-4 border ${
+                    theme.palette.mode === "dark"
+                      ? "border-gray-600 bg-gray-700"
+                      : "border-gray-300 bg-gray-50"
+                  } rounded-lg shadow-inner`}
+                >
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    component="div"
                   >
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>
-                      {qr.assignedTo ? qr.assignedTo.nombre : "N/A"}
-                    </TableCell>
-                    <TableCell>
-                      {qr.empresaId ? qr.empresaId.name : "N/A"}
-                    </TableCell>
-                    <TableCell>{qr.nombre}</TableCell>
-                    <TableCell>{qr.telefono}</TableCell>
-                    <TableCell>{qr.mail}</TableCell>
-                    {/* Mostrar la fecha de creación */}
-                    <TableCell>{qr.createdAt ? new Date(qr.createdAt).toLocaleDateString() : "N/A"}</TableCell>
-                    <TableCell sx={{ display: "flex", alignItems: "center" }}>
-                      <Avatar
-                        src={qrMini}
-                        alt="QR Code"
-                        sx={{
-                          width: 30,
-                          height: 30,
-                          marginRight: 2,
-                          cursor: "pointer",
-                        }}
-                        onClick={() => handleQrClick(qr._id)}
-                        variant="square"
-                      />
+                    Detalle de Usos
+                  </Typography>
+                  <Table size="small" aria-label="updates">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>N°</TableCell>
+                        <TableCell>Fecha</TableCell>
+                        <TableCell>Servicio</TableCell>
+                        <TableCell>Detalles</TableCell>
+                        <TableCell>Descuento</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {qr.updates.map((update, idx) => (
+                        <UpdateRow
+                          qr={qr}
+                          key={update._id}
+                          update={update}
+                          index={idx}
+                          theme={theme}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Box>
+              </Collapse>
+            </TableCell>
+          </TableRow>
+        )}
+      </React.Fragment>
+    );
+  })}
+</TableBody>
 
-                      {role !== "Vendedor" && role !== "Ref" && (
-                        <IconButton
-                          color="secondary"
-                          onClick={() => handleDelete(qr._id)}
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                        </IconButton>
-                      )}
-
-                      {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
-                        <IconButton
-                          color="primary"
-                          onClick={() => handleGeneratePdf(qr)}
-                        >
-                          <FontAwesomeIcon icon={faFilePdf} />
-                        </IconButton>
-                      )}
-                    </TableCell>
-                    <TableCell align="center">
-                      <FontAwesomeIcon
-                        icon={qr.isUsed ? faCheckCircle : faCircle}
-                        color={qr.isUsed ? "red" : "green"}
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                      >
-                        {(qr.isUsed ||
-                          (qr.updates && qr.updates.length > 0)) && (
-                          <IconButton
-                            color="secondary"
-                            onClick={() => handleRowClick(qr._id)}
-                          >
-                            <FontAwesomeIcon
-                              icon={
-                                openRow === qr._id ? faChevronUp : faChevronDown
-                              }
-                            />
-                          </IconButton>
-                        )}
-                        <Typography
-                          variant="body2"
-                          component="div"
-                          sx={{ fontWeight: "bold", ml: 1 }}
-                        >
-                          {qr.usageCount}/{qr.maxUsageCount}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                  {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
-                    <TableRow>
-                      <TableCell
-                        style={{ paddingBottom: 0, paddingTop: 0 }}
-                        colSpan={11}
-                      >
-                        <Collapse
-                          in={openRow === qr._id}
-                          timeout="auto"
-                          unmountOnExit
-                        >
-                          <Box
-                            margin={1}
-                            className={`p-4 border ${
-                              theme.palette.mode === "dark"
-                                ? "border-gray-600 bg-gray-700"
-                                : "border-gray-300 bg-gray-50"
-                            } rounded-lg shadow-inner`}
-                          >
-                            <Typography
-                              variant="h6"
-                              gutterBottom
-                              component="div"
-                            >
-                              Detalle de Usos
-                            </Typography>
-                            <Table size="small" aria-label="updates">
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell>N°</TableCell>
-                                  <TableCell>Fecha</TableCell>
-                                  <TableCell>Servicio</TableCell>
-                                  <TableCell>Detalles</TableCell>
-                                  <TableCell>Descuento</TableCell>
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {qr.updates.map((update, idx) => (
-                                  <UpdateRow
-                                    key={update._id}
-                                    update={update}
-                                    index={idx}
-                                    theme={theme}
-                                  />
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </Box>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </React.Fragment>
-              ))}
-            </TableBody>
           </Table>
         </TableContainer>
       ) : (

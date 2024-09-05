@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQrStore } from '../store/useQrStore';
 import useServiciosStore from '../store/useServiciosStore';
+import ReactQRCode from 'react-qr-code'; // Importa el componente de QR de la librería
 import {
   Box,
   Container,
@@ -9,10 +10,11 @@ import {
   Typography,
   Paper,
   CircularProgress,
-  IconButton
+  IconButton,
 } from '@mui/material';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import qrMini from "../assets/qrMini.png";
+import WarningIcon from '@mui/icons-material/Warning';
+import qrMini from '../assets/qrMini.png'; // Asegúrate de importar la imagen aquí
 
 export const QrDetails = () => {
   const { id } = useParams();
@@ -28,22 +30,10 @@ export const QrDetails = () => {
     getAllServicios: state.getAllServicios,
   }));
 
-  const [selectedImage, setSelectedImage] = useState('');
-
   useEffect(() => {
     getQrById(id);
-    getAllServicios(); // Obtener servicios al cargar el componente
+    getAllServicios();
   }, [id, getQrById, getAllServicios]);
-
-  useEffect(() => {
-    if (qr) {
-      if (qr.isUsed) {
-        setSelectedImage(qrMini); // Muestra la imagen desde assets si isUsed es true
-      } else if (qr.base64Image) {
-        setSelectedImage(`data:image/png;base64,${qr.base64Image}`); // Muestra la imagen base64 si no está usada
-      }
-    }
-  }, [qr]);
 
   const getServiceName = (serviceId) => {
     const service = servicios.find((serv) => serv._id === serviceId);
@@ -65,7 +55,11 @@ export const QrDetails = () => {
   }
 
   if (error) {
-    return <Typography variant="h6" color="error">{error}</Typography>;
+    return (
+      <Typography variant="h6" color="error">
+        {error}
+      </Typography>
+    );
   }
 
   if (!qr) {
@@ -75,9 +69,25 @@ export const QrDetails = () => {
   return (
     <Container>
       <Box display="flex" flexDirection="column" alignItems="center" mt={8}>
-        <Typography variant="h3" component="h1" textAlign="center" gutterBottom>
-          Detalles del Qr
+        <Typography
+          variant="h3"
+          component="h1"
+          textAlign="center"
+          gutterBottom
+          sx={{ mt: 4 }} // Ajusta el margen superior
+        >
+          Detalles del QR
         </Typography>
+
+        {qr.isUsed && (
+          <Box display="flex" alignItems="center" color="warning.main" mb={2} >
+            <WarningIcon sx={{ fontSize: 40, marginRight: 1 }} />
+            <Typography variant="h5" color="warning.main">
+              QR Vencido
+            </Typography>
+          </Box>
+        )}
+
         <Grid container spacing={4}>
           <Grid item xs={12} md={6}>
             <Paper
@@ -88,17 +98,31 @@ export const QrDetails = () => {
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                transform: 'scale(0.9)',
-                mt: 5,
+                mt: 8, // Ajusta el margen superior
               }}
             >
-              <img
-                src={selectedImage}
-                alt="QR Code"
-                style={{ width: '90%', height: 'auto', display: 'block' }}
-              />
+              {!qr.isUsed ? (
+                <ReactQRCode
+                  value={JSON.stringify(qr)}
+                  size={440} // Asegura un tamaño de 256 para el QR
+              
+                />
+              ) : (
+                <img
+                  src={qrMini}
+                  alt="QR Code"
+                  style={{
+                    width: '90%',
+                    height: 'auto',
+                    display: 'block',
+                    filter: 'blur(5px)',
+                    opacity: 0.5,
+                  }}
+                />
+              )}
             </Paper>
           </Grid>
+
           <Grid item xs={12} md={6} mt={6}>
             <Paper elevation={3} sx={{ p: 2, borderRadius: 1, mb: 2 }}>
               <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
@@ -114,7 +138,7 @@ export const QrDetails = () => {
               <Typography variant="body2" component="div" sx={{ fontWeight: 'bold' }}>
                 Correo: {qr.mail}
               </Typography>
-            </Paper>           
+            </Paper>
             <Paper elevation={3} sx={{ p: 2, borderRadius: 1, mb: 2, display: 'flex', alignItems: 'center' }}>
               <Typography variant="body2" component="div" sx={{ fontWeight: 'bold', flex: 1 }}>
                 Teléfono: {qr.telefono}

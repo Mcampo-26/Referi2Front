@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Button,
   TextField,
@@ -14,9 +14,12 @@ import {
   FormControl,
 } from "@mui/material";
 import useQrStore from "../store/useQrStore";
+
 import useEmpresasStore from "../store/useEmpresaStore";
 import useUsuariosStore from "../store/useUsuariosStore";
 import { WhatsApp } from "@mui/icons-material";
+import ReactQRCode from "react-qr-code"; // Asegúrate de importar el componente de React QR Code
+
 import {
   useTheme,
   ThemeProvider,
@@ -50,12 +53,18 @@ export const QrMain = () => {
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [base64Image, setBase64Image] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
   const [maxUsageCount, setMaxUsageCount] = useState("");
   const [filteredUsuarios, setFilteredUsuarios] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [qrData, setQrData] = useState(null); // Estado para los detalles del QR
+  const [qrId, setQrId] = useState("");
+  const qrRef = useRef(null);
 
   const createQr = useQrStore((state) => state.createQr);
+  const { getQrById } = useQrStore((state) => ({
+    getQrById: state.getQrById,
+  }));
   const { empresas, getAllEmpresas } = useEmpresasStore();
   const { getUsuariosByEmpresa, usuarios, usuario } = useUsuariosStore(
     (state) => ({
@@ -68,20 +77,14 @@ export const QrMain = () => {
   const theme = useTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("md"));
 
-  // ID del rol SuperAdmin
-  const superAdminRoleId = "668692d09bbe1e9ff25a4826"; // Cambia esto por el ID correcto
+  const superAdminRoleId = "668692d09bbe1e9ff25a4826";
 
-  // Cargar todas las empresas cuando el componente se monta
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        // Verifica si las empresas ya están cargadas
         if (empresas.length === 0) {
           await getAllEmpresas();
-        
         }
-
-        // Verifica si el usuario no es SuperAdmin y tiene una empresa asignada
         if (usuario.roleId !== superAdminRoleId && usuario.empresa) {
           const empresaSeleccionada = empresas.find(
             (e) => e._id === usuario.empresa._id
@@ -89,17 +92,14 @@ export const QrMain = () => {
           if (empresaSeleccionada) {
             setEmpresaId(empresaSeleccionada._id);
             setNombreEmpresa(empresaSeleccionada.name);
-
-            // Carga de usuarios
-            await getUsuariosByEmpresa(empresaSeleccionada._id); // Espera a que los usuarios se carguen
-            // Verifica si los usuarios están correctamente cargados
+            await getUsuariosByEmpresa(empresaSeleccionada._id);
             if (usuarios && usuarios.length > 0) {
               setFilteredUsuarios(
                 usuarios.filter(
                   (u) => u.empresa && u.empresa._id === empresaSeleccionada._id
                 )
               );
-            } 
+            }
           }
         }
       } catch (error) {
@@ -108,9 +108,8 @@ export const QrMain = () => {
     };
 
     cargarDatos();
-  }, [getAllEmpresas, empresas, usuario, getUsuariosByEmpresa]); // Ajusta las dependencias adecuadamente
+  }, [getAllEmpresas, empresas, usuario, getUsuariosByEmpresa]);
 
-  // Manejar el cambio de empresa solo si es SuperAdmin
   const handleEmpresaChange = async (e) => {
     if (usuario.roleId === superAdminRoleId) {
       const selectedEmpresaId = e.target.value;
@@ -134,7 +133,6 @@ export const QrMain = () => {
     }
   };
 
-  // Filtrar los usuarios basados en la empresa seleccionada
   useEffect(() => {
     if (empresaId) {
       const usuariosFiltrados = usuarios.filter(
@@ -216,7 +214,7 @@ export const QrMain = () => {
     }
 
     const empresa = empresas.find((e) => e._id === empresaId);
-    const qrData = {
+    const qrDataToSend = {
       userId,
       assignedTo: {
         _id: assignedTo,
@@ -233,69 +231,115 @@ export const QrMain = () => {
     };
 
     try {
-      const newQr = await createQr(qrData, {
+      setLoading(true);
+      const newQr = await createQr(qrDataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (newQr && newQr.base64Image) {
-        setBase64Image(newQr.base64Image);
+      if (newQr && newQr._id) {
+        setQrId(newQr._id); // Guarda el ID del QR recién creado
         Swal.fire("QR creado", "QR creado exitosamente", "success");
       }
     } catch (error) {
       console.error("Error al crear QR:", error);
       Swal.fire("Error", "Hubo un problema al crear el QR", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    const fetchQrData = async () => {
+      if (qrId) {
+        try {
+          const qrDetails = await getQrById(qrId);
+          setQrData(qrDetails); // Guarda los detalles del QR
+        } catch (error) {
+          console.error("Error al obtener los detalles del QR:", error);
+        }
+      }
+    };
+
+    fetchQrData();
+  }, [qrId, getQrById]);
+
   const handleWhatsAppShare = () => {
-    if (!base64Image) {
+    if (!qrRef.current) {
       alert("No hay código QR para compartir.");
       return;
     }
-
-    // Crear un mensaje personalizado
-    const mensaje = `¡Hola! 🎉\nTe invitamos a usar este QR\npara obtener beneficios exclusivos con ${nombreEmpresa}.`;
-
+  
     // Crear un canvas
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
+    const svg = qrRef.current.querySelector("svg");
+  
+    const svgData = new XMLSerializer().serializeToString(svg);
     const img = new Image();
-    img.src = `data:image/png;base64,${base64Image}`;
-
+    img.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
+  
     img.onload = () => {
-      // Ajustar el tamaño del canvas según el tamaño de la imagen y el texto
-      const padding = 50; // Margen adicional alrededor del texto
-      const lineHeight = 30; // Altura de línea para el texto
+      // Ajustar el tamaño del canvas para incluir espacio para el texto
+      const padding = 10; // Espacio adicional alrededor del texto
+      const fontSize = 13; // Tamaño de la fuente
+      const lineHeight = fontSize + 4; // Altura de cada línea de texto
+      const maxWidth = 300; // Ancho máximo del texto
+      const textHeight = 80; // Altura estimada para el texto (ajusta según el mensaje)
+      const marginTop = 25; // Margen superior entre la imagen y el texto
+      const marginBottom = -50; // Espacio inferior extra
+      
       canvas.width = img.width + padding * 2;
-      canvas.height = img.height + lineHeight * 3 + padding * 2; // Espacio adicional para el texto y margen
-
-      // Dibujar la imagen del QR en el canvas con margen superior
-      ctx.fillStyle = "#fff"; // Fondo blanco
-      ctx.fillRect(0, 0, canvas.width, canvas.height); // Fondo del canvas
-      ctx.drawImage(img, padding, padding); // Dibuja la imagen del QR
-
-      // Configurar el estilo del texto
-      ctx.font = "30px Arial"; // Tamaño de fuente ajustado
-      ctx.fillStyle = "#000";
+      canvas.height = img.height + textHeight + padding * 2 + marginTop + marginBottom;
+  
+      // Dibujar el fondo blanco
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+      // Dibujar la imagen del QR en el canvas
+      ctx.drawImage(img, padding, padding);
+  
+      // Crear un mensaje personalizado
+      const mensaje = `¡Hola! 🎉\nTe invitamos a usar este QR\npara obtener beneficios exclusivos con ${nombreEmpresa}.`;
+  
+      // Configurar estilo del texto
+      ctx.font = `${fontSize}px Arial`;
+      ctx.fillStyle = "#333"; // Un color más suave para el texto
       ctx.textAlign = "center";
-
-      // Dividir el mensaje en líneas
-      const messageLines = mensaje.split("\n");
-
+  
+      // Dividir el mensaje en líneas para que no se salga del cuadro
+      const words = mensaje.split(" ");
+      const lines = [];
+      let currentLine = "";
+  
+      for (let i = 0; i < words.length; i++) {
+        const testLine = currentLine + words[i] + " ";
+        const testWidth = ctx.measureText(testLine).width;
+        if (testWidth > maxWidth) {
+          lines.push(currentLine);
+          currentLine = words[i] + " ";
+        } else {
+          currentLine = testLine;
+        }
+      }
+      lines.push(currentLine);
+  
+      // Ajustar la posición inicial del texto
+      const textYStart = img.height + padding + marginTop;
+  
       // Dibujar cada línea del mensaje en el canvas
-      messageLines.forEach((line, index) => {
+      lines.forEach((line, index) => {
         ctx.fillText(
           line,
           canvas.width / 2,
-          img.height + padding + lineHeight * (index + 1)
+          textYStart + index * lineHeight // Ajusta la posición del texto
         );
       });
-
+  
       // Convertir el canvas a una imagen base64
       const combinedImage = canvas.toDataURL("image/png");
-
+  
       // Crear un archivo Blob con la imagen combinada
       const byteCharacters = atob(combinedImage.split(",")[1]);
       const byteNumbers = new Array(byteCharacters.length);
@@ -307,10 +351,10 @@ export const QrMain = () => {
       const file = new File([blob], "qr-code-with-message.png", {
         type: "image/png",
       });
-
+  
       // Detectar si es un dispositivo móvil o de escritorio
       const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
+  
       if (isMobile) {
         // Para dispositivos móviles, compartir la imagen combinada usando la API de compartir nativa
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -331,12 +375,14 @@ export const QrMain = () => {
         window.open(imageUrl, "_blank");
       }
     };
-
+  
     img.onerror = () => {
       console.error("Error al cargar la imagen del QR");
       alert("Error al cargar la imagen del QR");
     };
   };
+
+  
 
   return (
     <ThemeProvider theme={theme}>
@@ -497,10 +543,11 @@ export const QrMain = () => {
                     onClick={handleGenerateClick}
                     fullWidth
                     className="py-3 text-lg mt-4"
+                    disabled={loading}
                   >
-                    Generar QR
+                    {loading ? "Generando..." : "Generar QR"}
                   </Button>
-                  {base64Image && (
+                  {qrData && (
                     <Button
                       variant="contained"
                       color="success"
@@ -520,20 +567,15 @@ export const QrMain = () => {
                 md={6}
                 className="flex justify-center items-center"
               >
-                {base64Image && (
+                {qrData && (
                   <Paper
                     elevation={3}
+                    ref={qrRef} // Referencia al contenedor del QR
                     className="p-0 bg-white dark:bg-gray-800 rounded-md shadow-md flex justify-center items-center w-full h-full"
                   >
-                    <img
-                      src={`data:image/png;base64,${base64Image}`}
-                      alt="Generated QR Code"
-                      className="w-full h-full max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg"
-                      style={{
-                        width: "300%",
-                        height: "50%",
-                        maxWidth: "450px",
-                      }}
+                    <ReactQRCode
+                      value={JSON.stringify(qrData)}
+                      size={256} // Ajusta el tamaño según sea necesario
                     />
                   </Paper>
                 )}
