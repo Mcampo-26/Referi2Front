@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { Navbar } from './componentes/Navbar';
 import './index.css';
 import { Home } from "./pages/Home";
@@ -24,10 +24,10 @@ import { RestaurarPassword } from './componentes/RestaurarPassword';
 import { PaymentResultPage } from './pages/PaymentResultPage';
 import { UserPlanDetails } from './pages/UserPlanDetails';
 import { VerifyAccount } from '../src/componentes/VerifyAccount';
-import {ProtectedRoute} from './componentes/ProtectedRoute';
+import { ProtectedRoute } from './componentes/ProtectedRoute';
 import { Mensajes } from "./componentes/Mensajes";
 
-// Aquí defines los temas
+// Definición de temas
 const lightTheme = createTheme({
   palette: {
     mode: 'light',
@@ -42,7 +42,7 @@ const lightTheme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: '#f5f5f5', // Fondo claro para el tema claro
+          backgroundColor: '#f5f5f5',
           color: '#000000',
         },
       },
@@ -64,7 +64,7 @@ const darkTheme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: '#303030', // Fondo oscuro para el tema oscuro
+          backgroundColor: '#303030',
           color: '#ffffff',
         },
       },
@@ -74,6 +74,44 @@ const darkTheme = createTheme({
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
+  const [blockBackButton, setBlockBackButton] = useState(true); // Estado para bloquear o desbloquear el botón "Atrás"
+  const navigate = useNavigate();
+  const { isAuthenticated } = useUsuariosStore((state) => ({
+    isAuthenticated: state.isAuthenticated,
+  }));
+
+  useEffect(() => {
+    // Limpiar el localStorage al cargar la página principal
+    localStorage.clear();
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login', { replace: true });
+    } else if (blockBackButton) {
+      // Empuja un nuevo estado al historial para prevenir navegación hacia atrás
+      const pushState = () => {
+        window.history.pushState(null, "", window.location.href);
+      };
+
+      pushState(); // Empuja el estado inicialmente
+
+      const handlePopState = () => {
+        pushState(); // Empuja un nuevo estado cada vez que el usuario intenta retroceder
+        navigate(window.location.pathname, { replace: true }); // Redirige a la página actual inmediatamente
+      };
+
+      window.addEventListener("popstate", handlePopState);
+
+      // Este código empuja repetidamente estados al historial para bloquear completamente el botón "Atrás"
+      const intervalId = setInterval(pushState, 100); // Cada 100 ms se asegura de que el historial esté actualizado
+
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+        clearInterval(intervalId); // Limpia el intervalo al desmontar el componente o al cambiar el estado de bloqueo
+      };
+    }
+  }, [isAuthenticated, blockBackButton, navigate]);
 
   useEffect(() => {
     if (darkMode) {
@@ -89,10 +127,14 @@ function App() {
     setDarkMode(!darkMode);
   };
 
+  const handleUserInteraction = () => {
+    setBlockBackButton(false); // Desbloquea el botón "Atrás" cuando el usuario hace clic en alguna pestaña
+  };
+
   return (
     <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
       <CssBaseline />
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100" onClick={handleUserInteraction}>
         <Navbar toggleDarkMode={toggleDarkMode} darkMode={darkMode} />
         <Routes>
           <Route path="/" element={<Home />} />

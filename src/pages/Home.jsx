@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, Typography, Container, Paper, useTheme, Button, Alert } from '@mui/material';
 import { styled } from '@mui/system';
 import { ScanQr } from '../componentes/ScanQr';
@@ -38,6 +38,14 @@ export const Home = () => {
 
   // Convertir roleId a roleName usando el mapa
   const roleName = roleMap[role] || null;
+
+  useEffect(() => {
+    // Verificar autenticación
+    if (isAuthenticated) {
+      // Reemplazar el estado actual en el historial para deshabilitar el botón "Atrás"
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [isAuthenticated]);
 
   if (isAuthenticated) {
     if (roleName === 'Admin' || roleName === 'SuperAdmin') {
