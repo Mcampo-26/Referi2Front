@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -10,17 +10,42 @@ export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isAlertActive, setIsAlertActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Nuevo estado de carga
   const navigate = useNavigate();
-  const { loginUsuario, solicitarRestauracion } = useUsuariosStore();
+  const { loginUsuario, solicitarRestauracion, isAuthenticated } = useUsuariosStore();
+
+  useEffect(() => {
+    // Si el usuario está autenticado, redirigir al home
+    if (isAuthenticated) {
+      navigate('/');
+    } else {
+      setIsLoading(false); // Terminar carga cuando se verifica autenticación
+    }
+
+    // Manejo del historial para prevenir navegación hacia atrás
+    const handlePopState = () => {
+      // Evita que el usuario regrese al login
+      if (isAuthenticated) {
+        navigate('/');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    // Limpieza del event listener
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [navigate, isAuthenticated]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     const isSuccess = await loginUsuario(email, password);
-  
+
     if (isSuccess) {
       console.log('Inicio de sesión exitoso');
       setIsAlertActive(true); // Activar el desenfoque del fondo
-  
+
       // Mostrar el SweetAlert con la animación y redirección
       MySwal.fire({
         title: '¡Bienvenido a Referidos!',
@@ -43,9 +68,9 @@ export const Login = () => {
             swalPopup.classList.add('animate-fadeOut');
           }
           setIsAlertActive(false); // Desactivar el desenfoque del fondo
-  
-          // Redirigir a la página principal después de que SweetAlert se haya cerrado
-          navigate('/'); // Navegar a la página de inicio
+
+          // Reemplaza la URL actual en el historial después del inicio de sesión
+          navigate('/', { replace: true });
         },
       });
     } else {
@@ -56,7 +81,6 @@ export const Login = () => {
       });
     }
   };
-  
 
   const handleForgotPassword = () => {
     MySwal.fire({
@@ -85,6 +109,11 @@ export const Login = () => {
       },
     });
   };
+
+  // Mostrar un indicador de carga o nada hasta que se verifique el estado de autenticación
+  if (isLoading) {
+    return null; // O mostrar un spinner de carga si lo prefieres
+  }
 
   return (
     <div className={`relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-500 bg-no-repeat dark:bg-gray-900 bg-cover ${isAlertActive ? 'blur-bg' : ''}`}>

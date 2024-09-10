@@ -99,18 +99,26 @@ export const useUsuariosStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await axiosInstance.post('/usuarios/login', { email, password });
+      console.log('Respuesta del servidor:', response.data); // Verifica lo que realmente está devolviendo el servidor
+  
       if (response.status === 200) {
-        const usuario = response.data.usuario;
-        const token = response.data.token;
-        const role = usuario.role ? usuario.role._id : null;  // Almacena el ID del rol en lugar del nombre
-
+        const { usuario, token } = response.data;
+        const role = usuario.role ? usuario.role._id : null; // Almacena el ID del rol en lugar del nombre
         const empresaId = usuario.empresa ? usuario.empresa._id : null;
         const empresaName = usuario.empresa ? usuario.empresa.name : null;
-
-        // Guardar nombre y correo electrónico en localStorage
-        const nombre = usuario.nombre || '';  // Ajusta según el nombre del campo en tu modelo
-        const userEmail = usuario.email || '';
-
+  
+        // Guardar en localStorage inmediatamente
+        localStorage.setItem('usuario', JSON.stringify(usuario));
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('token', token);
+        localStorage.setItem('userName', usuario.nombre || '');
+        localStorage.setItem('userEmail', usuario.email || '');
+        localStorage.setItem('role', role || '');
+        localStorage.setItem('empresaId', empresaId || '');
+        localStorage.setItem('empresaName', empresaName || '');
+        localStorage.setItem('userId', usuario._id);
+  
+        // Actualizar el estado
         set({
           usuario,
           userId: usuario._id,
@@ -120,26 +128,8 @@ export const useUsuariosStore = create((set, get) => ({
           empresaName: empresaName,
           loading: false,
         });
-
-        localStorage.setItem('usuario', JSON.stringify(usuario));
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('token', token);
-        localStorage.setItem('userName', nombre); // Almacena el nombre en localStorage
-        localStorage.setItem('userEmail', userEmail); // Almacena el email en localStorage
-
-        if (role) {
-          localStorage.setItem('role', role);
-        } else {
-          localStorage.removeItem('role');
-        }
-        if (empresaId && empresaName) {
-          localStorage.setItem('empresaId', empresaId);
-          localStorage.setItem('empresaName', empresaName);
-        } else {
-          localStorage.removeItem('empresaId');
-          localStorage.removeItem('empresaName');
-        }
-        localStorage.setItem('userId', usuario._id);
+  
+        console.log('Token almacenado:', localStorage.getItem('token')); // Verifica si el token se almacenó correctamente
         return true;
       } else {
         throw new Error('Authentication failed');
@@ -150,12 +140,14 @@ export const useUsuariosStore = create((set, get) => ({
       return false;
     }
   },
-
+  
   logoutUsuario: () => {
     localStorage.clear(); // Elimina todo del localStorage
     set({ usuario: null, userId: null, isAuthenticated: false, role: null });
-   // window.location.reload(); // Recarga la página completa
-},
+  },
+  
+
+
 
 
 

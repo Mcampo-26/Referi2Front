@@ -45,6 +45,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
     }
   }, [isAuthenticated, getUnreadMessagesCountByUser, usuario]);
 
+  
   const handleLogout = () => {
     closeMenu();
     Swal.fire({
@@ -52,8 +53,8 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
       timer: 2000,
       didOpen: () => Swal.showLoading(),
     }).then(() => {
-      logoutUsuario();
-      navigate('/');
+      logoutUsuario(); // Llama a la función de logout del store
+      navigate('/login', { replace: true }); // Redirige después de cerrar sesión
     });
   };
 

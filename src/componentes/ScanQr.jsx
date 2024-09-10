@@ -1,25 +1,47 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Button, Box, Typography, Container, TextField, Grid, Paper, FormControl, InputLabel, Select, MenuItem, Fade } from '@mui/material';
-import { Html5Qrcode } from 'html5-qrcode';
-import { useTheme } from '@mui/material/styles';
-import useQrStore from '../store/useQrStore';
-import useServiciosStore from '../store/useServiciosStore';
-import Swal from 'sweetalert2';
-import 'tailwindcss/tailwind.css';
-import './Css/Scan.css'; // Asegúrate de que el archivo CSS principal esté importado
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Button,
+  Box,
+  Typography,
+  Container,
+  TextField,
+  Grid,
+  Paper,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Fade,
+} from "@mui/material";
+import { useParams } from 'react-router-dom'; //
+import { Html5Qrcode } from "html5-qrcode";
+import { useTheme } from "@mui/material/styles";
+import useQrStore from "../store/useQrStore";
+import useServiciosStore from "../store/useServiciosStore";
+import Swal from "sweetalert2";
+import "tailwindcss/tailwind.css";
+import "./Css/Scan.css"; 
 import qrHome from "../assets/qrHome.jpg";
 
 export const ScanQr = () => {
   const [scannedData, setScannedData] = useState(null);
   const [error, setError] = useState(null);
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 768);
-  const [selectedService, setSelectedService] = useState('');
-  const [details, setDetails] = useState('');
-  const [discount, setDiscount] = useState(''); // Estado para el descuento
+  const [selectedService, setSelectedService] = useState("");
+  const [details, setDetails] = useState("");
+  const [discount, setDiscount] = useState("");
   const [fadeOut, setFadeOut] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const { servicios, getServiciosByEmpresaId, loading, error: serviciosError } = useServiciosStore((state) => ({
+  const [enableUpdateFields, setEnableUpdateFields] = useState(false); // Nuevo estado para habilitar campos de actualización
+  const { qrId } = useParams(); // As
+
+  const {
+    servicios,
+    getServiciosByEmpresaId,
+    loading,
+    error: serviciosError,
+  } = useServiciosStore((state) => ({
     servicios: state.servicios,
     getServiciosByEmpresaId: state.getServiciosByEmpresaId,
     loading: state.loading,
@@ -28,143 +50,147 @@ export const ScanQr = () => {
   const { updateQr, getQrById, getQrsByAssignedUser } = useQrStore((state) => ({
     updateQr: state.updateQr,
     getQrById: state.getQrById,
-    getQrsByAssignedUser: state.getQrsByAssignedUser, // Asegúrate de que esta línea esté presente
+    getQrsByAssignedUser: state.getQrsByAssignedUser,
   }));
   const theme = useTheme();
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Manejo de redimensionamiento de pantalla para actualizar el estado
   useEffect(() => {
     const handleResize = () => {
       setIsSmallScreen(window.innerWidth < 768);
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     handleResize();
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
-  // Inicialización del escáner de QR y limpieza al desmontar el componente
   useEffect(() => {
-    const html5QrCode = new Html5Qrcode('reader');
+    const html5QrCode = new Html5Qrcode("reader");
     scannerRef.current = html5QrCode;
 
     return () => {
       if (html5QrCode.isScanning) {
-        html5QrCode.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
+        html5QrCode
+          .stop()
+          .catch((err) => console.error("Failed to stop Html5Qrcode.", err));
       }
     };
   }, []);
 
+
+  useEffect(() => {
+    const fetchQrData = async () => {
+        const qrDetails = await getQrById(qrId);
+        console.log('QR obtenido del backend:', qrDetails);
+        setEnableUpdateFields(qrDetails.enableUpdateFields);
+    };
+    if (qrId) fetchQrData();
+}, [qrId]);
+
   const parseData = (data) => {
     try {
-      const parsed = JSON.parse(data); // Si los datos son JSON válidos, los parsea.
+      const parsed = JSON.parse(data); 
+      setEnableUpdateFields(parsed.enableUpdateFields || false); // Actualiza el estado del checkbox de actualización
       return {
-        id: parsed._id || 'N/A',
-        userId: parsed.userId || 'N/A',
-        assignedTo: parsed.assignedTo || 'N/A',
-        empresaId: parsed.empresaId || { _id: 'N/A', name: 'N/A' },
-        nombre: parsed.nombre || 'N/A',
-        telefono: parsed.telefono || 'N/A',
-        mail: parsed.mail || 'N/A',
-        startTime: parsed.startTime || 'N/A',
-        endTime: parsed.endTime || 'N/A',
+        id: parsed._id || "N/A",
+        userId: parsed.userId || "N/A",
+        assignedTo: parsed.assignedTo || "N/A",
+        empresaId: parsed.empresaId || { _id: "N/A", name: "N/A" },
+        nombre: parsed.nombre || "N/A",
+        telefono: parsed.telefono || "N/A",
+        mail: parsed.mail || "N/A",
+        startTime: parsed.startTime || "N/A",
+        endTime: parsed.endTime || "N/A",
         usageCount: parsed.usageCount || 0,
         maxUsageCount: parsed.maxUsageCount || 0,
         isUsed: parsed.isUsed || false,
         updates: parsed.updates || [],
-        date: parsed.date ? new Date(parsed.date).toISOString() : 'N/A',
+        date: parsed.date ? new Date(parsed.date).toISOString() : "N/A",
       };
     } catch (error) {
-      console.error('Error al parsear los datos:', error);
+      console.error("Error al parsear los datos:", error);
       return {
-        id: 'N/A',
-        userId: 'N/A',
-        assignedTo: 'N/A',
-        empresaId: { _id: 'N/A', name: 'N/A' },
-        nombre: 'N/A',
-        telefono: 'N/A',
-        mail: 'N/A',
-        startTime: 'N/A',
-        endTime: 'N/A',
+        id: "N/A",
+        userId: "N/A",
+        assignedTo: "N/A",
+        empresaId: { _id: "N/A", name: "N/A" },
+        nombre: "N/A",
+        telefono: "N/A",
+        mail: "N/A",
+        startTime: "N/A",
+        endTime: "N/A",
         usageCount: 0,
         maxUsageCount: 0,
         isUsed: false,
         updates: [],
-        date: 'N/A',
+        date: "N/A",
       };
     }
   };
-  
 
   const startScan = () => {
     if (scannerRef.current && !scannerRef.current.isScanning) {
       setError(null);
       setIsScanning(true);
-      scannerRef.current.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 300 },
-        handleScan,
-        handleError
-      ).catch(err => {
-        console.error('Failed to start scanning.', err);
-        setError(err);
-        setIsScanning(false);
-      });
+      scannerRef.current
+        .start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 300 },
+          handleScan,
+          handleError
+        )
+        .catch((err) => {
+          console.error("Failed to start scanning.", err);
+          setError(err);
+          setIsScanning(false);
+        });
     }
   };
 
   const handleScan = async (data) => {
     if (data) {
       setError(null);
-      console.log('Datos escaneados crudos:', data);
+      console.log("Datos escaneados crudos:", data);
   
       const parsedData = parseData(data);
   
-      if (!parsedData.id || parsedData.id === 'N/A') {
-        console.error('ID de QR inválido:', parsedData.id);
+      if (!parsedData.id || parsedData.id === "N/A") {
+        console.error("ID de QR inválido:", parsedData.id);
         Swal.fire({
-          title: 'Error',
-          text: 'El QR escaneado no contiene un ID válido.',
-          icon: 'error',
-          confirmButtonText: 'Aceptar'
+          title: "Error",
+          text: "El QR escaneado no contiene un ID válido.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
         });
         return;
       }
   
-      console.log('Datos escaneados:', parsedData);
+      console.log("Datos escaneados:", parsedData);
       const qrFromDb = await getQrById(parsedData.id);
+      console.log("Respuesta del backend al obtener QR por ID:", qrFromDb);
   
       if (!qrFromDb) {
-        console.error('QR no encontrado en la base de datos');
+        console.error("QR no encontrado en la base de datos");
         Swal.fire({
-          title: 'Error',
-          text: 'El QR no se encontró en la base de datos.',
-          icon: 'error',
-          confirmButtonText: 'Aceptar'
+          title: "Error",
+          text: "El QR no se encontró en la base de datos.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
         });
         return;
       }
   
-      if (qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
-        stopScan();
-        Swal.fire({
-          title: 'QR no usable',
-          text: 'El QR ya no puede ser usado.',
-          icon: 'warning',
-          confirmButtonText: 'Aceptar'
-        }).then(() => {
-          setIsUpdating(false);
-          setIsScanning(false);
-          setScannedData(null);
-        });
-        return;
-      }
+      console.log("Estado 'enableUpdateFields' antes de actualizar:", enableUpdateFields);
+setEnableUpdateFields(qrFromDb.enableUpdateFields || false);
+console.log("Estado 'enableUpdateFields' después de actualizar:", qrFromDb.enableUpdateFields);
+
   
+      // Establecer otros estados según la respuesta del backend
       setScannedData({
         ...parsedData,
         id: parsedData._id || parsedData.id,
@@ -174,12 +200,15 @@ export const ScanQr = () => {
         updates: qrFromDb.updates || [],
       });
   
-      if (parsedData.empresaId && parsedData.empresaId._id !== 'N/A') {
-        console.log('Obteniendo servicios para empresaId:', parsedData.empresaId._id);
+      if (parsedData.empresaId && parsedData.empresaId._id !== "N/A") {
+        console.log(
+          "Obteniendo servicios para empresaId:",
+          parsedData.empresaId._id
+        );
         await getServiciosByEmpresaId(parsedData.empresaId._id);
-        console.log('Servicios obtenidos:', servicios);
+        console.log("Servicios obtenidos:", servicios);
       } else {
-        console.error('Empresa ID no válido:', parsedData.empresaId._id);
+        console.error("Empresa ID no válido:", parsedData.empresaId._id);
       }
   
       stopScan();
@@ -195,8 +224,7 @@ export const ScanQr = () => {
         "No MultiFormat Readers were able to detect the code"
       )
     ) {
-      // Ignorar el error de "No se encontró el código QR"
-      return; // No hacer nada si es un NotFoundException
+      return;
     } else {
       console.error("Error durante el escaneo:", err);
       setError(err);
@@ -205,7 +233,9 @@ export const ScanQr = () => {
 
   const stopScan = () => {
     if (scannerRef.current && scannerRef.current.isScanning) {
-      scannerRef.current.stop().catch(err => console.error('Failed to stop Html5Qrcode.', err));
+      scannerRef.current
+        .stop()
+        .catch((err) => console.error("Failed to stop Html5Qrcode.", err));
       setIsScanning(false);
     }
   };
@@ -213,138 +243,143 @@ export const ScanQr = () => {
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
-      console.log('Archivo seleccionado:', file);
-      scannerRef.current.scanFile(file, true)
+      console.log("Archivo seleccionado:", file);
+      scannerRef.current
+        .scanFile(file, true)
         .then(async (decodedText) => {
           setError(null);
-          console.log('Texto decodificado del QR:', decodedText);
+          console.log("Texto decodificado del QR:", decodedText);
           const parsedData = parseData(decodedText);
 
           const qrFromDb = await getQrById(parsedData.id);
-          if (qrFromDb && qrFromDb.isUsed && qrFromDb.usageCount >= qrFromDb.maxUsageCount) {
+          if (
+            qrFromDb &&
+            qrFromDb.isUsed &&
+            qrFromDb.usageCount >= qrFromDb.maxUsageCount
+          ) {
             stopScan();
             Swal.fire({
-              title: 'QR no usable',
-              text: 'El QR ya no puede ser usado.',
-              icon: 'warning',
-              confirmButtonText: 'Aceptar'
+              title: "QR no usable",
+              text: "El QR ya no puede ser usado.",
+              icon: "warning",
+              confirmButtonText: "Aceptar",
             });
             return;
           }
 
           handleScan(decodedText);
         })
-        .catch(err => {
-          if (err.name === 'NotFoundException') {
-            console.warn('QR code not found in file. Please try another file.');
+        .catch((err) => {
+          if (err.name === "NotFoundException") {
+            console.warn("QR code not found in file. Please try another file.");
           } else {
-            console.error('Error scanning file:', err);
+            console.error("Error scanning file:", err);
             setError(err);
           }
         });
     } else {
-      console.log('No file selected');
+      console.log("No file selected");
     }
   };
 
   const handleUpdateQr = async () => {
-    setIsUpdating(true); // Establecer el estado como "actualizando"
-    console.log('handleUpdateQr called');
-    console.log('scannedData:', scannedData);
-    console.log('Servicio seleccionado para guardar:', selectedService);
+    setIsUpdating(true);
+    console.log("handleUpdateQr called");
+    console.log("scannedData:", scannedData);
+    console.log("Servicio seleccionado para guardar:", selectedService);
     if (!scannedData.id) {
       setError(new Error("No QR code ID found."));
       console.log("No QR code ID found");
-     
+
       return;
     }
-  
+
     const qrData = {
       service: selectedService,
       details,
-      discount, // Incluir el descuento
+      discount,
       updatedAt: new Date().toISOString(),
     };
-  
-    console.log('Datos a enviar:', qrData);
-    console.log('QR ID:', scannedData.id);
-  
+
+    console.log("Datos a enviar:", qrData);
+    console.log("QR ID:", scannedData.id);
+
     try {
       const response = await updateQr(scannedData.id, qrData);
       console.log("Response from backend:", response);
       const updatedQr = response.qr;
       console.log("QR actualizado con éxito:", updatedQr);
-  
+
       if (!updatedQr) {
         throw new Error("QR data is undefined");
       }
-  
+
       setFadeOut(true);
       const storedUserId = localStorage.getItem("userId");
       if (storedUserId) {
         await getQrsByAssignedUser(storedUserId);
       }
-  
+
       Swal.fire({
-        title: 'QR actualizado',
-        text: 'El QR ha sido actualizado correctamente.',
-        icon: 'success',
-        confirmButtonText: 'Aceptar'
+        title: "QR actualizado",
+        text: "El QR ha sido actualizado correctamente.",
+        icon: "success",
+        confirmButtonText: "Aceptar",
       }).then(() => {
-        // Restablecer el estado después de la confirmación
-        setIsUpdating(false); 
-        setIsScanning(false); 
+        setIsUpdating(false);
+        setIsScanning(false);
         setScannedData(null);
-        setSelectedService('');
-        setDetails('');
-        setDiscount('');
+        setSelectedService("");
+        setDetails("");
+        setDiscount("");
         setFadeOut(false);
       });
     } catch (error) {
       console.error("Error al actualizar QR:", error);
       Swal.fire({
-        title: 'Error',
-        text: 'Hubo un problema al actualizar el QR',
-        icon: 'error',
-        confirmButtonText: 'Aceptar'
+        title: "Error",
+        text: "Hubo un problema al actualizar el QR",
+        icon: "error",
+        confirmButtonText: "Aceptar",
       }).then(() => {
-        // Asegurarse de que se reinicien los estados incluso en caso de error
         setIsUpdating(false);
       });
     }
   };
 
-  const usosRestantes = scannedData ? scannedData.maxUsageCount - scannedData.usageCount : 0;
-  
+  const usosRestantes = scannedData
+    ? scannedData.maxUsageCount - scannedData.usageCount
+    : 0;
+
   return (
     <Container
       maxWidth="md"
       className="flex flex-col items-center justify-center mt-20"
       sx={{
-        paddingBottom: '40px',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
+        paddingBottom: "40px",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
       }}
     >
       {/* Ocultar imagen de escanear mientras se escanea, actualiza o hay datos escaneados */}
       {!isScanning && !isUpdating && !scannedData && (
         <Box
           component="img"
-          src={qrHome} // Ruta de tu imagen en assets
+          src={qrHome}
           alt="Iniciar Escaneo"
-          onClick={startScan} // Evento para iniciar el escaneo
+          onClick={startScan}
           sx={{
-            cursor: 'pointer',
+            cursor: "pointer",
             width: 150,
             height: 150,
             mb: 2,
           }}
         />
       )}
-  
+
       <Typography variant="h4" className="text-center mb-4">
         Escanear QR Code
       </Typography>
@@ -356,10 +391,16 @@ export const ScanQr = () => {
         mt={4}
         className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md"
       />
-  
+
       {/* Ocultar botón de "Subir Archivo" mientras se escanea, actualiza o hay datos escaneados */}
       {!isScanning && !isUpdating && !scannedData && (
-        <Box display="flex" justifyContent="center" alignItems="center" mb={4} gap={2}>
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          mb={4}
+          gap={2}
+        >
           <Button
             variant="contained"
             color="secondary"
@@ -370,15 +411,15 @@ export const ScanQr = () => {
           </Button>
         </Box>
       )}
-  
+
       <input
         type="file"
         accept="image/*"
         ref={fileInputRef}
         onChange={handleFileChange}
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
       />
-  
+
       {/* Botón para detener el escaneo */}
       {isScanning && (
         <Button
@@ -390,7 +431,7 @@ export const ScanQr = () => {
           Detener Escaneo
         </Button>
       )}
-  
+
       {scannedData && (
         <Fade in={!fadeOut} timeout={100}>
           <Box
@@ -412,74 +453,121 @@ export const ScanQr = () => {
                   Información del QR:
                 </Typography>
                 <Grid container spacing={2}>
-                  
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Nombre:</strong> {scannedData.nombre}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Teléfono:</strong> {scannedData.telefono}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Correo:</strong> {scannedData.mail}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Hora de inicio:</strong> {scannedData.startTime}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Hora de fin:</strong> {scannedData.endTime}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Fecha:</strong> {new Date(scannedData.date).toLocaleDateString()}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Empresa:</strong> {scannedData.empresaId?.name || 'N/A'}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Usado:</strong> {scannedData.usageCount}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1"><strong>Usos restantes:</strong> {usosRestantes >= 0 ? usosRestantes : 'N/A'}</Typography>
-                  </Grid>
+                  {scannedData.nombre && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1"><strong>Nombre:</strong> {scannedData.nombre}</Typography>
+                    </Grid>
+                  )}
+                  {scannedData.telefono && scannedData.telefono !== 'N/A' && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1"><strong>Teléfono:</strong> {scannedData.telefono}</Typography>
+                    </Grid>
+                  )}
+                  {scannedData.mail && scannedData.mail !== 'N/A' && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1"><strong>Correo:</strong> {scannedData.mail}</Typography>
+                    </Grid>
+                  )}
+                  {scannedData.startTime && scannedData.startTime !== 'N/A' && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1"><strong>Hora de inicio:</strong> {scannedData.startTime}</Typography>
+                    </Grid>
+                  )}
+                  {scannedData.endTime && scannedData.endTime !== 'N/A' && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1"><strong>Hora de fin:</strong> {scannedData.endTime}</Typography>
+                    </Grid>
+                  )}
+                  {scannedData.date && scannedData.date !== 'N/A' && scannedData.date !== 'Invalid Date' && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1"><strong>Fecha:</strong> {new Date(scannedData.date).toLocaleDateString()}</Typography>
+                    </Grid>
+                  )}
+                  {scannedData.empresaId?.name && scannedData.empresaId.name !== 'N/A' && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1"><strong>Empresa:</strong> {scannedData.empresaId.name}</Typography>
+                    </Grid>
+                  )}
+                  {scannedData.usageCount !== undefined && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1"><strong>Usado:</strong> {scannedData.usageCount}</Typography>
+                    </Grid>
+                  )}
+                  {usosRestantes >= 0 && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1"><strong>Usos restantes:</strong> {usosRestantes}</Typography>
+                    </Grid>
+                  )}
                 </Grid>
-                
-                <FormControl fullWidth margin="normal" variant="outlined">
-  <InputLabel>Servicio</InputLabel>
-  <Select
-    value={selectedService}
-    onChange={(e) => {
-      setSelectedService(e.target.value);
-      console.log('Servicio seleccionado:', e.target.value); // Verifica que el valor se actualice correctamente
-    }}
-    label="Servicio"
-  >
-    {servicios.map((servicio) => (
-      <MenuItem key={servicio._id} value={servicio._id}>
-        {servicio.name}
-      </MenuItem>
-    ))}
-  </Select>
-</FormControl>
+              
 
-                <TextField
-                  fullWidth
-                  label="Descuento"
-                  variant="outlined"
-                  value={discount}
-                  onChange={(e) => setDiscount(e.target.value)}
-                  margin="normal"
-                  InputProps={{
-                    endAdornment: <Typography>%</Typography>, // Añadir el símbolo de porcentaje
-                  }}
-                />
-                <TextField
-                  fullWidth
-                  label="Detalles"
-                  variant="outlined"
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
-                  margin="normal"
-                />
-                
+
+{enableUpdateFields && (
+console.log("Campos de actualización habilitados:", enableUpdateFields),
+  <>
+    {servicios.length > 0 && (
+      <FormControl fullWidth margin="normal" variant="outlined">
+        <InputLabel>Servicio</InputLabel>
+        <Select
+          value={selectedService}
+          onChange={(e) => setSelectedService(e.target.value)}
+          label="Servicio"
+        >
+          {servicios.map((servicio) => (
+            <MenuItem key={servicio._id} value={servicio._id}>
+              {servicio.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    )}
+    {/* Otros campos... */}
+  </>
+)}
+
+                {enableUpdateFields && (                 
+  <>
+    {servicios.length > 0 && (
+      <FormControl fullWidth margin="normal" variant="outlined">
+        <InputLabel>Servicio</InputLabel>
+        <Select
+          value={selectedService}
+          onChange={(e) => setSelectedService(e.target.value)}
+          label="Servicio"
+        >
+          {servicios.map((servicio) => (
+            <MenuItem key={servicio._id} value={servicio._id}>
+              {servicio.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    )}
+
+    <TextField
+      fullWidth
+      label="Descuento"
+      variant="outlined"
+      value={discount}
+      onChange={(e) => setDiscount(e.target.value)}
+      margin="normal"
+      InputProps={{
+        endAdornment: <Typography>%</Typography>,
+      }}
+    />
+
+    <TextField
+      fullWidth
+      label="Detalles"
+      variant="outlined"
+      value={details}
+      onChange={(e) => setDetails(e.target.value)}
+      margin="normal"
+    />
+  </>
+)}
+
+
                 <Button
                   variant="contained"
                   color="primary"
@@ -493,7 +581,7 @@ export const ScanQr = () => {
           </Box>
         </Fade>
       )}
-  
+
       {error && (
         <Box
           mt={4}
@@ -534,9 +622,7 @@ export const ScanQr = () => {
           boxShadow={3}
           className="w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300"
         >
-          <Typography variant="body1">
-            Cargando servicios...
-          </Typography>
+          <Typography variant="body1">Cargando servicios...</Typography>
         </Box>
       )}
     </Container>
