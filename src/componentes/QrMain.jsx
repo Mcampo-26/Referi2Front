@@ -230,15 +230,13 @@ export const QrMain = () => {
 
     const empresa = empresas.find((e) => e._id === empresaId);
     const qrDataToSend = {
-
       userId,
-  
 
       assignedTo: {
         _id: assignedTo,
         nombre: usuarios.find((u) => u._id === assignedTo)?.nombre,
       },
-      
+
       empresaId: { _id: empresaId, name: empresa?.name || "N/A" },
       ...(enableNombre && { nombre }),
       ...(enableTelefono && { telefono }),
@@ -293,15 +291,15 @@ export const QrMain = () => {
       alert("No hay código QR para compartir.");
       return;
     }
-
+  
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const svg = qrRef.current.querySelector("svg");
-
+  
     const svgData = new XMLSerializer().serializeToString(svg);
     const img = new Image();
     img.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
-
+  
     img.onload = () => {
       const padding = 10;
       const fontSize = 13;
@@ -310,26 +308,26 @@ export const QrMain = () => {
       const textHeight = 80;
       const marginTop = 25;
       const marginBottom = -50;
-
+  
       canvas.width = img.width + padding * 2;
       canvas.height =
         img.height + textHeight + padding * 2 + marginTop + marginBottom;
-
+  
       ctx.fillStyle = "#fff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+  
       ctx.drawImage(img, padding, padding);
-
+  
       const mensaje = `¡Hola! 🎉\nTe invitamos a usar este QR\npara obtener beneficios exclusivos con ${nombreEmpresa}.`;
-
+  
       ctx.font = `${fontSize}px Arial`;
       ctx.fillStyle = "#333";
       ctx.textAlign = "center";
-
+  
       const words = mensaje.split(" ");
       const lines = [];
       let currentLine = "";
-
+  
       for (let i = 0; i < words.length; i++) {
         const testLine = currentLine + words[i] + " ";
         const testWidth = ctx.measureText(testLine).width;
@@ -341,29 +339,32 @@ export const QrMain = () => {
         }
       }
       lines.push(currentLine);
-
+  
       const textYStart = img.height + padding + marginTop;
-
+  
       lines.forEach((line, index) => {
         ctx.fillText(line, canvas.width / 2, textYStart + index * lineHeight);
       });
-
+  
       const combinedImage = canvas.toDataURL("image/png");
-
-      const byteCharacters = atob(combinedImage.split(",")[1]);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: "image/png" });
-      const file = new File([blob], "qr-code-with-message.png", {
-        type: "image/png",
-      });
-
+  
       const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
+  
       if (isMobile) {
+        const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+        window.open(url, '_blank');
+      } else {
+        const byteCharacters = atob(combinedImage.split(",")[1]);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "image/png" });
+        const file = new File([blob], "qr-code-with-message.png", {
+          type: "image/png",
+        });
+  
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           navigator
             .share({
@@ -376,18 +377,15 @@ export const QrMain = () => {
         } else {
           alert("Tu navegador no soporta compartir archivos o texto.");
         }
-      } else {
-        const imageUrl = URL.createObjectURL(blob);
-        window.open(imageUrl, "_blank");
       }
     };
-
+  
     img.onerror = () => {
       console.error("Error al cargar la imagen del QR");
       alert("Error al cargar la imagen del QR");
     };
   };
-
+  
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -400,7 +398,11 @@ export const QrMain = () => {
             <Grid container spacing={4} mt={4}>
               <Grid item xs={12} md={6}>
                 <Box mt={-5} className="p-4 rounded-md shadow-md">
-                  <FormControl fullWidth variant="outlined" className="custom-margin">
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    className="custom-margin"
+                  >
                     <InputLabel>Empresa</InputLabel>
                     <Select
                       labelId="empresa-select-label"
@@ -411,25 +413,35 @@ export const QrMain = () => {
                       sx={{
                         color: theme.palette.mode === "dark" ? "#fff" : "#111",
                         ".MuiOutlinedInput-notchedOutline": {
-                          borderColor: theme.palette.mode === "dark" ? "#fff" : "#444",
+                          borderColor:
+                            theme.palette.mode === "dark" ? "#fff" : "#444",
                         },
                         "&:hover .MuiOutlinedInput-notchedOutline": {
                           borderColor: theme.palette.primary.main,
                         },
                         ".MuiSvgIcon-root": {
-                          color: theme.palette.mode === "dark" ? "#fff" : "#000",
+                          color:
+                            theme.palette.mode === "dark" ? "#fff" : "#000",
                         },
                       }}
                     >
                       {empresas.map((empresa) => (
-                        <MenuItem key={empresa._id} value={empresa._id} sx={{ color: "black" }}>
+                        <MenuItem
+                          key={empresa._id}
+                          value={empresa._id}
+                          sx={{ color: "black" }}
+                        >
                           {empresa.name}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
 
-                  <FormControl fullWidth variant="outlined" className="custom-margin">
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    className="custom-margin"
+                  >
                     <InputLabel>Asignar a usuario</InputLabel>
                     <Select
                       value={assignedTo}
@@ -447,18 +459,20 @@ export const QrMain = () => {
 
                   {/* Checkbox para habilitar/deshabilitar campos de actualización */}
                   <FormControlLabel
-  control={
-    <Checkbox
-      checked={enableUpdateFields} // Cambia a enableUpdateFields
-      onChange={(e) => {
-        setEnableUpdateFields(e.target.checked); // Cambia a setEnableUpdateFields
-        console.log('Checkbox de actualización marcado:', e.target.checked);
-      }}
-    />
-  }
-  label="Actualizar"
-/>
-
+                    control={
+                      <Checkbox
+                        checked={enableUpdateFields} // Cambia a enableUpdateFields
+                        onChange={(e) => {
+                          setEnableUpdateFields(e.target.checked); // Cambia a setEnableUpdateFields
+                          console.log(
+                            "Checkbox de actualización marcado:",
+                            e.target.checked
+                          );
+                        }}
+                      />
+                    }
+                    label="Actualizar"
+                  />
 
                   {/* Inputs activados por checkboxes */}
                   {enableNombre && (
@@ -472,7 +486,7 @@ export const QrMain = () => {
                       inputProps={{ maxLength: 20 }}
                     />
                   )}
-                  
+
                   {enableTelefono && (
                     <TextField
                       label="Teléfono"
@@ -600,7 +614,6 @@ export const QrMain = () => {
                       <Checkbox
                         checked={enableTelefono}
                         onChange={(e) => setEnableTelefono(e.target.checked)}
-                        
                       />
                     }
                     label="Teléfono"
@@ -645,21 +658,28 @@ export const QrMain = () => {
                     control={
                       <Checkbox
                         checked={enableMaxUsageCount}
-                        onChange={(e) => setEnableMaxUsageCount(e.target.checked)}
+                        onChange={(e) =>
+                          setEnableMaxUsageCount(e.target.checked)
+                        }
                       />
                     }
                     label="Cantidad de usos"
                   />
                 </Box>
               </Grid>
-              <Grid item xs={12} md={6} className="flex justify-center items-center">
+              <Grid
+                item
+                xs={12}
+                md={6}
+                className="flex justify-center items-center"
+              >
                 {qrData && (
                   <Paper
                     elevation={3}
                     ref={qrRef}
                     className="p-0 bg-white dark:bg-gray-800 rounded-md shadow-md flex justify-center items-center w-full h-full"
                   >
-                    <ReactQRCode value={JSON.stringify(qrData)} size={256} />
+                    <ReactQRCode value={JSON.stringify(qrData)} size={350} />
                   </Paper>
                 )}
               </Grid>

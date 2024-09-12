@@ -13,14 +13,14 @@ import {
   MenuItem,
   Fade,
 } from "@mui/material";
-import { useParams } from 'react-router-dom'; //
+import { useParams } from "react-router-dom";
 import { Html5Qrcode } from "html5-qrcode";
 import { useTheme } from "@mui/material/styles";
 import useQrStore from "../store/useQrStore";
 import useServiciosStore from "../store/useServiciosStore";
 import Swal from "sweetalert2";
 import "tailwindcss/tailwind.css";
-import "./Css/Scan.css"; 
+import "./Css/Scan.css";
 import qrHome from "../assets/qrHome.jpg";
 
 export const ScanQr = () => {
@@ -33,8 +33,8 @@ export const ScanQr = () => {
   const [fadeOut, setFadeOut] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [enableUpdateFields, setEnableUpdateFields] = useState(false); // Nuevo estado para habilitar campos de actualización
-  const { qrId } = useParams(); // As
+  const [enableUpdateFields, setEnableUpdateFields] = useState(false);
+  const { qrId } = useParams();
 
   const {
     servicios,
@@ -47,11 +47,13 @@ export const ScanQr = () => {
     loading: state.loading,
     error: state.error,
   }));
+
   const { updateQr, getQrById, getQrsByAssignedUser } = useQrStore((state) => ({
     updateQr: state.updateQr,
     getQrById: state.getQrById,
     getQrsByAssignedUser: state.getQrsByAssignedUser,
   }));
+
   const theme = useTheme();
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -82,20 +84,19 @@ export const ScanQr = () => {
     };
   }, []);
 
-
   useEffect(() => {
     const fetchQrData = async () => {
-        const qrDetails = await getQrById(qrId);
-        console.log('QR obtenido del backend:', qrDetails);
-        setEnableUpdateFields(qrDetails.enableUpdateFields);
+      const qrDetails = await getQrById(qrId);
+      console.log("QR obtenido del backend:", qrDetails);
+      setEnableUpdateFields(qrDetails.enableUpdateFields);
     };
     if (qrId) fetchQrData();
-}, [qrId]);
+  }, [qrId]);
 
   const parseData = (data) => {
     try {
-      const parsed = JSON.parse(data); 
-      setEnableUpdateFields(parsed.enableUpdateFields || false); // Actualiza el estado del checkbox de actualización
+      const parsed = JSON.parse(data);
+      setEnableUpdateFields(parsed.enableUpdateFields || false);
       return {
         id: parsed._id || "N/A",
         userId: parsed.userId || "N/A",
@@ -152,7 +153,7 @@ export const ScanQr = () => {
     }
   };
 
-  const handleScan = async (data) => {
+ const handleScan = async (data) => {
     if (data) {
       setError(null);
       console.log("Datos escaneados crudos:", data);
@@ -160,7 +161,6 @@ export const ScanQr = () => {
       const parsedData = parseData(data);
   
       if (!parsedData.id || parsedData.id === "N/A") {
-        console.error("ID de QR inválido:", parsedData.id);
         Swal.fire({
           title: "Error",
           text: "El QR escaneado no contiene un ID válido.",
@@ -170,12 +170,10 @@ export const ScanQr = () => {
         return;
       }
   
-      console.log("Datos escaneados:", parsedData);
       const qrFromDb = await getQrById(parsedData.id);
       console.log("Respuesta del backend al obtener QR por ID:", qrFromDb);
   
       if (!qrFromDb) {
-        console.error("QR no encontrado en la base de datos");
         Swal.fire({
           title: "Error",
           text: "El QR no se encontró en la base de datos.",
@@ -185,12 +183,8 @@ export const ScanQr = () => {
         return;
       }
   
-      console.log("Estado 'enableUpdateFields' antes de actualizar:", enableUpdateFields);
-setEnableUpdateFields(qrFromDb.enableUpdateFields || false);
-console.log("Estado 'enableUpdateFields' después de actualizar:", qrFromDb.enableUpdateFields);
-
+      setEnableUpdateFields(qrFromDb.enableUpdateFields);
   
-      // Establecer otros estados según la respuesta del backend
       setScannedData({
         ...parsedData,
         id: parsedData._id || parsedData.id,
@@ -201,18 +195,37 @@ console.log("Estado 'enableUpdateFields' después de actualizar:", qrFromDb.enab
       });
   
       if (parsedData.empresaId && parsedData.empresaId._id !== "N/A") {
-        console.log(
-          "Obteniendo servicios para empresaId:",
-          parsedData.empresaId._id
-        );
         await getServiciosByEmpresaId(parsedData.empresaId._id);
-        console.log("Servicios obtenidos:", servicios);
-      } else {
-        console.error("Empresa ID no válido:", parsedData.empresaId._id);
+      }
+  
+      // Mostrar alerta si `enableUpdateFields` es `false`
+      if (!qrFromDb.enableUpdateFields) {
+        Swal.fire({
+          title: "Escaneo Correcto",
+          text: "El QR se escaneó correctamente.",
+          icon: "success",
+          confirmButtonText: "Cerrar",
+        }).then(() => {
+          // Restablece el estado después de cerrar el SweetAlert
+          resetComponentState(); // Llama a una función para reiniciar el componente
+        });
       }
   
       stopScan();
     }
+  };
+  
+  // Nueva función para reiniciar el estado del componente
+  const resetComponentState = () => {
+    setScannedData(null);
+    setEnableUpdateFields(false);
+    setSelectedService("");
+    setDetails("");
+    setDiscount("");
+    setError(null);
+    setIsScanning(false);
+    setIsUpdating(false);
+    setFadeOut(false);
   };
   
   
@@ -392,7 +405,6 @@ console.log("Estado 'enableUpdateFields' después de actualizar:", qrFromDb.enab
         className="w-full md:w-auto border border-gray-300 rounded-lg shadow-md"
       />
 
-      {/* Ocultar botón de "Subir Archivo" mientras se escanea, actualiza o hay datos escaneados */}
       {!isScanning && !isUpdating && !scannedData && (
         <Box
           display="flex"
@@ -420,7 +432,6 @@ console.log("Estado 'enableUpdateFields' después de actualizar:", qrFromDb.enab
         style={{ display: "none" }}
       />
 
-      {/* Botón para detener el escaneo */}
       {isScanning && (
         <Button
           variant="contained"
@@ -432,156 +443,132 @@ console.log("Estado 'enableUpdateFields' después de actualizar:", qrFromDb.enab
         </Button>
       )}
 
-      {scannedData && (
-        <Fade in={!fadeOut} timeout={100}>
-          <Box
-            component={Paper}
-            elevation={3}
-            mt={4}
-            mb={4}
-            p={4}
-            borderRadius={2}
-            className={`w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300 ${fadeOut ? 'fade-out' : ''}`}
-          >
-            {scannedData.isUsed && scannedData.usageCount >= scannedData.maxUsageCount ? (
-              <Typography variant="body1" color="error" align="center">
-                QR no usable. El QR ya no puede ser usado.
-              </Typography>
-            ) : (
-              <>
-                <Typography variant="h6" mb={5} gutterBottom>
-                  Información del QR:
-                </Typography>
-                <Grid container spacing={2}>
-                  {scannedData.nombre && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body1"><strong>Nombre:</strong> {scannedData.nombre}</Typography>
-                    </Grid>
-                  )}
-                  {scannedData.telefono && scannedData.telefono !== 'N/A' && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body1"><strong>Teléfono:</strong> {scannedData.telefono}</Typography>
-                    </Grid>
-                  )}
-                  {scannedData.mail && scannedData.mail !== 'N/A' && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body1"><strong>Correo:</strong> {scannedData.mail}</Typography>
-                    </Grid>
-                  )}
-                  {scannedData.startTime && scannedData.startTime !== 'N/A' && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body1"><strong>Hora de inicio:</strong> {scannedData.startTime}</Typography>
-                    </Grid>
-                  )}
-                  {scannedData.endTime && scannedData.endTime !== 'N/A' && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body1"><strong>Hora de fin:</strong> {scannedData.endTime}</Typography>
-                    </Grid>
-                  )}
-                  {scannedData.date && scannedData.date !== 'N/A' && scannedData.date !== 'Invalid Date' && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body1"><strong>Fecha:</strong> {new Date(scannedData.date).toLocaleDateString()}</Typography>
-                    </Grid>
-                  )}
-                  {scannedData.empresaId?.name && scannedData.empresaId.name !== 'N/A' && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body1"><strong>Empresa:</strong> {scannedData.empresaId.name}</Typography>
-                    </Grid>
-                  )}
-                  {scannedData.usageCount !== undefined && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body1"><strong>Usado:</strong> {scannedData.usageCount}</Typography>
-                    </Grid>
-                  )}
-                  {usosRestantes >= 0 && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body1"><strong>Usos restantes:</strong> {usosRestantes}</Typography>
-                    </Grid>
-                  )}
-                </Grid>
-              
-
-
-{enableUpdateFields && (
-console.log("Campos de actualización habilitados:", enableUpdateFields),
-  <>
-    {servicios.length > 0 && (
-      <FormControl fullWidth margin="normal" variant="outlined">
-        <InputLabel>Servicio</InputLabel>
-        <Select
-          value={selectedService}
-          onChange={(e) => setSelectedService(e.target.value)}
-          label="Servicio"
-        >
-          {servicios.map((servicio) => (
-            <MenuItem key={servicio._id} value={servicio._id}>
-              {servicio.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    )}
-    {/* Otros campos... */}
-  </>
-)}
-
-                {enableUpdateFields && (                 
-  <>
-    {servicios.length > 0 && (
-      <FormControl fullWidth margin="normal" variant="outlined">
-        <InputLabel>Servicio</InputLabel>
-        <Select
-          value={selectedService}
-          onChange={(e) => setSelectedService(e.target.value)}
-          label="Servicio"
-        >
-          {servicios.map((servicio) => (
-            <MenuItem key={servicio._id} value={servicio._id}>
-              {servicio.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    )}
-
-    <TextField
-      fullWidth
-      label="Descuento"
-      variant="outlined"
-      value={discount}
-      onChange={(e) => setDiscount(e.target.value)}
-      margin="normal"
-      InputProps={{
-        endAdornment: <Typography>%</Typography>,
-      }}
-    />
-
-    <TextField
-      fullWidth
-      label="Detalles"
-      variant="outlined"
-      value={details}
-      onChange={(e) => setDetails(e.target.value)}
-      margin="normal"
-    />
-  </>
-)}
-
-
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleUpdateQr}
-                  sx={{ mt: 2 }}
-                >
-                  Guardar Cambios
-                </Button>
-              </>
+{scannedData && (
+  <Fade in={!fadeOut} timeout={100}>
+    <Box
+      component={Paper}
+      elevation={3}
+      mt={4}
+      mb={4}
+      p={4}
+      borderRadius={2}
+      className={`w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300 ${fadeOut ? 'fade-out' : ''}`}
+    >
+      {scannedData.isUsed && scannedData.usageCount >= scannedData.maxUsageCount ? (
+        <Typography variant="body1" color="error" align="center">
+          QR no usable. El QR ya no puede ser usado.
+        </Typography>
+      ) : (
+        <>
+          <Typography variant="h6" mb={5} gutterBottom>
+            Información del QR:
+          </Typography>
+          <Grid container spacing={2}>
+            {scannedData.nombre && (
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body1"><strong>Nombre:</strong> {scannedData.nombre}</Typography>
+              </Grid>
             )}
-          </Box>
-        </Fade>
-      )}
+            {scannedData.telefono && scannedData.telefono !== 'N/A' && (
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body1"><strong>Teléfono:</strong> {scannedData.telefono}</Typography>
+              </Grid>
+            )}
+            {scannedData.mail && scannedData.mail !== 'N/A' && (
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body1"><strong>Correo:</strong> {scannedData.mail}</Typography>
+              </Grid>
+            )}
+            {scannedData.startTime && scannedData.startTime !== 'N/A' && (
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body1"><strong>Hora de inicio:</strong> {scannedData.startTime}</Typography>
+              </Grid>
+            )}
+            {scannedData.endTime && scannedData.endTime !== 'N/A' && (
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body1"><strong>Hora de fin:</strong> {scannedData.endTime}</Typography>
+              </Grid>
+            )}
+            {scannedData.date && scannedData.date !== 'N/A' && scannedData.date !== 'Invalid Date' && (
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body1"><strong>Fecha:</strong> {new Date(scannedData.date).toLocaleDateString()}</Typography>
+              </Grid>
+            )}
+            {scannedData.empresaId?.name && scannedData.empresaId.name !== 'N/A' && (
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body1"><strong>Empresa:</strong> {scannedData.empresaId.name}</Typography>
+              </Grid>
+            )}
+            {scannedData.usageCount !== undefined && scannedData.usageCount > 0 && (
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body1"><strong>Usado:</strong> {scannedData.usageCount}</Typography>
+              </Grid>
+            )}
+            {usosRestantes > 0 && (
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body1"><strong>Usos restantes:</strong> {usosRestantes}</Typography>
+              </Grid>
+            )}
+          </Grid>
 
+          {/* Renderizar los inputs de actualización solo si enableUpdateFields es true */}
+          {enableUpdateFields && (
+            <>
+              {servicios.length > 0 && (
+                <FormControl fullWidth margin="normal" variant="outlined">
+                  <InputLabel>Servicio</InputLabel>
+                  <Select
+                    value={selectedService}
+                    onChange={(e) => setSelectedService(e.target.value)}
+                    label="Servicio"
+                  >
+                    {servicios.map((servicio) => (
+                      <MenuItem key={servicio._id} value={servicio._id}>
+                        {servicio.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              <TextField
+                fullWidth
+                label="Descuento"
+                variant="outlined"
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+                margin="normal"
+                InputProps={{
+                  endAdornment: <Typography>%</Typography>,
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="Detalles"
+                variant="outlined"
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+                margin="normal"
+              />
+
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleUpdateQr}
+                sx={{ mt: 2 }}
+              >
+                Guardar Cambios
+              </Button>
+            </>
+          )}
+        </>
+      )}
+    </Box>
+  </Fade>
+)}
+
+      
       {error && (
         <Box
           mt={4}
@@ -597,6 +584,7 @@ console.log("Campos de actualización habilitados:", enableUpdateFields),
           </Typography>
         </Box>
       )}
+
       {serviciosError && (
         <Box
           mt={4}
@@ -612,6 +600,7 @@ console.log("Campos de actualización habilitados:", enableUpdateFields),
           </Typography>
         </Box>
       )}
+
       {loading && (
         <Box
           mt={4}
