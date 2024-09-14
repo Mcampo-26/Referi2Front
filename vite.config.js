@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { URL } from './src/utilities/config'; // Asegúrate de que el archivo de configuración esté correctamente configurado.
 
 export default defineConfig({
   plugins: [react()],
@@ -9,7 +10,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://https://main--referi2.netlify.app', // Cambia esto al puerto de tu backend
+        target: URL, // URL del backend
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
