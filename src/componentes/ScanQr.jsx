@@ -22,6 +22,7 @@ import Swal from "sweetalert2";
 import "tailwindcss/tailwind.css";
 import "./Css/Scan.css";
 import qrHome from "../assets/qrHome.jpg";
+import usePaymentStore from "../store/usePaymentStore"
 
 export const ScanQr = () => {
   const [scannedData, setScannedData] = useState(null);
@@ -35,6 +36,7 @@ export const ScanQr = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [enableUpdateFields, setEnableUpdateFields] = useState(false);
   const { qrId } = useParams();
+  const { createPayment } = usePaymentStore();
   const [isHandlingScan, setIsHandlingScan] = useState(false);
   const {
     servicios,
@@ -122,6 +124,7 @@ export const ScanQr = () => {
         isUsed: parsed.isUsed || false,
         updates: parsed.updates || [],
         date: parsed.date ? new Date(parsed.date).toISOString() : "N/A",
+        isPayment: parsed.isPayment || false, // Asegúrate de incluir el campo isPayment
       };
     } catch (error) {
       console.error("Error al parsear los datos:", error);
@@ -140,9 +143,11 @@ export const ScanQr = () => {
         isUsed: false,
         updates: [],
         date: "N/A",
+        isPayment: false, // Asegúrate de incluir también aquí el campo isPayment
       };
     }
   };
+  
 
   const startScan = () => {
     if (scannerRef.current && !scannerRef.current.isScanning) {
@@ -178,10 +183,8 @@ export const ScanQr = () => {
   };
   const handleScan = async (data) => {
     if (!isHandlingScan && data) {
-      // Detener el escaneo inmediatamente para evitar escaneos múltiples
       stopScan();
-  
-      setIsHandlingScan(true); // Evitar que se ejecute de nuevo
+      setIsHandlingScan(true);
       setError(null);
       console.log("Datos escaneados crudos:", data);
   
@@ -194,7 +197,7 @@ export const ScanQr = () => {
           icon: "error",
           confirmButtonText: "Aceptar",
         }).finally(() => {
-          setIsHandlingScan(false); // Restablecer el estado después de la alerta
+          setIsHandlingScan(false);
         });
         return;
       }
@@ -209,13 +212,12 @@ export const ScanQr = () => {
           icon: "error",
           confirmButtonText: "Aceptar",
         }).finally(() => {
-          setIsHandlingScan(false); // Restablecer el estado después de la alerta
+          setIsHandlingScan(false);
         });
         return;
       }
   
       setEnableUpdateFields(qrFromDb.enableUpdateFields);
-  
       setScannedData({
         ...parsedData,
         id: parsedData._id || parsedData.id,
@@ -229,22 +231,54 @@ export const ScanQr = () => {
         await getServiciosByEmpresaId(parsedData.empresaId._id);
       }
   
-      if (!qrFromDb.enableUpdateFields) {
-        Swal.fire({  title: "Escaneo Correcto",
+      console.log("Verificando si el QR es de pago:", qrFromDb.isPayment);
+  
+      if (qrFromDb.isPayment) {
+        console.log("QR de pago detectado, iniciando proceso de pago...");
+        try {
+          const usuarioEmail = localStorage.getItem('userEmail');
+          console.log("Usuario email obtenido:", usuarioEmail);
+  
+          if (qrFromDb.precio) {
+            const initPointUrl = await createPayment(
+              qrFromDb.nombre, // nombre del QR
+              qrFromDb.precio, // precio del QR
+              null, // método de pago (opcional)
+              usuarioEmail // email del usuario
+            );
+            console.log("URL de punto de inicio de pago obtenido:", initPointUrl);
+            window.location.href = initPointUrl;
+          } else {
+            console.error("El precio del QR es nulo o indefinido.");
+          }
+        } catch (error) {
+          console.error('Error al crear la preferencia de pago:', error);
+          Swal.fire({
+            title: "Error",
+            text: "Hubo un problema al crear la preferencia de pago.",
+            icon: "error",
+            confirmButtonText: "Aceptar",
+          });
+          setIsHandlingScan(false);
+          return;
+        }
+      } else if (!qrFromDb.enableUpdateFields) {
+        Swal.fire({
+          title: "Escaneo Correcto",
           text: "El QR se escaneó correctamente.",
           icon: "success",
-          position: "center", // Posición del toast
-          showConfirmButton: false, // Ocultar botón de confirmación
-          timer: 4000, // Duración en milisegundos
-          timerProgressBar: true, // Barra de progreso
-          background: "#333", // Cambiar el fondo
-          color: "#fff", // Cambiar el color del texto
+          position: "center",
+          showConfirmButton: false,
+          timer: 4000,
+          timerProgressBar: true,
+          background: "#333",
+          color: "#fff",
           customClass: {
-            popup: 'colored-toast' // Añadir una clase personalizada
+            popup: 'colored-toast',
           },
         }).finally(() => {
           resetComponentState();
-          setIsHandlingScan(false); // Restablecer el estado después de la alerta
+          setIsHandlingScan(false);
         });
       } else {
         setIsHandlingScan(false);
