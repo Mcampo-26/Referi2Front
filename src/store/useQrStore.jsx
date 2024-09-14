@@ -102,7 +102,14 @@ export const useQrStore = create((set) => ({
     try {
       const response = await axiosInstance.get(`/Qr/${id}`);
       console.log("QR obtenido:", response.data);
-      set({ qr: response.data, loading: false });
+  
+      // Actualiza el estado con el QR recibido
+      set({
+        qr: response.data,
+        loading: false,
+        error: null,
+      });
+  
       return response.data;
     } catch (error) {
       console.error('Error al obtener QR por ID:', error.response || error.message);
@@ -110,6 +117,7 @@ export const useQrStore = create((set) => ({
       return null; // Devuelve null en caso de error
     }
   },
+  
 
 
 

@@ -163,7 +163,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
                 mb: { xs: 1, md: 0 }
               }}
             >
-              {`Hola, ${usuario.nombre}${role ? `! eres ${roleMap[role]} de ${empresaNombre}` : ''}`}
+              {`Hola, ${role ? ` eres ${roleMap[role]} de ${empresaNombre}` : ''}`}
             </Typography>
           )}
 

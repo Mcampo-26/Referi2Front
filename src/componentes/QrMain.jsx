@@ -61,7 +61,9 @@ export const QrMain = () => {
   const [qrId, setQrId] = useState("");
   const [enableUpdateFields, setEnableUpdateFields] = useState(false); // Nuevo estado para el checkbox de actualización
   const qrRef = useRef(null);
-
+  const [precio, setPrecio] = useState(""); // Estado para el precio
+  const [isPayment, setIsPayment] = useState(false); // Estad
+  const [enablePrecio, setEnablePrecio] = useState(false);
   // Estados para manejar los checkboxes de los campos
   const [enableNombre, setEnableNombre] = useState(false);
   const [enableTelefono, setEnableTelefono] = useState(false);
@@ -230,15 +232,11 @@ export const QrMain = () => {
 
     const empresa = empresas.find((e) => e._id === empresaId);
     const qrDataToSend = {
-
       userId,
-  
-
       assignedTo: {
         _id: assignedTo,
         nombre: usuarios.find((u) => u._id === assignedTo)?.nombre,
       },
-      
       empresaId: { _id: empresaId, name: empresa?.name || "N/A" },
       ...(enableNombre && { nombre }),
       ...(enableTelefono && { telefono }),
@@ -249,8 +247,11 @@ export const QrMain = () => {
       ...(enableMaxUsageCount && {
         maxUsageCount: parseInt(maxUsageCount, 10),
       }),
-      enableUpdateFields, // Incluye el estado de habilitación de actualización en los datos QR
+      ...(precio && { precio: parseFloat(precio) }), // Incluye el precio
+      enableUpdateFields,
+      isPayment: true, // Añadir este campo si es un QR "de pago"
     };
+
     console.log("Datos enviados al QR:", qrDataToSend);
 
     try {
@@ -350,20 +351,23 @@ export const QrMain = () => {
 
       const combinedImage = canvas.toDataURL("image/png");
 
-      const byteCharacters = atob(combinedImage.split(",")[1]);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: "image/png" });
-      const file = new File([blob], "qr-code-with-message.png", {
-        type: "image/png",
-      });
-
       const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
       if (isMobile) {
+        const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+        window.open(url, "_blank");
+      } else {
+        const byteCharacters = atob(combinedImage.split(",")[1]);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "image/png" });
+        const file = new File([blob], "qr-code-with-message.png", {
+          type: "image/png",
+        });
+
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           navigator
             .share({
@@ -376,9 +380,6 @@ export const QrMain = () => {
         } else {
           alert("Tu navegador no soporta compartir archivos o texto.");
         }
-      } else {
-        const imageUrl = URL.createObjectURL(blob);
-        window.open(imageUrl, "_blank");
       }
     };
 
@@ -386,6 +387,15 @@ export const QrMain = () => {
       console.error("Error al cargar la imagen del QR");
       alert("Error al cargar la imagen del QR");
     };
+  };
+
+  const handlePaymentChange = (e) => {
+    setIsPayment(e.target.checked);
+    if (e.target.checked) {
+      setEnablePrecio(true); // Si QR de Pago está marcado, habilitar el precio
+    } else {
+      setEnablePrecio(false); // Si QR de Pago no está marcado, deshabilitar el precio
+    }
   };
 
   return (
@@ -400,7 +410,11 @@ export const QrMain = () => {
             <Grid container spacing={4} mt={4}>
               <Grid item xs={12} md={6}>
                 <Box mt={-5} className="p-4 rounded-md shadow-md">
-                  <FormControl fullWidth variant="outlined" className="custom-margin">
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    className="custom-margin"
+                  >
                     <InputLabel>Empresa</InputLabel>
                     <Select
                       labelId="empresa-select-label"
@@ -411,25 +425,35 @@ export const QrMain = () => {
                       sx={{
                         color: theme.palette.mode === "dark" ? "#fff" : "#111",
                         ".MuiOutlinedInput-notchedOutline": {
-                          borderColor: theme.palette.mode === "dark" ? "#fff" : "#444",
+                          borderColor:
+                            theme.palette.mode === "dark" ? "#fff" : "#444",
                         },
                         "&:hover .MuiOutlinedInput-notchedOutline": {
                           borderColor: theme.palette.primary.main,
                         },
                         ".MuiSvgIcon-root": {
-                          color: theme.palette.mode === "dark" ? "#fff" : "#000",
+                          color:
+                            theme.palette.mode === "dark" ? "#fff" : "#000",
                         },
                       }}
                     >
                       {empresas.map((empresa) => (
-                        <MenuItem key={empresa._id} value={empresa._id} sx={{ color: "black" }}>
+                        <MenuItem
+                          key={empresa._id}
+                          value={empresa._id}
+                          sx={{ color: "black" }}
+                        >
                           {empresa.name}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
 
-                  <FormControl fullWidth variant="outlined" className="custom-margin">
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    className="custom-margin"
+                  >
                     <InputLabel>Asignar a usuario</InputLabel>
                     <Select
                       value={assignedTo}
@@ -446,21 +470,10 @@ export const QrMain = () => {
                   </FormControl>
 
                   {/* Checkbox para habilitar/deshabilitar campos de actualización */}
-                  <FormControlLabel
-  control={
-    <Checkbox
-      checked={enableUpdateFields} // Cambia a enableUpdateFields
-      onChange={(e) => {
-        setEnableUpdateFields(e.target.checked); // Cambia a setEnableUpdateFields
-        console.log('Checkbox de actualización marcado:', e.target.checked);
-      }}
-    />
-  }
-  label="Actualizar"
-/>
+              
 
+             
 
-                  {/* Inputs activados por checkboxes */}
                   {enableNombre && (
                     <TextField
                       label="Nombre"
@@ -472,7 +485,7 @@ export const QrMain = () => {
                       inputProps={{ maxLength: 20 }}
                     />
                   )}
-                  
+
                   {enableTelefono && (
                     <TextField
                       label="Teléfono"
@@ -494,6 +507,22 @@ export const QrMain = () => {
                       variant="outlined"
                       value={mail}
                       onChange={(e) => setMail(e.target.value)}
+                      fullWidth
+                      className="custom-margin"
+                    />
+                  )}
+
+                  {(enablePrecio || isPayment) && (
+                    <TextField
+                      label="Precio"
+                      variant="outlined"
+                      placeholder="Precio"
+                      value={precio}
+                      onChange={(e) => {
+                        if (/^\d*(\.\d{0,2})?$/.test(e.target.value)) {
+                          setPrecio(e.target.value);
+                        }
+                      }}
                       fullWidth
                       className="custom-margin"
                     />
@@ -560,31 +589,26 @@ export const QrMain = () => {
                     />
                   )}
 
-                  {/* Botón para generar el QR */}
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleGenerateClick}
-                    fullWidth
-                    className="py-3 text-lg mt-4"
-                    disabled={loading}
-                  >
-                    {loading ? "Generando..." : "Generar QR"}
-                  </Button>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={isPayment}
+                        onChange={handlePaymentChange}
+                      />
+                    }
+                    label="QR de Pago"
+                  />
 
-                  {qrData && (
-                    <Button
-                      variant="contained"
-                      color="success"
-                      startIcon={<WhatsApp />}
-                      onClick={handleWhatsAppShare}
-                      fullWidth
-                      className="py-3 text-lg mt-4"
-                    >
-                      Compartir en WhatsApp
-                    </Button>
-                  )}
-
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={enablePrecio}
+                        onChange={(e) => setEnablePrecio(e.target.checked)}
+                        disabled={isPayment} // Deshabilitar este checkbox si el QR de Pago está seleccionado
+                      />
+                    }
+                    label="Precio"
+                  />
                   {/* Checkboxes para activar/desactivar campos */}
                   <FormControlLabel
                     control={
@@ -600,7 +624,6 @@ export const QrMain = () => {
                       <Checkbox
                         checked={enableTelefono}
                         onChange={(e) => setEnableTelefono(e.target.checked)}
-                        
                       />
                     }
                     label="Teléfono"
@@ -645,21 +668,84 @@ export const QrMain = () => {
                     control={
                       <Checkbox
                         checked={enableMaxUsageCount}
-                        onChange={(e) => setEnableMaxUsageCount(e.target.checked)}
+                        onChange={(e) =>
+                          setEnableMaxUsageCount(e.target.checked)
+                        }
                       />
                     }
                     label="Cantidad de usos"
                   />
+                      {/* Checkbox para habilitar/deshabilitar campos de actualización */}
+                      <FormControlLabel
+  control={
+    <Checkbox
+      checked={enableUpdateFields} 
+      onChange={(e) => {
+        setEnableUpdateFields(e.target.checked); 
+        console.log("Checkbox de actualización marcado:", e.target.checked);
+      }}
+    />
+  }
+  label="Actualizar"
+/>
+
+{/* Botón condicional para "QR Actualizable" */}
+{enableUpdateFields && (
+  <Typography
+    variant="subtitle1"
+    style={{
+      backgroundColor: '#388e3c', // Verde claro casi agua
+      color: '#fff',
+      padding: '5px 10px',
+      borderRadius: '5px',
+      display: 'inline-block',
+      marginTop: '10px',
+      fontSize: '0.875rem', // Tamaño de fuente más pequeño
+    }}
+  >
+    QR Actualizable
+  </Typography>
+)}
                 </Box>
+                {/* Botón para generar el QR */}
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleGenerateClick}
+                  fullWidth
+                  className="py-3 text-lg mt-4"
+                  disabled={loading}
+                >
+                  {loading ? "Generando..." : "Generar QR"}
+                </Button>
+
+                {qrData && (
+                  <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={<WhatsApp />}
+                    onClick={handleWhatsAppShare}
+                    fullWidth
+                    className="py-3 text-lg mt-4"
+                  >
+                    Compartir en WhatsApp
+                  </Button>
+                )}
               </Grid>
-              <Grid item xs={12} md={6} className="flex justify-center items-center">
+
+              <Grid
+                item
+                xs={12}
+                md={6}
+                className="flex justify-center items-center"
+              >
                 {qrData && (
                   <Paper
                     elevation={3}
                     ref={qrRef}
                     className="p-0 bg-white dark:bg-gray-800 rounded-md shadow-md flex justify-center items-center w-full h-full"
                   >
-                    <ReactQRCode value={JSON.stringify(qrData)} size={256} />
+                    <ReactQRCode value={JSON.stringify(qrData)} size={350} />
                   </Paper>
                 )}
               </Grid>
