@@ -35,7 +35,7 @@ export const ScanQr = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [enableUpdateFields, setEnableUpdateFields] = useState(false);
   const { qrId } = useParams();
-
+  const [isHandlingScan, setIsHandlingScan] = useState(false);
   const {
     servicios,
     getServiciosByEmpresaId,
@@ -85,14 +85,24 @@ export const ScanQr = () => {
   }, []);
 
   useEffect(() => {
-    const fetchQrData = async () => {
-      const qrDetails = await getQrById(qrId);
-      console.log("QR obtenido del backend:", qrDetails);
-      setEnableUpdateFields(qrDetails.enableUpdateFields);
-    };
-    if (qrId) fetchQrData();
-  }, [qrId]);
-
+    if (qrId) {
+      const fetchQrData = async () => {
+        const qrDetails = await getQrById(qrId);
+        console.log("QR obtenido del backend:", qrDetails);
+        setEnableUpdateFields(qrDetails.enableUpdateFields);
+  
+        if (qrDetails && qrDetails.empresaId) {
+          // Verifica si ya tienes servicios cargados para evitar llamadas repetidas
+          if (!servicios.length) {
+            await getServiciosByEmpresaId(qrDetails.empresaId._id);
+          }
+        }
+      };
+  
+      fetchQrData();
+    }
+  }, [qrId, getQrById, servicios.length]); // Solo se ejecutará si cambian estas dependencias
+  
   const parseData = (data) => {
     try {
       const parsed = JSON.parse(data);
@@ -153,8 +163,25 @@ export const ScanQr = () => {
     }
   };
 
- const handleScan = async (data) => {
-    if (data) {
+  
+  // Nueva función para reiniciar el estado del componente
+  const resetComponentState = () => {
+    setScannedData(null);
+    setEnableUpdateFields(false);
+    setSelectedService("");
+    setDetails("");
+    setDiscount("");
+    setError(null);
+    setIsScanning(false);
+    setIsUpdating(false);
+    setFadeOut(false);
+  };
+  const handleScan = async (data) => {
+    if (!isHandlingScan && data) {
+      // Detener el escaneo inmediatamente para evitar escaneos múltiples
+      stopScan();
+  
+      setIsHandlingScan(true); // Evitar que se ejecute de nuevo
       setError(null);
       console.log("Datos escaneados crudos:", data);
   
@@ -166,6 +193,8 @@ export const ScanQr = () => {
           text: "El QR escaneado no contiene un ID válido.",
           icon: "error",
           confirmButtonText: "Aceptar",
+        }).finally(() => {
+          setIsHandlingScan(false); // Restablecer el estado después de la alerta
         });
         return;
       }
@@ -179,6 +208,8 @@ export const ScanQr = () => {
           text: "El QR no se encontró en la base de datos.",
           icon: "error",
           confirmButtonText: "Aceptar",
+        }).finally(() => {
+          setIsHandlingScan(false); // Restablecer el estado después de la alerta
         });
         return;
       }
@@ -198,34 +229,27 @@ export const ScanQr = () => {
         await getServiciosByEmpresaId(parsedData.empresaId._id);
       }
   
-      // Mostrar alerta si `enableUpdateFields` es `false`
       if (!qrFromDb.enableUpdateFields) {
-        Swal.fire({
-          title: "Escaneo Correcto",
+        Swal.fire({  title: "Escaneo Correcto",
           text: "El QR se escaneó correctamente.",
           icon: "success",
-          confirmButtonText: "Cerrar",
-        }).then(() => {
-          // Restablece el estado después de cerrar el SweetAlert
-          resetComponentState(); // Llama a una función para reiniciar el componente
+          position: "center", // Posición del toast
+          showConfirmButton: false, // Ocultar botón de confirmación
+          timer: 4000, // Duración en milisegundos
+          timerProgressBar: true, // Barra de progreso
+          background: "#333", // Cambiar el fondo
+          color: "#fff", // Cambiar el color del texto
+          customClass: {
+            popup: 'colored-toast' // Añadir una clase personalizada
+          },
+        }).finally(() => {
+          resetComponentState();
+          setIsHandlingScan(false); // Restablecer el estado después de la alerta
         });
+      } else {
+        setIsHandlingScan(false);
       }
-  
-      stopScan();
     }
-  };
-  
-  // Nueva función para reiniciar el estado del componente
-  const resetComponentState = () => {
-    setScannedData(null);
-    setEnableUpdateFields(false);
-    setSelectedService("");
-    setDetails("");
-    setDiscount("");
-    setError(null);
-    setIsScanning(false);
-    setIsUpdating(false);
-    setFadeOut(false);
   };
   
   

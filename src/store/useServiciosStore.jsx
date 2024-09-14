@@ -1,17 +1,19 @@
-import {create} from 'zustand';
+import { create } from 'zustand';
 import axios from 'axios';
 import { URL } from '../utilities/config';
 
-const useServiciosStore = create((set) => ({
+const useServiciosStore = create((set, get) => ({
   servicios: [],
   loading: false,
   error: null,
-  
+
+  // Obtener todos los servicios
   getAllServicios: async () => {
+    if (get().loading || get().servicios.length > 0) return; // Evitar múltiples llamadas
     set({ loading: true, error: null });
     try {
       const response = await axios.get(`${URL}/Servicio/all`);
-      console.log('Servicios obtenidos en el store:', response.data); // Verifica la estructura de los datos
+      console.log('Servicios obtenidos en el store:', response.data);
       set({
         servicios: response.data,
         loading: false,
@@ -21,11 +23,14 @@ const useServiciosStore = create((set) => ({
       set({ loading: false, error: 'Error al obtener todos los servicios' });
     }
   },
+
+  // Obtener servicios por empresa
   getServiciosByEmpresaId: async (empresaId) => {
+    if (get().loading || get().servicios.some((servicio) => servicio.empresaId === empresaId)) return; // Evitar llamadas repetidas
     set({ loading: true, error: null });
     try {
       const response = await axios.get(`${URL}/Servicio/byEmpresa/${empresaId}`);
-      console.log('Servicios por empresa:', response.data); // Verificar si los servicios son obtenidos correctamente
+      console.log('Servicios por empresa:', response.data);
       set({
         servicios: response.data,
         loading: false,

@@ -61,7 +61,9 @@ export const QrMain = () => {
   const [qrId, setQrId] = useState("");
   const [enableUpdateFields, setEnableUpdateFields] = useState(false); // Nuevo estado para el checkbox de actualización
   const qrRef = useRef(null);
-
+  const [precio, setPrecio] = useState(""); // Estado para el precio
+  const [isPayment, setIsPayment] = useState(false); // Estad
+  const [enablePrecio, setEnablePrecio] = useState(false);
   // Estados para manejar los checkboxes de los campos
   const [enableNombre, setEnableNombre] = useState(false);
   const [enableTelefono, setEnableTelefono] = useState(false);
@@ -231,12 +233,10 @@ export const QrMain = () => {
     const empresa = empresas.find((e) => e._id === empresaId);
     const qrDataToSend = {
       userId,
-
       assignedTo: {
         _id: assignedTo,
         nombre: usuarios.find((u) => u._id === assignedTo)?.nombre,
       },
-
       empresaId: { _id: empresaId, name: empresa?.name || "N/A" },
       ...(enableNombre && { nombre }),
       ...(enableTelefono && { telefono }),
@@ -247,8 +247,11 @@ export const QrMain = () => {
       ...(enableMaxUsageCount && {
         maxUsageCount: parseInt(maxUsageCount, 10),
       }),
-      enableUpdateFields, // Incluye el estado de habilitación de actualización en los datos QR
+      ...(precio && { precio: parseFloat(precio) }), // Incluye el precio
+      enableUpdateFields,
+      isPayment: true, // Añadir este campo si es un QR "de pago"
     };
+
     console.log("Datos enviados al QR:", qrDataToSend);
 
     try {
@@ -291,15 +294,15 @@ export const QrMain = () => {
       alert("No hay código QR para compartir.");
       return;
     }
-  
+
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const svg = qrRef.current.querySelector("svg");
-  
+
     const svgData = new XMLSerializer().serializeToString(svg);
     const img = new Image();
     img.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
-  
+
     img.onload = () => {
       const padding = 10;
       const fontSize = 13;
@@ -308,26 +311,26 @@ export const QrMain = () => {
       const textHeight = 80;
       const marginTop = 25;
       const marginBottom = -50;
-  
+
       canvas.width = img.width + padding * 2;
       canvas.height =
         img.height + textHeight + padding * 2 + marginTop + marginBottom;
-  
+
       ctx.fillStyle = "#fff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
+
       ctx.drawImage(img, padding, padding);
-  
+
       const mensaje = `¡Hola! 🎉\nTe invitamos a usar este QR\npara obtener beneficios exclusivos con ${nombreEmpresa}.`;
-  
+
       ctx.font = `${fontSize}px Arial`;
       ctx.fillStyle = "#333";
       ctx.textAlign = "center";
-  
+
       const words = mensaje.split(" ");
       const lines = [];
       let currentLine = "";
-  
+
       for (let i = 0; i < words.length; i++) {
         const testLine = currentLine + words[i] + " ";
         const testWidth = ctx.measureText(testLine).width;
@@ -339,20 +342,20 @@ export const QrMain = () => {
         }
       }
       lines.push(currentLine);
-  
+
       const textYStart = img.height + padding + marginTop;
-  
+
       lines.forEach((line, index) => {
         ctx.fillText(line, canvas.width / 2, textYStart + index * lineHeight);
       });
-  
+
       const combinedImage = canvas.toDataURL("image/png");
-  
+
       const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-  
+
       if (isMobile) {
         const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-        window.open(url, '_blank');
+        window.open(url, "_blank");
       } else {
         const byteCharacters = atob(combinedImage.split(",")[1]);
         const byteNumbers = new Array(byteCharacters.length);
@@ -364,7 +367,7 @@ export const QrMain = () => {
         const file = new File([blob], "qr-code-with-message.png", {
           type: "image/png",
         });
-  
+
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           navigator
             .share({
@@ -379,13 +382,22 @@ export const QrMain = () => {
         }
       }
     };
-  
+
     img.onerror = () => {
       console.error("Error al cargar la imagen del QR");
       alert("Error al cargar la imagen del QR");
     };
   };
-  
+
+  const handlePaymentChange = (e) => {
+    setIsPayment(e.target.checked);
+    if (e.target.checked) {
+      setEnablePrecio(true); // Si QR de Pago está marcado, habilitar el precio
+    } else {
+      setEnablePrecio(false); // Si QR de Pago no está marcado, deshabilitar el precio
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -458,23 +470,10 @@ export const QrMain = () => {
                   </FormControl>
 
                   {/* Checkbox para habilitar/deshabilitar campos de actualización */}
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={enableUpdateFields} // Cambia a enableUpdateFields
-                        onChange={(e) => {
-                          setEnableUpdateFields(e.target.checked); // Cambia a setEnableUpdateFields
-                          console.log(
-                            "Checkbox de actualización marcado:",
-                            e.target.checked
-                          );
-                        }}
-                      />
-                    }
-                    label="Actualizar"
-                  />
+              
 
-                  {/* Inputs activados por checkboxes */}
+             
+
                   {enableNombre && (
                     <TextField
                       label="Nombre"
@@ -508,6 +507,22 @@ export const QrMain = () => {
                       variant="outlined"
                       value={mail}
                       onChange={(e) => setMail(e.target.value)}
+                      fullWidth
+                      className="custom-margin"
+                    />
+                  )}
+
+                  {(enablePrecio || isPayment) && (
+                    <TextField
+                      label="Precio"
+                      variant="outlined"
+                      placeholder="Precio"
+                      value={precio}
+                      onChange={(e) => {
+                        if (/^\d*(\.\d{0,2})?$/.test(e.target.value)) {
+                          setPrecio(e.target.value);
+                        }
+                      }}
                       fullWidth
                       className="custom-margin"
                     />
@@ -574,31 +589,26 @@ export const QrMain = () => {
                     />
                   )}
 
-                  {/* Botón para generar el QR */}
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleGenerateClick}
-                    fullWidth
-                    className="py-3 text-lg mt-4"
-                    disabled={loading}
-                  >
-                    {loading ? "Generando..." : "Generar QR"}
-                  </Button>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={isPayment}
+                        onChange={handlePaymentChange}
+                      />
+                    }
+                    label="QR de Pago"
+                  />
 
-                  {qrData && (
-                    <Button
-                      variant="contained"
-                      color="success"
-                      startIcon={<WhatsApp />}
-                      onClick={handleWhatsAppShare}
-                      fullWidth
-                      className="py-3 text-lg mt-4"
-                    >
-                      Compartir en WhatsApp
-                    </Button>
-                  )}
-
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={enablePrecio}
+                        onChange={(e) => setEnablePrecio(e.target.checked)}
+                        disabled={isPayment} // Deshabilitar este checkbox si el QR de Pago está seleccionado
+                      />
+                    }
+                    label="Precio"
+                  />
                   {/* Checkboxes para activar/desactivar campos */}
                   <FormControlLabel
                     control={
@@ -665,8 +675,64 @@ export const QrMain = () => {
                     }
                     label="Cantidad de usos"
                   />
+                      {/* Checkbox para habilitar/deshabilitar campos de actualización */}
+                      <FormControlLabel
+  control={
+    <Checkbox
+      checked={enableUpdateFields} 
+      onChange={(e) => {
+        setEnableUpdateFields(e.target.checked); 
+        console.log("Checkbox de actualización marcado:", e.target.checked);
+      }}
+    />
+  }
+  label="Actualizar"
+/>
+
+{/* Botón condicional para "QR Actualizable" */}
+{enableUpdateFields && (
+  <Typography
+    variant="subtitle1"
+    style={{
+      backgroundColor: '#388e3c', // Verde claro casi agua
+      color: '#fff',
+      padding: '5px 10px',
+      borderRadius: '5px',
+      display: 'inline-block',
+      marginTop: '10px',
+      fontSize: '0.875rem', // Tamaño de fuente más pequeño
+    }}
+  >
+    QR Actualizable
+  </Typography>
+)}
                 </Box>
+                {/* Botón para generar el QR */}
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleGenerateClick}
+                  fullWidth
+                  className="py-3 text-lg mt-4"
+                  disabled={loading}
+                >
+                  {loading ? "Generando..." : "Generar QR"}
+                </Button>
+
+                {qrData && (
+                  <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={<WhatsApp />}
+                    onClick={handleWhatsAppShare}
+                    fullWidth
+                    className="py-3 text-lg mt-4"
+                  >
+                    Compartir en WhatsApp
+                  </Button>
+                )}
               </Grid>
+
               <Grid
                 item
                 xs={12}
