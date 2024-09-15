@@ -33,7 +33,7 @@ export const PaymentResultPage = () => {
 
           await Swal.fire({
             title: '¡Pago Exitoso!',
-            text: 'Gracias por tu compra. Tu plan ha sido activado.',
+            text: 'Gracias por tu compra.',
             icon: 'success',
             confirmButtonText: 'OK',
             timer: 3000,
@@ -75,5 +75,18 @@ export const PaymentResultPage = () => {
     handlePaymentResult();
   }, [location, navigate, savePaymentDetails]);
 
-  return <div>Procesando resultado del pago...</div>;
-};
+  return (
+    <div>
+      {isLoading && (
+        <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
+          <CircularProgress />
+          <Typography variant="body1" ml={2}>
+            Procesando su solicitud, por favor espere...
+          </Typography>
+        </Box>
+      )}
+      <div>Procesando resultado del pago...</div>
+    </div>
+  );
+  
+}
