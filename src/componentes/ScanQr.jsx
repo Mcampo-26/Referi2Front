@@ -38,6 +38,8 @@ export const ScanQr = () => {
   const { qrId } = useParams();
   const { createPayment } = usePaymentStore();
   const [isHandlingScan, setIsHandlingScan] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const {
     servicios,
     getServiciosByEmpresaId,
@@ -227,11 +229,11 @@ export const ScanQr = () => {
       }
 
       console.log("Verificando si el QR es de pago:", qrFromDb.isPayment);
-
       if (qrFromDb.isPayment) {
         console.log("QR de pago detectado, iniciando proceso de pago...");
       
         try {
+          setIsLoading(true); // Inicia el estado de carga
           const usuarioEmail = localStorage.getItem("userEmail");
           const infoCompra = `Estás a punto de comprar: ${qrFromDb.nombre} por $${qrFromDb.precio}.`;
       
@@ -252,10 +254,14 @@ export const ScanQr = () => {
                 null,
                 usuarioEmail
               );
+              setIsLoading(false); // Detén el estado de carga
               window.location.href = initPointUrl;
             } else {
               console.error("El precio del QR es nulo o indefinido.");
+              setIsLoading(false); // Detén el estado de carga en caso de error
             }
+          } else {
+            setIsLoading(false); // Detén el estado de carga si se cancela
           }
         } catch (error) {
           console.error("Error al crear la preferencia de pago:", error);
@@ -265,32 +271,14 @@ export const ScanQr = () => {
             icon: "error",
             confirmButtonText: "Aceptar",
           });
+          setIsLoading(false); // Detén el estado de carga en caso de error
           setIsHandlingScan(false);
           return;
         }
-           
-      } else if (!qrFromDb.enableUpdateFields) {
-        Swal.fire({
-          title: "Escaneo Correcto",
-          text: "El QR se escaneó correctamente.",
-          icon: "success",
-          position: "center",
-          showConfirmButton: false,
-          timer: 4000,
-          timerProgressBar: true,
-          background: "#333",
-          color: "#fff",
-          customClass: {
-            popup: "colored-toast",
-          },
-        }).finally(() => {
-          resetComponentState();
-          setIsHandlingScan(false);
-        });
-      } else {
-        setIsHandlingScan(false);
       }
+      
     }
+      
   };
 
   const handleError = (err) => {
