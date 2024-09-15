@@ -22,7 +22,7 @@ import Swal from "sweetalert2";
 import "tailwindcss/tailwind.css";
 import "./Css/Scan.css";
 import qrHome from "../assets/qrHome.jpg";
-import usePaymentStore from "../store/usePaymentStore"
+import usePaymentStore from "../store/usePaymentStore";
 
 export const ScanQr = () => {
   const [scannedData, setScannedData] = useState(null);
@@ -90,9 +90,9 @@ export const ScanQr = () => {
     if (qrId) {
       const fetchQrData = async () => {
         const qrDetails = await getQrById(qrId);
-        console.log("QR obtenido del backend:", qrDetails);
+
         setEnableUpdateFields(qrDetails.enableUpdateFields);
-  
+
         if (qrDetails && qrDetails.empresaId) {
           // Verifica si ya tienes servicios cargados para evitar llamadas repetidas
           if (!servicios.length) {
@@ -100,11 +100,11 @@ export const ScanQr = () => {
           }
         }
       };
-  
+
       fetchQrData();
     }
   }, [qrId, getQrById, servicios.length]); // Solo se ejecutará si cambian estas dependencias
-  
+
   const parseData = (data) => {
     try {
       const parsed = JSON.parse(data);
@@ -127,7 +127,6 @@ export const ScanQr = () => {
         isPayment: parsed.isPayment || false, // Asegúrate de incluir el campo isPayment
       };
     } catch (error) {
-      console.error("Error al parsear los datos:", error);
       return {
         id: "N/A",
         userId: "N/A",
@@ -147,7 +146,6 @@ export const ScanQr = () => {
       };
     }
   };
-  
 
   const startScan = () => {
     if (scannerRef.current && !scannerRef.current.isScanning) {
@@ -168,7 +166,6 @@ export const ScanQr = () => {
     }
   };
 
-  
   // Nueva función para reiniciar el estado del componente
   const resetComponentState = () => {
     setScannedData(null);
@@ -186,10 +183,9 @@ export const ScanQr = () => {
       stopScan();
       setIsHandlingScan(true);
       setError(null);
-      console.log("Datos escaneados crudos:", data);
-  
+
       const parsedData = parseData(data);
-  
+
       if (!parsedData.id || parsedData.id === "N/A") {
         Swal.fire({
           title: "Error",
@@ -201,10 +197,9 @@ export const ScanQr = () => {
         });
         return;
       }
-  
+
       const qrFromDb = await getQrById(parsedData.id);
-      console.log("Respuesta del backend al obtener QR por ID:", qrFromDb);
-  
+
       if (!qrFromDb) {
         Swal.fire({
           title: "Error",
@@ -216,7 +211,7 @@ export const ScanQr = () => {
         });
         return;
       }
-  
+
       setEnableUpdateFields(qrFromDb.enableUpdateFields);
       setScannedData({
         ...parsedData,
@@ -226,33 +221,44 @@ export const ScanQr = () => {
         maxUsageCount: qrFromDb.maxUsageCount,
         updates: qrFromDb.updates || [],
       });
-  
+
       if (parsedData.empresaId && parsedData.empresaId._id !== "N/A") {
         await getServiciosByEmpresaId(parsedData.empresaId._id);
       }
-  
+
       console.log("Verificando si el QR es de pago:", qrFromDb.isPayment);
-  
+
       if (qrFromDb.isPayment) {
         console.log("QR de pago detectado, iniciando proceso de pago...");
+      
         try {
-          const usuarioEmail = localStorage.getItem('userEmail');
-          console.log("Usuario email obtenido:", usuarioEmail);
-  
-          if (qrFromDb.precio) {
-            const initPointUrl = await createPayment(
-              qrFromDb.nombre, // nombre del QR
-              qrFromDb.precio, // precio del QR
-              null, // método de pago (opcional)
-              usuarioEmail // email del usuario
-            );
-            console.log("URL de punto de inicio de pago obtenido:", initPointUrl);
-            window.location.href = initPointUrl;
-          } else {
-            console.error("El precio del QR es nulo o indefinido.");
+          const usuarioEmail = localStorage.getItem("userEmail");
+          const infoCompra = `Estás a punto de comprar: ${qrFromDb.nombre} por $${qrFromDb.precio}.`;
+      
+          const result = await Swal.fire({
+            title: "Confirmar Compra",
+            text: infoCompra,
+            icon: "info",
+            showCancelButton: true,
+            confirmButtonText: "Aceptar",
+            cancelButtonText: "Cancelar",
+          });
+      
+          if (result.isConfirmed) {
+            if (qrFromDb.precio) {
+              const initPointUrl = await createPayment(
+                qrFromDb.nombre,
+                qrFromDb.precio,
+                null,
+                usuarioEmail
+              );
+              window.location.href = initPointUrl;
+            } else {
+              console.error("El precio del QR es nulo o indefinido.");
+            }
           }
         } catch (error) {
-          console.error('Error al crear la preferencia de pago:', error);
+          console.error("Error al crear la preferencia de pago:", error);
           Swal.fire({
             title: "Error",
             text: "Hubo un problema al crear la preferencia de pago.",
@@ -262,6 +268,7 @@ export const ScanQr = () => {
           setIsHandlingScan(false);
           return;
         }
+           
       } else if (!qrFromDb.enableUpdateFields) {
         Swal.fire({
           title: "Escaneo Correcto",
@@ -274,7 +281,7 @@ export const ScanQr = () => {
           background: "#333",
           color: "#fff",
           customClass: {
-            popup: 'colored-toast',
+            popup: "colored-toast",
           },
         }).finally(() => {
           resetComponentState();
@@ -285,8 +292,6 @@ export const ScanQr = () => {
       }
     }
   };
-  
-  
 
   const handleError = (err) => {
     if (
@@ -319,7 +324,7 @@ export const ScanQr = () => {
         .scanFile(file, true)
         .then(async (decodedText) => {
           setError(null);
-          console.log("Texto decodificado del QR:", decodedText);
+
           const parsedData = parseData(decodedText);
 
           const qrFromDb = await getQrById(parsedData.id);
@@ -355,9 +360,7 @@ export const ScanQr = () => {
 
   const handleUpdateQr = async () => {
     setIsUpdating(true);
-    console.log("handleUpdateQr called");
-    console.log("scannedData:", scannedData);
-    console.log("Servicio seleccionado para guardar:", selectedService);
+
     if (!scannedData.id) {
       setError(new Error("No QR code ID found."));
       console.log("No QR code ID found");
@@ -372,14 +375,10 @@ export const ScanQr = () => {
       updatedAt: new Date().toISOString(),
     };
 
-    console.log("Datos a enviar:", qrData);
-    console.log("QR ID:", scannedData.id);
-
     try {
       const response = await updateQr(scannedData.id, qrData);
-      console.log("Response from backend:", response);
+
       const updatedQr = response.qr;
-      console.log("QR actualizado con éxito:", updatedQr);
 
       if (!updatedQr) {
         throw new Error("QR data is undefined");
@@ -501,132 +500,157 @@ export const ScanQr = () => {
         </Button>
       )}
 
-{scannedData && (
-  <Fade in={!fadeOut} timeout={100}>
-    <Box
-      component={Paper}
-      elevation={3}
-      mt={4}
-      mb={4}
-      p={4}
-      borderRadius={2}
-      className={`w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300 ${fadeOut ? 'fade-out' : ''}`}
-    >
-      {scannedData.isUsed && scannedData.usageCount >= scannedData.maxUsageCount ? (
-        <Typography variant="body1" color="error" align="center">
-          QR no usable. El QR ya no puede ser usado.
-        </Typography>
-      ) : (
-        <>
-          <Typography variant="h6" mb={5} gutterBottom>
-            Información del QR:
-          </Typography>
-          <Grid container spacing={2}>
-            {scannedData.nombre && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body1"><strong>Nombre:</strong> {scannedData.nombre}</Typography>
-              </Grid>
-            )}
-            {scannedData.telefono && scannedData.telefono !== 'N/A' && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body1"><strong>Teléfono:</strong> {scannedData.telefono}</Typography>
-              </Grid>
-            )}
-            {scannedData.mail && scannedData.mail !== 'N/A' && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body1"><strong>Correo:</strong> {scannedData.mail}</Typography>
-              </Grid>
-            )}
-            {scannedData.startTime && scannedData.startTime !== 'N/A' && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body1"><strong>Hora de inicio:</strong> {scannedData.startTime}</Typography>
-              </Grid>
-            )}
-            {scannedData.endTime && scannedData.endTime !== 'N/A' && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body1"><strong>Hora de fin:</strong> {scannedData.endTime}</Typography>
-              </Grid>
-            )}
-            {scannedData.date && scannedData.date !== 'N/A' && scannedData.date !== 'Invalid Date' && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body1"><strong>Fecha:</strong> {new Date(scannedData.date).toLocaleDateString()}</Typography>
-              </Grid>
-            )}
-            {scannedData.empresaId?.name && scannedData.empresaId.name !== 'N/A' && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body1"><strong>Empresa:</strong> {scannedData.empresaId.name}</Typography>
-              </Grid>
-            )}
-            {scannedData.usageCount !== undefined && scannedData.usageCount > 0 && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body1"><strong>Usado:</strong> {scannedData.usageCount}</Typography>
-              </Grid>
-            )}
-            {usosRestantes > 0 && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body1"><strong>Usos restantes:</strong> {usosRestantes}</Typography>
-              </Grid>
-            )}
-          </Grid>
+      {scannedData && (
+        <Fade in={!fadeOut} timeout={100}>
+          <Box
+            component={Paper}
+            elevation={3}
+            mt={4}
+            mb={4}
+            p={4}
+            borderRadius={2}
+            className={`w-full max-w-lg mx-auto bg-white dark:bg-gray-800 text-black dark:text-white transition-all duration-300 ${
+              fadeOut ? "fade-out" : ""
+            }`}
+          >
+            {scannedData.isUsed &&
+            scannedData.usageCount >= scannedData.maxUsageCount ? (
+              <Typography variant="body1" color="error" align="center">
+                QR no usable. El QR ya no puede ser usado.
+              </Typography>
+            ) : (
+              <>
+                <Typography variant="h6" mb={5} gutterBottom>
+                  Información del QR:
+                </Typography>
+                <Grid container spacing={2}>
+                  {scannedData.nombre && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1">
+                        <strong>Nombre:</strong> {scannedData.nombre}
+                      </Typography>
+                    </Grid>
+                  )}
+                  {scannedData.telefono && scannedData.telefono !== "N/A" && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1">
+                        <strong>Teléfono:</strong> {scannedData.telefono}
+                      </Typography>
+                    </Grid>
+                  )}
+                  {scannedData.mail && scannedData.mail !== "N/A" && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1">
+                        <strong>Correo:</strong> {scannedData.mail}
+                      </Typography>
+                    </Grid>
+                  )}
+                  {scannedData.startTime && scannedData.startTime !== "N/A" && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1">
+                        <strong>Hora de inicio:</strong> {scannedData.startTime}
+                      </Typography>
+                    </Grid>
+                  )}
+                  {scannedData.endTime && scannedData.endTime !== "N/A" && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1">
+                        <strong>Hora de fin:</strong> {scannedData.endTime}
+                      </Typography>
+                    </Grid>
+                  )}
+                  {scannedData.date &&
+                    scannedData.date !== "N/A" &&
+                    scannedData.date !== "Invalid Date" && (
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body1">
+                          <strong>Fecha:</strong>{" "}
+                          {new Date(scannedData.date).toLocaleDateString()}
+                        </Typography>
+                      </Grid>
+                    )}
+                  {scannedData.empresaId?.name &&
+                    scannedData.empresaId.name !== "N/A" && (
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body1">
+                          <strong>Empresa:</strong> {scannedData.empresaId.name}
+                        </Typography>
+                      </Grid>
+                    )}
+                  {scannedData.usageCount !== undefined &&
+                    scannedData.usageCount > 0 && (
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body1">
+                          <strong>Usado:</strong> {scannedData.usageCount}
+                        </Typography>
+                      </Grid>
+                    )}
+                  {usosRestantes > 0 && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body1">
+                        <strong>Usos restantes:</strong> {usosRestantes}
+                      </Typography>
+                    </Grid>
+                  )}
+                </Grid>
 
-          {/* Renderizar los inputs de actualización solo si enableUpdateFields es true */}
-          {enableUpdateFields && (
-            <>
-              {servicios.length > 0 && (
-                <FormControl fullWidth margin="normal" variant="outlined">
-                  <InputLabel>Servicio</InputLabel>
-                  <Select
-                    value={selectedService}
-                    onChange={(e) => setSelectedService(e.target.value)}
-                    label="Servicio"
-                  >
-                    {servicios.map((servicio) => (
-                      <MenuItem key={servicio._id} value={servicio._id}>
-                        {servicio.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              )}
+                {/* Renderizar los inputs de actualización solo si enableUpdateFields es true */}
+                {enableUpdateFields && (
+                  <>
+                    {servicios.length > 0 && (
+                      <FormControl fullWidth margin="normal" variant="outlined">
+                        <InputLabel>Servicio</InputLabel>
+                        <Select
+                          value={selectedService}
+                          onChange={(e) => setSelectedService(e.target.value)}
+                          label="Servicio"
+                        >
+                          {servicios.map((servicio) => (
+                            <MenuItem key={servicio._id} value={servicio._id}>
+                              {servicio.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
 
-              <TextField
-                fullWidth
-                label="Descuento"
-                variant="outlined"
-                value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
-                margin="normal"
-                InputProps={{
-                  endAdornment: <Typography>%</Typography>,
-                }}
-              />
+                    <TextField
+                      fullWidth
+                      label="Descuento"
+                      variant="outlined"
+                      value={discount}
+                      onChange={(e) => setDiscount(e.target.value)}
+                      margin="normal"
+                      InputProps={{
+                        endAdornment: <Typography>%</Typography>,
+                      }}
+                    />
 
-              <TextField
-                fullWidth
-                label="Detalles"
-                variant="outlined"
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-                margin="normal"
-              />
+                    <TextField
+                      fullWidth
+                      label="Detalles"
+                      variant="outlined"
+                      value={details}
+                      onChange={(e) => setDetails(e.target.value)}
+                      margin="normal"
+                    />
 
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleUpdateQr}
-                sx={{ mt: 2 }}
-              >
-                Guardar Cambios
-              </Button>
-            </>
-          )}
-        </>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleUpdateQr}
+                      sx={{ mt: 2 }}
+                    >
+                      Guardar Cambios
+                    </Button>
+                  </>
+                )}
+              </>
+            )}
+          </Box>
+        </Fade>
       )}
-    </Box>
-  </Fade>
-)}
 
-      
       {error && (
         <Box
           mt={4}
