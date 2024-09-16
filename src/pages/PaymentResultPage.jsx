@@ -33,14 +33,14 @@ export const PaymentResultPage = () => {
 
           await Swal.fire({
             title: '¡Pago Exitoso!',
-            text: 'Gracias por tu compra. Tu plan ha sido activado.',
+            text: 'Gracias por tu compra.',
             icon: 'success',
             confirmButtonText: 'OK',
             timer: 3000,
             timerProgressBar: true,
           });
           
-          navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
+          navigate('/Referidos'); // Redirige al usuario después de que se cierre el SweetAlert
         } catch (error) {
           await Swal.fire({
             title: 'Error',
@@ -49,7 +49,7 @@ export const PaymentResultPage = () => {
             confirmButtonText: 'OK',
           });
           
-          navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
+          navigate('/Referidos'); //Redirige al usuario después de que se cierre el SweetAlert
         }
       } else if (status === 'failure') {
         await Swal.fire({
@@ -59,7 +59,7 @@ export const PaymentResultPage = () => {
           confirmButtonText: 'OK',
         });
         
-        navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
+        navigate('/Referidos'); // Redirige al usuario después de que se cierre el SweetAlert
       } else if (status === 'pending') {
         await Swal.fire({
           title: 'Pago Pendiente',
@@ -68,7 +68,7 @@ export const PaymentResultPage = () => {
           confirmButtonText: 'OK',
         });
         
-        navigate('/'); // Redirige al usuario después de que se cierre el SweetAlert
+        navigate('/Referidos'); // Redirige al usuario después de que se cierre el SweetAlert
       }
     };
 

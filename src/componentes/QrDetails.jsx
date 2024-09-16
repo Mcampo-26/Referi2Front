@@ -200,35 +200,36 @@ export const QrDetails = () => {
 
         <Grid container spacing={4} justifyContent="center" alignItems="center">
           <Grid item xs={12} md={6} container justifyContent="center" alignItems="center" direction="column">
-            <Paper
-              elevation={3}
-              sx={{
-                p: 2,
-                borderRadius: 1,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100%',
-                marginBottom: 'auto',
-              }}
-              ref={qrRef}
-            >
-              {!qr.isUsed ? (
-                <ReactQRCode value={JSON.stringify(qr)} size={440} />
-              ) : (
-                <img
-                  src={qrMini}
-                  alt="QR Code"
-                  style={{
-                    width: '90%',
-                    height: 'auto',
-                    display: 'block',
-                    filter: 'blur(5px)',
-                    opacity: 0.5,
-                  }}
-                />
-              )}
-            </Paper>
+          <Paper
+  elevation={3}
+  sx={{
+    p: 2,
+    borderRadius: 1,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
+    marginBottom: 'auto',
+  }}
+  ref={qrRef}
+>
+  {!qr.isUsed ? (
+    <ReactQRCode value={qr.paymentLink ? qr.paymentLink : JSON.stringify(qr)} size={440} />
+  ) : (
+    <img
+      src={qrMini}
+      alt="QR Code"
+      style={{
+        width: '90%',
+        height: 'auto',
+        display: 'block',
+        filter: 'blur(5px)',
+        opacity: 0.5,
+      }}
+    />
+  )}
+</Paper>
+
           </Grid>
 
           <Grid
@@ -255,7 +256,7 @@ export const QrDetails = () => {
               <Grid item>
                 <Paper elevation={3} sx={{ p: 2, borderRadius: 1 }}>
                   <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
-                    Usuario: {qr.nombre}
+                    Nombre: {qr.nombre}
                   </Typography>
                 </Paper>
               </Grid>

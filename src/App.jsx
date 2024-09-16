@@ -81,9 +81,22 @@ function App() {
   }));
 
   useEffect(() => {
-    // Limpiar el localStorage al cargar la página principal
-    localStorage.clear();
+    // Listener para sincronizar el estado entre pestañas
+    const syncAuthState = () => {
+      const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+      const usuario = JSON.parse(localStorage.getItem('usuario'));
+      
+      useUsuariosStore.setState({ isAuthenticated, usuario });
+    };
+  
+    window.addEventListener('storage', syncAuthState);
+  
+    // Limpieza del listener
+    return () => {
+      window.removeEventListener('storage', syncAuthState);
+    };
   }, []);
+  
 
   useEffect(() => {
     if (!isAuthenticated) {

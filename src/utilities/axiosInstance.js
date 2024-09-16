@@ -1,6 +1,6 @@
 import axios from 'axios';
 const jwt_decode = (await import('jwt-decode')).default;
-import { URL } from './config'; 
+import { URL } from './config'; // Importa ambas URLs
 
 const axiosInstance = axios.create({
   baseURL: URL,
@@ -24,19 +24,23 @@ const isTokenExpired = (token) => {
 // Interceptor de solicitud de Axios
 axiosInstance.interceptors.request.use(
   async (config) => {
+    // Cambia la base URL a NGROK_URL si la ruta es /createPayment
+    if (config.url.includes('/createPayment')) {
+      // Lógica para /createPayment
+    } else if (config.url.includes('/Pagos/createPaymentLink')) {
+      // Lógica para /newRoute
+    }
+
     let token = localStorage.getItem('token');
     if (!token) {
-      // Espera un breve momento y vuelve a verificar
       await new Promise(resolve => setTimeout(resolve, 50)); // Retraso de 50ms
       token = localStorage.getItem('token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      } else {
-        console.log('No hay token disponible después de la reintento.');
-      }
-    } else {
+    }
+    
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
     return config;
   },
   (error) => {

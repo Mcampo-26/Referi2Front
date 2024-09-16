@@ -51,6 +51,32 @@ export const usePaymentStore = create((set) => ({
       set({ paymentError: 'Hubo un problema al guardar los detalles del pago.', paymentLoading: false });
     }
   },
+
+  createPaymentLink: async (productName, price) => {
+    set({ paymentLoading: true, paymentError: null });
+    try {
+      const payload = {
+        title: productName,
+        unit_price: parseFloat(price),
+      };
+
+      const response = await axiosInstance.post('/Pagos/create_payment_link', payload);
+
+      const paymentLink = response.data.init_point; // Asumiendo que esta es la propiedad correcta
+
+      if (paymentLink) {
+        set({ paymentLoading: false });
+        return paymentLink; // Devuelve el enlace de pago generado
+      } else {
+        throw new Error('No se recibió un enlace de pago en la respuesta');
+      }
+    } catch (error) {
+      console.error('Error al crear el enlace de pago:', error.response ? error.response.data : error.message);
+      set({ paymentError: 'Hubo un problema al generar tu enlace de pago.', paymentLoading: false });
+      throw error;
+    }
+  },
+
 }));
 
 export default usePaymentStore;

@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
+import axiosInstance from "../utilities/axiosInstance";
+import { usePaymentStore } from "../store/usePaymentStore";
 import {
   Button,
   TextField,
@@ -20,6 +22,8 @@ import useEmpresasStore from "../store/useEmpresaStore";
 import useUsuariosStore from "../store/useUsuariosStore";
 import { WhatsApp } from "@mui/icons-material";
 import ReactQRCode from "react-qr-code";
+import axios from "axios";
+
 import {
   useTheme,
   ThemeProvider,
@@ -72,6 +76,9 @@ export const QrMain = () => {
   const [enableStartTime, setEnableStartTime] = useState(false);
   const [enableEndTime, setEnableEndTime] = useState(false);
   const [enableMaxUsageCount, setEnableMaxUsageCount] = useState(false);
+  const { createPaymentLink } = usePaymentStore(); // Extrae la función
+  const [isQrRendered, setIsQrRendered] = useState(false);
+
 
   const createQr = useQrStore((state) => state.createQr);
   const { getQrById } = useQrStore((state) => ({
@@ -121,6 +128,24 @@ export const QrMain = () => {
 
     cargarDatos();
   }, [getAllEmpresas, empresas, usuario, getUsuariosByEmpresa]);
+
+
+
+  useEffect(() => {
+    const fetchQrData = async () => {
+      if (qrId && !isQrRendered) { // Evita que se renderice dos veces
+        try {
+          const qrDetails = await getQrById(qrId);
+          setQrData(qrDetails);
+          setIsQrRendered(true); // Marca como renderizado
+        } catch (error) {
+          console.error("Error al obtener los detalles del QR:", error);
+        }
+      }
+    };
+    fetchQrData();
+  }, [qrId, getQrById, isQrRendered]);
+  
 
   const handleEmpresaChange = async (e) => {
     if (usuario.roleId === superAdminRoleId) {
@@ -217,19 +242,20 @@ export const QrMain = () => {
     return true;
   };
 
+  // Generación del enlace de pago y el QR
   const handleGenerateClick = async () => {
     if (!validateFields()) {
       return;
     }
-
+  
     const userId = localStorage.getItem("userId");
     const token = localStorage.getItem("token");
-
+  
     if (!userId || !token) {
       console.error("User ID or token is missing");
       return;
     }
-
+  
     const empresa = empresas.find((e) => e._id === empresaId);
     const qrDataToSend = {
       userId,
@@ -244,27 +270,49 @@ export const QrMain = () => {
       ...(enableDate && { date }),
       ...(enableStartTime && { startTime }),
       ...(enableEndTime && { endTime }),
-      ...(enableMaxUsageCount && {
-        maxUsageCount: parseInt(maxUsageCount, 10),
-      }),
-      ...(precio && { precio: parseFloat(precio) }), // Incluye el precio
+      ...(enableMaxUsageCount && { maxUsageCount: parseInt(maxUsageCount, 10) }),
       enableUpdateFields,
-      isPayment: true, // Añadir este campo si es un QR "de pago"
+      isPayment,
     };
-
-    console.log("Datos enviados al QR:", qrDataToSend);
-
+  
+    if (isPayment) {
+      const price = parseFloat(precio);
+      if (isNaN(price) || price <= 0) {
+        Swal.fire("Error", "El precio debe ser un número mayor que cero", "error");
+        return;
+      }
+      qrDataToSend.precio = price;
+    }
+  
     try {
       setLoading(true);
+  
+      if (isPayment) {
+        const response = await axiosInstance.post('/Pagos/create_payment_link', {
+          title: qrDataToSend.nombre,
+          price: qrDataToSend.precio,
+        });
+  
+        const paymentLink = response.data.paymentLink;
+        qrDataToSend.paymentLink = paymentLink; // Añadir el link al objeto
+      }
+  
       const newQr = await createQr(qrDataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
+  
       if (newQr && newQr._id) {
         setQrId(newQr._id);
-        Swal.fire("QR creado", "QR creado exitosamente", "success");
+        setQrData({
+          ...qrDataToSend,
+          _id: newQr._id,
+          paymentLink: newQr.paymentLink || null, // Agregar el enlace de pago si existe
+        });
+        Swal.fire("QR creado", "QR creado exitosamente", "success").then(() => {
+          setIsQrRendered(true);
+        });
       }
     } catch (error) {
       console.error("Error al crear QR:", error);
@@ -273,6 +321,43 @@ export const QrMain = () => {
       setLoading(false);
     }
   };
+  
+  
+  // Función para generar el contenido del QR basado en si es de pago o no
+  const generateQrContent = (qrData) => {
+    if (qrData?.isPayment && qrData?.paymentLink) {
+      // Si es de pago, usar solo el enlace de pago
+      return qrData.paymentLink;
+    }
+    // Si no es de pago, incluir los datos adicionales como JSON
+    return JSON.stringify(qrData);
+  };
+  
+  
+  
+
+
+  // Renderiza solo el enlace de pago en el QR
+  <Grid item xs={12} md={6} className="flex justify-center items-center">
+    {qrData && (
+      <Paper
+        elevation={3}
+        ref={qrRef}
+        className="p-0 bg-white dark:bg-gray-800 rounded-md shadow-md flex justify-center items-center w-full h-full"
+      >
+{qrData && qrData._id ? (
+  <ReactQRCode value={isPayment ? qrData.paymentLink : JSON.stringify(qrData)} size={450} />
+) : (
+  <Typography>Error: QR ID no válido</Typography>
+)}
+
+
+
+      </Paper>
+    )}
+  </Grid>;
+
+ 
 
   useEffect(() => {
     const fetchQrData = async () => {
@@ -470,9 +555,8 @@ export const QrMain = () => {
                   </FormControl>
 
                   {/* Checkbox para habilitar/deshabilitar campos de actualización */}
-              
 
-             
+                 
 
                   {enableNombre && (
                     <TextField
@@ -514,18 +598,19 @@ export const QrMain = () => {
 
                   {(enablePrecio || isPayment) && (
                     <TextField
-                      label="Precio"
-                      variant="outlined"
-                      placeholder="Precio"
-                      value={precio}
-                      onChange={(e) => {
+                    label="Precio"
+                    variant="outlined"
+                    placeholder="Precio"
+                    value={precio}
+                    onChange={(e) => {
                         if (/^\d*(\.\d{0,2})?$/.test(e.target.value)) {
-                          setPrecio(e.target.value);
+                            setPrecio(e.target.value);
                         }
-                      }}
-                      fullWidth
-                      className="custom-margin"
-                    />
+                    }}
+                    fullWidth
+                    className="custom-margin"
+                />
+                
                   )}
 
                   {enableDate && (
@@ -589,14 +674,14 @@ export const QrMain = () => {
                     />
                   )}
 
-                  <FormControlLabel
+                   <FormControlLabel
                     control={
                       <Checkbox
                         checked={isPayment}
                         onChange={handlePaymentChange}
                       />
                     }
-                    label="QR de Pago"
+                    label="QR de Pago Directo"
                   />
 
                   <FormControlLabel
@@ -675,37 +760,40 @@ export const QrMain = () => {
                     }
                     label="Cantidad de usos"
                   />
-                      {/* Checkbox para habilitar/deshabilitar campos de actualización */}
-                      <FormControlLabel
-  control={
-    <Checkbox
-      checked={enableUpdateFields} 
-      onChange={(e) => {
-        setEnableUpdateFields(e.target.checked); 
-        console.log("Checkbox de actualización marcado:", e.target.checked);
-      }}
-    />
-  }
-  label="Actualizar"
-/>
+                  {/* Checkbox para habilitar/deshabilitar campos de actualización */}
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={enableUpdateFields}
+                        onChange={(e) => {
+                          setEnableUpdateFields(e.target.checked);
+                          console.log(
+                            "Checkbox de actualización marcado:",
+                            e.target.checked
+                          );
+                        }}
+                      />
+                    }
+                    label="Actualizar"
+                  />
 
-{/* Botón condicional para "QR Actualizable" */}
-{enableUpdateFields && (
-  <Typography
-    variant="subtitle1"
-    style={{
-      backgroundColor: '#388e3c', // Verde claro casi agua
-      color: '#fff',
-      padding: '5px 10px',
-      borderRadius: '5px',
-      display: 'inline-block',
-      marginTop: '10px',
-      fontSize: '0.875rem', // Tamaño de fuente más pequeño
-    }}
-  >
-    QR Actualizable
-  </Typography>
-)}
+                  {/* Botón condicional para "QR Actualizable" */}
+                  {enableUpdateFields && (
+                    <Typography
+                      variant="subtitle1"
+                      style={{
+                        backgroundColor: "#388e3c", // Verde claro casi agua
+                        color: "#fff",
+                        padding: "5px 10px",
+                        borderRadius: "5px",
+                        display: "inline-block",
+                        marginTop: "10px",
+                        fontSize: "0.875rem", // Tamaño de fuente más pequeño
+                      }}
+                    >
+                      QR Actualizable
+                    </Typography>
+                  )}
                 </Box>
                 {/* Botón para generar el QR */}
                 <Button
@@ -739,15 +827,23 @@ export const QrMain = () => {
                 md={6}
                 className="flex justify-center items-center"
               >
-                {qrData && (
-                  <Paper
-                    elevation={3}
-                    ref={qrRef}
-                    className="p-0 bg-white dark:bg-gray-800 rounded-md shadow-md flex justify-center items-center w-full h-full"
-                  >
-                    <ReactQRCode value={JSON.stringify(qrData)} size={350} />
-                  </Paper>
-                )}
+   <Grid item xs={12} md={6} className="flex justify-center items-center">
+  {qrData && (
+    <Paper
+      elevation={3}
+      ref={qrRef}
+      className="p-0 bg-white dark:bg-gray-800 rounded-md shadow-md flex justify-center items-center w-full h-full"
+    >
+      <ReactQRCode value={generateQrContent(qrData)} size={350} />
+    </Paper>
+  )}
+</Grid>
+
+
+
+
+
+
               </Grid>
             </Grid>
           </CardContent>

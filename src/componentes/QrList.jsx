@@ -84,9 +84,15 @@ export const QrList = () => {
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
+    console.log("storedUserId desde localStorage:", storedUserId); // Verifica el ID de usuario almacenado
+
     if (storedUserId) {
+      console.log("Ejecutando getQrsByAssignedUser...");
       getQrsByAssignedUser(storedUserId);
+    }else{
+      console.log("No se encontró userId en localStorage.");
     }
+    
   }, [getQrsByAssignedUser]);
 
   const handleSort = (column) => {
