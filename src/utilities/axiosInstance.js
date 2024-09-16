@@ -1,8 +1,7 @@
 import axios from 'axios';
-import jwt_decode from 'jwt-decode'; // Asegúrate de importar jwt-decode correctamente
-import { URL } from './config'; // Importa la URL desde la configuración
+const jwt_decode = (await import('jwt-decode')).default;
+import { URL } from './config'; // Importa ambas URLs
 
-// Crear instancia de Axios
 const axiosInstance = axios.create({
   baseURL: URL,
   headers: {
@@ -12,10 +11,8 @@ const axiosInstance = axios.create({
 
 // Función para verificar si el token ha expirado
 const isTokenExpired = (token) => {
-  if (!token) return true; // Considera el token como expirado si no está presente
-
   try {
-    const decoded = jwt_decode(token); // Decodifica el token usando jwt-decode
+    const decoded = jwt_decode(token);
     const currentTime = Date.now() / 1000; // Convertir milisegundos a segundos
     return decoded.exp < currentTime; // Verifica si la expiración es menor que el tiempo actual
   } catch (error) {
@@ -27,23 +24,21 @@ const isTokenExpired = (token) => {
 // Interceptor de solicitud de Axios
 axiosInstance.interceptors.request.use(
   async (config) => {
+    // Cambia la base URL a NGROK_URL si la ruta es /createPayment
+    if (config.url.includes('/createPayment')) {
+      config.baseURL =URL;
+    }
+
     let token = localStorage.getItem('token');
     if (!token) {
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise(resolve => setTimeout(resolve, 50)); // Retraso de 50ms
       token = localStorage.getItem('token');
     }
-
+    
     if (token) {
-      const tokenExpired = isTokenExpired(token); // Verifica si el token ha expirado
-      if (!tokenExpired) {
-        config.headers.Authorization = `Bearer ${token}`; // Agrega el token a las solicitudes
-      } else {
-        console.warn('Token expirado, por favor inicie sesión de nuevo.');
-      }
-    } else {
-      console.warn('No se encontró el token en localStorage.');
+      config.headers.Authorization = `Bearer ${token}`;
     }
-
+    
     return config;
   },
   (error) => {
