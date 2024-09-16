@@ -3,12 +3,11 @@ const jwt_decode = (await import('jwt-decode')).default;
 import { URL } from './config'; // Importa ambas URLs
 
 const axiosInstance = axios.create({
-  baseURL: process.env.URL || 'https://referido2back.onrender.com', // Asegúrate de que esta URL sea correcta
+  baseURL: URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
-
 
 // Función para verificar si el token ha expirado
 const isTokenExpired = (token) => {
