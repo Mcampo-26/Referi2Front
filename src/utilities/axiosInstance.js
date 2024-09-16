@@ -24,21 +24,21 @@ const isTokenExpired = (token) => {
 // Interceptor de solicitud de Axios
 axiosInstance.interceptors.request.use(
   async (config) => {
-    // Cambia la base URL a NGROK_URL si la ruta es /createPayment
-    if (config.url.includes('/createPayment')) {
-      config.baseURL =URL;
-    }
+    // Comentar o eliminar cualquier lógica relacionada con Ngrok
+    // if (config.url.includes('/createPayment')) {
+    //   config.baseURL = URL; // Esta parte ya no es necesaria
+    // }
 
     let token = localStorage.getItem('token');
     if (!token) {
       await new Promise(resolve => setTimeout(resolve, 50)); // Retraso de 50ms
       token = localStorage.getItem('token');
     }
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
   },
   (error) => {
