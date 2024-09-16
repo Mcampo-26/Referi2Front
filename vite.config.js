@@ -5,7 +5,15 @@ import { URL } from './src/utilities/config'; // Asegúrate de que el archivo de
 export default defineConfig({
   plugins: [react()],
   esbuild: {
-    target: 'esnext', // O puedes usar 'es2022'
+    target: 'esnext', // O 'es2022' para soporte moderno
+  },
+  build: {
+    target: 'esnext', // Asegura compatibilidad con top-level await
+    rollupOptions: {
+      output: {
+        format: 'esm', // Utiliza el formato de módulos ES
+      },
+    },
   },
   server: {
     proxy: {
