@@ -26,7 +26,9 @@ axiosInstance.interceptors.request.use(
   async (config) => {
     // Cambia la base URL a NGROK_URL si la ruta es /createPayment
     if (config.url.includes('/createPayment')) {
-      config.baseURL =URL;
+      // Lógica para /createPayment
+    } else if (config.url.includes('/Pagos/createPaymentLink')) {
+      // Lógica para /newRoute
     }
 
     let token = localStorage.getItem('token');

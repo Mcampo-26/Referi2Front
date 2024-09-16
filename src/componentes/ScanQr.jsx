@@ -185,9 +185,10 @@ export const ScanQr = () => {
       stopScan();
       setIsHandlingScan(true);
       setError(null);
-
+  
+      // Intentar parsear los datos si no es un enlace
       const parsedData = parseData(data);
-
+  
       if (!parsedData.id || parsedData.id === "N/A") {
         Swal.fire({
           title: "Error",
@@ -199,9 +200,9 @@ export const ScanQr = () => {
         });
         return;
       }
-
+  
       const qrFromDb = await getQrById(parsedData.id);
-
+  
       if (!qrFromDb) {
         Swal.fire({
           title: "Error",
@@ -213,7 +214,7 @@ export const ScanQr = () => {
         });
         return;
       }
-
+  
       setEnableUpdateFields(qrFromDb.enableUpdateFields);
       setScannedData({
         ...parsedData,
@@ -223,20 +224,18 @@ export const ScanQr = () => {
         maxUsageCount: qrFromDb.maxUsageCount,
         updates: qrFromDb.updates || [],
       });
-
+  
       if (parsedData.empresaId && parsedData.empresaId._id !== "N/A") {
         await getServiciosByEmpresaId(parsedData.empresaId._id);
       }
-
-      console.log("Verificando si el QR es de pago:", qrFromDb.isPayment);
+  
       if (qrFromDb.isPayment) {
         console.log("QR de pago detectado, iniciando proceso de pago...");
-      
+  
         try {
-          setIsLoading(true); // Inicia el estado de carga
           const usuarioEmail = localStorage.getItem("userEmail");
           const infoCompra = `Estás a punto de comprar: ${qrFromDb.nombre} por $${qrFromDb.precio}.`;
-      
+  
           const result = await Swal.fire({
             title: "Confirmar Compra",
             text: infoCompra,
@@ -245,8 +244,17 @@ export const ScanQr = () => {
             confirmButtonText: "Aceptar",
             cancelButtonText: "Cancelar",
           });
-      
+  
           if (result.isConfirmed) {
+            Swal.fire({
+              title: "Cargando...",
+              text: "Redirigiendo a Mercado Pago...",
+              allowOutsideClick: false,
+              didOpen: () => {
+                Swal.showLoading(); // Mostrar spinner de carga
+              },
+            });
+  
             if (qrFromDb.precio) {
               const initPointUrl = await createPayment(
                 qrFromDb.nombre,
@@ -254,14 +262,24 @@ export const ScanQr = () => {
                 null,
                 usuarioEmail
               );
-              setIsLoading(false); // Detén el estado de carga
+  
+              // Registrar el pago realizado en la base de datos
+              await registerPayment({
+                qrId: qrFromDb._id,
+                nombre: qrFromDb.nombre,
+                precio: qrFromDb.precio,
+                usuarioEmail,
+                fechaPago: new Date().toISOString(),
+              });
+  
+              Swal.close(); // Cerrar el spinner antes de redirigir
               window.location.href = initPointUrl;
             } else {
               console.error("El precio del QR es nulo o indefinido.");
-              setIsLoading(false); // Detén el estado de carga en caso de error
+              Swal.close(); // Cerrar el spinner si hay error
             }
           } else {
-            setIsLoading(false); // Detén el estado de carga si se cancela
+            setIsLoading(false);
           }
         } catch (error) {
           console.error("Error al crear la preferencia de pago:", error);
@@ -271,15 +289,20 @@ export const ScanQr = () => {
             icon: "error",
             confirmButtonText: "Aceptar",
           });
-          setIsLoading(false); // Detén el estado de carga en caso de error
           setIsHandlingScan(false);
           return;
         }
+      } else {
+        console.log("QR no es de pago, manejando como QR estándar.");
+        // Aquí puedes manejar los QR que no son de pago.
       }
-      
+  
+      setIsHandlingScan(false); // Marca que terminó de manejar el escaneo
     }
-      
   };
+  
+  
+  
 
   const handleError = (err) => {
     if (

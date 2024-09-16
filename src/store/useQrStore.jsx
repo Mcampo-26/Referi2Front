@@ -13,23 +13,24 @@ export const useQrStore = create((set) => ({
 
 
 
-  createQr: async (qr) => {
+  createQr: async (qrData) => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosInstance.post('/Qr/create', qr);
+      const response = await axiosInstance.post('/Qr/create', qrData);
       const nuevoQr = response.data.newQr;
       set((state) => ({
         qrs: [...state.qrs, nuevoQr],
         loading: false,
+        qr: nuevoQr // Actualiza el estado con el nuevo QR
       }));
       return nuevoQr;
     } catch (error) {
       console.error('Error al crear QR:', error.response || error.message);
       set({ loading: false, error: 'Error al crear QR' });
-      throw error; // Asegúrate de lanzar el error para manejarlo en handleGenerateClick
+      throw error;
     }
   },
-
+  
   
   getQrs: async (page = 1, limit = 10) => {
     set({ loading: true, error: null });
