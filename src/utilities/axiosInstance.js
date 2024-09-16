@@ -9,7 +9,7 @@ const axiosInstance = axios.create({
   },
 });
 
-// Cargar jwt-decode dinámicamente de manera segura
+// Función para cargar jwt-decode dinámicamente
 const loadJwtDecode = async () => {
   const module = await import('jwt-decode');
   return module.default || module; // Asegura que siempre obtengas la función correcta
@@ -21,7 +21,7 @@ const isTokenExpired = async (token) => {
 
   try {
     const jwt_decode = await loadJwtDecode(); // Cargar jwt-decode dinámicamente
-    const decoded = jwt_decode(token);
+    const decoded = jwt_decode(token); // Decodifica el token usando jwt_decode
     const currentTime = Date.now() / 1000; // Convertir milisegundos a segundos
     return decoded.exp < currentTime; // Verifica si la expiración es menor que el tiempo actual
   } catch (error) {
@@ -30,36 +30,16 @@ const isTokenExpired = async (token) => {
   }
 };
 
-// Función para obtener el token de localStorage con manejo de retraso
-const getToken = async () => {
-  let token = localStorage.getItem('token');
-  
-  // Espera brevemente en caso de que el token aún no esté disponible
-  if (!token) {
-    await new Promise(resolve => setTimeout(resolve, 100)); // Aumenta el tiempo de espera si es necesario
-    token = localStorage.getItem('token');
-  }
-
-  console.log('Token después de la espera:', token);
-  return token;
-};
-
 // Interceptor de solicitud de Axios
 axiosInstance.interceptors.request.use(
   async (config) => {
-    const token = await getToken(); // Asegura que el token esté presente
-
-    if (token) {
-      const tokenExpired = await isTokenExpired(token); // Verifica si el token ha expirado
-      if (!tokenExpired) {
-        config.headers.Authorization = `Bearer ${token}`;
-      } else {
-        console.warn('Token expirado, por favor inicie sesión de nuevo');
-        // Lógica para manejar token expirado (por ejemplo, redirigir a la página de login)
-      }
-    } else {
-      console.warn('No se encontró el token en localStorage.');
+    // Verifica si la URL de la solicitud incluye '/createPayment'
+    if (config.url.includes('/createPayment')) {
+      config.baseURL = URL;
     }
+
+    // No se enviará el token en las solicitudes
+    console.info('Configuración de la solicitud sin token de autorización.');
 
     return config;
   },
