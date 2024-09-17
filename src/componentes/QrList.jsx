@@ -50,11 +50,7 @@ const StyledTableCell = ({
     className={`${className} cursor-pointer font-bold`}
     style={{ cursor: onClick ? "pointer" : "default", fontSize: "1rem" }}
   >
-    <Typography
-      variant="subtitle1"
-      component="div"
-      sx={{ fontWeight: "bold" }}
-    >
+    <Typography variant="subtitle1" component="div" sx={{ fontWeight: "bold" }}>
       {children}
       {orderBy === column && (orderDirection === "asc" ? "▲" : "▼")}
     </Typography>
@@ -73,27 +69,41 @@ const UpdateRow = ({ update, index, theme }) => (
 
 export const QrList = () => {
   const theme = useTheme();
-  const { qrs, getQrsByAssignedUser, deleteQr, loading, error } = useQrStore();
-  const { userId } = useUsuariosStore();
+  const { qrs, getQrsByAssignedUser, getAllQrs, getQrsByEmpresa, deleteQr, loading, error } = useQrStore();
+  const { empresaId } = useUsuariosStore();
   const [orderBy, setOrderBy] = useState("nombre");
   const [orderDirection, setOrderDirection] = useState("asc");
   const [searchTerm, setSearchTerm] = useState("");
   const [openRow, setOpenRow] = useState(null);
   const navigate = useNavigate();
-  const role = localStorage.getItem("role");
+  
+  // Obtener valores del localStorage al montar el componente
+  const storedUserId = localStorage.getItem("userId");
+  const storedRoleId = localStorage.getItem("role");
+  const storedEmpresa = localStorage.getItem("empresaId");
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
-    console.log("storedUserId desde localStorage:", storedUserId); // Verifica el ID de usuario almacenado
-
+    const storedRoleId = localStorage.getItem("role");
+  
+    console.log("Stored User ID:", storedUserId);
+    console.log("Stored Role ID:", storedRoleId);
+  
     if (storedUserId) {
-      console.log("Ejecutando getQrsByAssignedUser...");
-      getQrsByAssignedUser(storedUserId);
-    }else{
+      if (storedRoleId === "668692d09bbe1e9ff25a4826") {
+        getAllQrs();
+      } else if (storedRoleId === "66aba1fc753d20ba639d2aaf") {
+        getQrsByEmpresa(1, 10);
+      } else {
+        getQrsByAssignedUser(storedUserId);
+      }
+    } else {
       console.log("No se encontró userId en localStorage.");
     }
-    
-  }, [getQrsByAssignedUser]);
+  }, [getAllQrs, getQrsByEmpresa, getQrsByAssignedUser]);
+  
+  
+  
 
   const handleSort = (column) => {
     if (column === orderBy) {
@@ -138,9 +148,7 @@ export const QrList = () => {
   };
 
   const handleQrClick = (id) => {
-    if (role === "Vendedor") {
-      return;
-    }
+    if (storedRoleId === "Vendedor") return;
     navigate(`/QrDetails/${id}`);
   };
 
@@ -152,15 +160,14 @@ export const QrList = () => {
     navigate("/pdfs", { state: { qr } });
   };
 
-  const filteredQrs = qrs.filter(
+  const filteredQrs = (qrs || []).filter(
     (qr) =>
       qr &&
-      ((qr.nombre &&
-        qr.nombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (qr.telefono &&
-          qr.telefono.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      ((qr.nombre && qr.nombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (qr.telefono && qr.telefono.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (qr.mail && qr.mail.toLowerCase().includes(searchTerm.toLowerCase())))
   );
+  
 
   const sortedQrs = filteredQrs.sort((a, b) => {
     const aValue = a[orderBy] ? a[orderBy].toLowerCase() : "";
@@ -225,7 +232,6 @@ export const QrList = () => {
               },
             }}
           />
-
           {searchTerm && (
             <Button
               variant="contained"
@@ -414,8 +420,7 @@ export const QrList = () => {
                         onClick={() => handleQrClick(qr._id)}
                         variant="square"
                       />
-
-                      {role !== "Vendedor" && role !== "Ref" && (
+                      {storedRoleId === "668692d09bbe1e9ff25a4826" && (
                         <IconButton
                           color="secondary"
                           onClick={() => handleDelete(qr._id)}
@@ -423,7 +428,6 @@ export const QrList = () => {
                           <FontAwesomeIcon icon={faTrash} />
                         </IconButton>
                       )}
-
                       {(qr.isUsed || (qr.updates && qr.updates.length > 0)) && (
                         <IconButton
                           color="primary"

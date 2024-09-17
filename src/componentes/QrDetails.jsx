@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-import { useQrStore } from '../store/useQrStore';
-import useServiciosStore from '../store/useServiciosStore';
-import ReactQRCode from 'react-qr-code';
+import React, { useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
+import { useQrStore } from "../store/useQrStore";
+import useServiciosStore from "../store/useServiciosStore";
+import ReactQRCode from "react-qr-code";
 import {
   Box,
   Container,
@@ -11,10 +11,10 @@ import {
   Paper,
   CircularProgress,
   IconButton,
-} from '@mui/material';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import WarningIcon from '@mui/icons-material/Warning';
-import qrMini from '../assets/qrMini.png';
+} from "@mui/material";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import WarningIcon from "@mui/icons-material/Warning";
+import qrMini from "../assets/qrMini.png";
 
 export const QrDetails = () => {
   const { id } = useParams();
@@ -39,38 +39,38 @@ export const QrDetails = () => {
 
   const getServiceName = (serviceId) => {
     const service = servicios.find((serv) => serv._id === serviceId);
-    return service ? service.name : 'Servicio no encontrado';
+    return service ? service.name : "Servicio no encontrado";
   };
 
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const options = { year: "numeric", month: "long", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   const handleWhatsAppClick = (phoneNumber) => {
-    const formattedNumber = phoneNumber.replace(/\D/g, '');
-    window.open(`https://wa.me/${formattedNumber}`, '_blank');
+    const formattedNumber = phoneNumber.replace(/\D/g, "");
+    window.open(`https://wa.me/${formattedNumber}`, "_blank");
   };
   const handleWhatsAppShare = () => {
     if (!qrRef.current) {
       alert("No hay código QR para compartir.");
       return;
     }
-  
+
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const svg = qrRef.current.querySelector("svg");
-  
+
     if (!svg) {
       console.error("No se encontró el SVG del QR.");
       alert("Error al cargar el código QR.");
       return;
     }
-  
+
     const svgData = new XMLSerializer().serializeToString(svg);
     const img = new Image();
     img.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
-  
+
     img.onload = () => {
       const padding = 10;
       const fontSize = 13;
@@ -79,28 +79,28 @@ export const QrDetails = () => {
       const textHeight = 80;
       const marginTop = 25;
       const marginBottom = -50;
-  
+
       canvas.width = img.width + padding * 2;
       canvas.height =
         img.height + textHeight + padding * 2 + marginTop + marginBottom;
-  
+
       ctx.fillStyle = "#fff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
+
       ctx.drawImage(img, padding, padding);
-  
+
       const mensaje = `¡Hola! 🎉\nTe invitamos a usar este QR\npara obtener beneficios exclusivos con ${
         qr.empresaId?.name || "nuestra empresa"
       }.`;
-  
+
       ctx.font = `${fontSize}px Arial`;
       ctx.fillStyle = "#333";
       ctx.textAlign = "center";
-  
+
       const words = mensaje.split(" ");
       const lines = [];
       let currentLine = "";
-  
+
       for (let i = 0; i < words.length; i++) {
         const testLine = currentLine + words[i] + " ";
         const testWidth = ctx.measureText(testLine).width;
@@ -112,17 +112,17 @@ export const QrDetails = () => {
         }
       }
       lines.push(currentLine);
-  
+
       const textYStart = img.height + padding + marginTop;
-  
+
       lines.forEach((line, index) => {
         ctx.fillText(line, canvas.width / 2, textYStart + index * lineHeight);
       });
-  
+
       const combinedImage = canvas.toDataURL("image/png");
-  
+
       const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-  
+
       const byteCharacters = atob(combinedImage.split(",")[1]);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -133,7 +133,7 @@ export const QrDetails = () => {
       const file = new File([blob], "qr-code-with-message.png", {
         type: "image/png",
       });
-  
+
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         // Usar navigator.share si está disponible
         navigator
@@ -156,16 +156,12 @@ export const QrDetails = () => {
         downloadLink.click();
       }
     };
-  
+
     img.onerror = () => {
       console.error("Error al cargar la imagen del QR");
       alert("Error al cargar la imagen del QR");
     };
   };
-  
-  
-  
-  
 
   if (loading) {
     return <CircularProgress />;
@@ -206,37 +202,57 @@ export const QrDetails = () => {
         )}
 
         <Grid container spacing={4} justifyContent="center" alignItems="center">
-          <Grid item xs={12} md={6} container justifyContent="center" alignItems="center" direction="column">
-          <Paper
-  elevation={3}
-  sx={{
-    p: 2,
-    borderRadius: 1,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100%',
-    marginBottom: 'auto',
-  }}
-  ref={qrRef}
->
-  {!qr.isUsed ? (
-    <ReactQRCode value={qr.paymentLink ? qr.paymentLink : JSON.stringify(qr)} size={440} />
-  ) : (
-    <img
-      src={qrMini}
-      alt="QR Code"
-      style={{
-        width: '90%',
-        height: 'auto',
-        display: 'block',
-        filter: 'blur(5px)',
-        opacity: 0.5,
-      }}
-    />
-  )}
-</Paper>
-
+          <Grid
+            item
+            xs={12}
+            md={6}
+            container
+            justifyContent="center"
+            alignItems="center"
+            direction="column"
+          >
+            <Paper
+              elevation={3}
+              sx={{
+                p: 1, // Agrega padding de 2 unidades (puedes ajustar este valor según necesites)
+                borderRadius: 1,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "auto", // Ajusta automáticamente la altura
+                width: "92%", // Ocupa todo el ancho disponible
+                maxWidth: "100%", // Limita el ancho máximo al 100%
+                marginBottom: "auto",
+                overflow: "hidden", // Evita el desbordamiento
+              }}
+              ref={qrRef}
+            >
+              {!qr.isUsed ? (
+                <ReactQRCode
+                  value={qr.paymentLink ? qr.paymentLink : JSON.stringify(qr)}
+                  size={240} // Ajusta el tamaño inicial del QR
+                  style={{
+                    width: "100%", // Asegura que el QR ocupe todo el ancho del contenedor
+                    height: "auto", // Permite que la altura se ajuste automáticamente
+                    margin: 0, // Elimina cualquier margen adicional
+                    padding: 0, // Elimina cualquier relleno adicional
+                    display: "block",
+                  }}
+                />
+              ) : (
+                <img
+                  src={qrMini}
+                  alt="QR Code"
+                  style={{
+                    width: "100%", // Asegura que la imagen ocupe todo el ancho disponible
+                    height: "auto", // Ajusta automáticamente la altura para mantener la proporción
+                    display: "block",
+                    filter: "blur(5px)",
+                    opacity: 0.5,
+                  }}
+                />
+              )}
+            </Paper>
           </Grid>
 
           <Grid
@@ -248,12 +264,20 @@ export const QrDetails = () => {
             spacing={2}
             alignItems="flex-start"
             justifyContent="center"
-            style={{ display: 'flex', height: '100%', justifyContent: 'center' }}
+            style={{
+              display: "flex",
+              height: "100%",
+              justifyContent: "center",
+            }}
           >
             {qr.empresaId?.name && (
               <Grid item>
                 <Paper elevation={3} sx={{ p: 2, borderRadius: 1 }}>
-                  <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+                  <Typography
+                    variant="h6"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
+                  >
                     Empresa: {qr.empresaId.name}
                   </Typography>
                 </Paper>
@@ -262,7 +286,11 @@ export const QrDetails = () => {
             {qr.nombre && (
               <Grid item>
                 <Paper elevation={3} sx={{ p: 2, borderRadius: 1 }}>
-                  <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
+                  <Typography
+                    variant="subtitle1"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
+                  >
                     Nombre: {qr.nombre}
                   </Typography>
                 </Paper>
@@ -271,7 +299,11 @@ export const QrDetails = () => {
             {qr.mail && (
               <Grid item>
                 <Paper elevation={3} sx={{ p: 2, borderRadius: 1 }}>
-                  <Typography variant="body2" component="div" sx={{ fontWeight: 'bold' }}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
+                  >
                     Correo: {qr.mail}
                   </Typography>
                 </Paper>
@@ -279,11 +311,26 @@ export const QrDetails = () => {
             )}
             {qr.telefono && (
               <Grid item>
-                <Paper elevation={3} sx={{ p: 2, borderRadius: 1, display: 'flex', alignItems: 'center' }}>
-                  <Typography variant="body2" component="div" sx={{ fontWeight: 'bold', flex: 1 }}>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 2,
+                    borderRadius: 1,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    sx={{ fontWeight: "bold", flex: 1 }}
+                  >
                     Teléfono: {qr.telefono}
                   </Typography>
-                  <IconButton onClick={() => handleWhatsAppClick(qr.telefono)} sx={{ ml: 2 }}>
+                  <IconButton
+                    onClick={() => handleWhatsAppClick(qr.telefono)}
+                    sx={{ ml: 2 }}
+                  >
                     <WhatsAppIcon color="success" />
                   </IconButton>
                 </Paper>
@@ -292,34 +339,58 @@ export const QrDetails = () => {
             {qr.date && (
               <Grid item>
                 <Paper elevation={3} sx={{ p: 2, borderRadius: 1 }}>
-                  <Typography variant="body2" component="div" sx={{ fontWeight: 'bold' }}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
+                  >
                     Fecha: {formatDate(qr.date)}
                   </Typography>
                 </Paper>
               </Grid>
             )}
             {qr.usageCount !== undefined && qr.usageCount > 0 && (
-  <Grid item>
-    <Paper elevation={3} sx={{ p: 2, borderRadius: 1 }}>
-      <Typography variant="body2" component="div" sx={{ fontWeight: 'bold' }}>
-        Usado: {qr.usageCount}
-      </Typography>
-    </Paper>
-  </Grid>
-)}
-            
+              <Grid item>
+                <Paper elevation={3} sx={{ p: 2, borderRadius: 1 }}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
+                  >
+                    Usado: {qr.usageCount}
+                  </Typography>
+                </Paper>
+              </Grid>
+            )}
+
             {qr.maxUsageCount !== undefined && qr.usageCount !== undefined && (
               <Grid item>
                 <Paper elevation={3} sx={{ p: 2, borderRadius: 1 }}>
-                  <Typography variant="body2" component="div" sx={{ fontWeight: 'bold' }}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
+                  >
                     Usos restantes: {qr.maxUsageCount - qr.usageCount}
                   </Typography>
                 </Paper>
               </Grid>
             )}
             <Grid item>
-              <Paper elevation={3} sx={{ p: 2, borderRadius: 1, display: 'flex', alignItems: 'center' }}>
-                <Typography variant="body2" component="div" sx={{ fontWeight: 'bold', flex: 1 }}>
+              <Paper
+                elevation={3}
+                sx={{
+                  p: 2,
+                  borderRadius: 1,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  component="div"
+                  sx={{ fontWeight: "bold", flex: 1 }}
+                >
                   Compartir QR
                 </Typography>
                 <IconButton onClick={handleWhatsAppShare} sx={{ ml: 2 }}>

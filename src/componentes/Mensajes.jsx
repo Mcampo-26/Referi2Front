@@ -31,7 +31,7 @@ export const Mensajes = () => {
   const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
   const [selectedRecipient, setSelectedRecipient] = useState('');
   const [selectedMessage, setSelectedMessage] = useState(null);
-  const [messageType, setMessageType] = useState('received');
+  const [messageType, setMessageType] = useState('received'); // Inicializa el estado con 'received'
 
   const userId = localStorage.getItem('userId');
   const userName = localStorage.getItem('userName');
@@ -86,17 +86,15 @@ export const Mensajes = () => {
     }
   };
 
-  const handleSelectMessage = (message) => {
-    setSelectedMessage(message);
-    markMessageAsRead(message._id);
-    
-    // Llama a handleReply para establecer el destinatario automáticamente
-    handleReply(message);
-  };
-
   const handleSelectMessageType = (type) => {
+  
     setMessageType(type);
     setSelectedRecipient(''); // Reinicia el destinatario seleccionado al cambiar de tipo de mensaje
+  };
+
+  const handleSelectMessage = (message) => {    setSelectedMessage(message);
+    markMessageAsRead(message._id);
+    handleReply(message); 
   };
 
   const handleKeyCommand = (command) => {
@@ -202,6 +200,7 @@ export const Mensajes = () => {
             <MensajeDetails 
               selectedMessage={selectedMessage} 
               handleReply={handleReply}
+              messageType={messageType} // Pasa la prop messageType correctamente
             />
           </Paper>
 

@@ -212,12 +212,26 @@ export const useUsuariosStore = create((set, get) => ({
   
     try {
       const response = await axiosInstance.get(`/Pagos/usuarios/${userId}/plan-details`);
-      set({ planDetails: response.data, loading: false });
+      
+      // Verifica si la respuesta tiene datos de plan
+      if (response.data) {
+        set({ planDetails: response.data, loading: false });
+      } else {
+        // Si no hay datos de plan, establece planDetails como null
+        set({ planDetails: null, loading: false });
+      }
     } catch (error) {
-      console.error('Error al obtener los detalles del plan:', error.response || error.message);
-      set({ error: 'No se pudieron cargar los detalles del plan.', loading: false });
+      // Maneja el error de manera que no muestre en consola
+      if (error.response && error.response.status === 404) {
+        console.warn('No se encontraron detalles del plan para el usuario.'); // Usa warn en vez de error
+        set({ planDetails: null, loading: false });
+      } else {
+        console.error('Error al obtener los detalles del plan:', error.response || error.message);
+        set({ error: 'No se pudieron cargar los detalles del plan.', loading: false });
+      }
     }
   },
+  
   verifyUsuario: async (email, code) => {
     console.log('Datos enviados al servidor:', { email, code }); // Log de los datos enviados
     set({ loading: true, error: null });

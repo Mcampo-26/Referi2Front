@@ -1,8 +1,13 @@
 import React from 'react';
-import { Paper, Typography, IconButton, Button } from '@mui/material';
+import { Paper, Typography, Button } from '@mui/material';
 import ReplyIcon from '@mui/icons-material/Reply';
 
-const MensajeDetails = ({ selectedMessage, handleReply }) => {
+const MensajeDetails = ({ selectedMessage, handleReply, messageType }) => {
+  // Verifica si el tipo de mensaje es enviado
+  const esMensajeEnviado = messageType === 'sent';
+
+
+
   return (
     <Paper
       className="p-4 bg-white dark:bg-gray-800 shadow-md"
@@ -18,18 +23,24 @@ const MensajeDetails = ({ selectedMessage, handleReply }) => {
         <>
           <div className="flex justify-between items-center mb-4">
             <div>
-              <Typography variant="h5" className="text-gray-900 dark:text-white font-bold">
-                {selectedMessage.sender ? selectedMessage.sender.nombre : 'Remitente desconocido'}
+              {/* Mostrar "Para:" si es un mensaje enviado, "De:" si es recibido */}
+              <Typography variant="h6" className="text-gray-900 dark:text-white font-bold">
+                {esMensajeEnviado ? 'Para: ' : 'De: '}
+                {esMensajeEnviado
+                  ? selectedMessage.recipient?.nombre || 'Desconocido'  // Mostrar destinatario si es enviado
+                  : selectedMessage.sender?.nombre || 'Desconocido'}   
               </Typography>
               <Typography variant="body1" className="text-gray-700 dark:text-gray-300">
-                {selectedMessage.sender ? selectedMessage.sender.email : 'Correo desconocido'}
+                {esMensajeEnviado
+                  ? selectedMessage.recipient?.email || 'Correo desconocido'  // Mostrar correo del destinatario si es enviado
+                  : selectedMessage.sender?.email || 'Correo desconocido'}  
               </Typography>
             </div>
             <Button
               variant="contained"
               color="primary"
               startIcon={<ReplyIcon />}
-              onClick={() => handleReply(selectedMessage.sender?._id)}
+              onClick={() => handleReply(selectedMessage)}
             >
               Responder
             </Button>

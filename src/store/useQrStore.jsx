@@ -1,5 +1,5 @@
-import {create} from 'zustand';
-import axiosInstance from '../utilities/axiosInstance'; // Importa la instancia configurada
+import { create } from 'zustand';
+import axiosInstance from '../utilities/axiosInstance';
 
 export const useQrStore = create((set) => ({
   qrs: [],
@@ -9,9 +9,7 @@ export const useQrStore = create((set) => ({
   totalRecords: 0,
   totalPages: 1,
   currentPage: 1,
-  empresa: null, // Añadir estado para la empresa
-
-
+  empresa: null, // Estado para la empresa
 
   createQr: async (qrData) => {
     set({ loading: true, error: null });
@@ -21,7 +19,7 @@ export const useQrStore = create((set) => ({
       set((state) => ({
         qrs: [...state.qrs, nuevoQr],
         loading: false,
-        qr: nuevoQr // Actualiza el estado con el nuevo QR
+        qr: nuevoQr
       }));
       return nuevoQr;
     } catch (error) {
@@ -30,51 +28,49 @@ export const useQrStore = create((set) => ({
       throw error;
     }
   },
-  
-  
-  getQrs: async (page = 1, limit = 10) => {
-    set({ loading: true, error: null });
-    const userRole = localStorage.getItem('userRole');
-    const userId = localStorage.getItem('userId');
 
+  getAllQrs: async () => {
+    set({ loading: true, error: null });
     try {
-      if (userRole === 'SuperAdmin') {
-        const response = await axiosInstance.get('/Qr/get', {
-          params: { page, limit }
-        });
-        const { qrs, total, totalPages, currentPage } = response.data;
-        set({
-          qrs,
-          totalRecords: total,
-          totalPages,
-          currentPage,
-          loading: false
-        });
-      } else if (userRole === 'Admin' && userId) {
-        const { empresa } = useQrStore.getState(); // Obtener la empresa del estado
-        if (empresa) {
-          const response = await axiosInstance.get(`/Qr/empresa/${empresa._id}`, {
-            params: { page, limit }
-          });
-          const { qrs, total, totalPages, currentPage } = response.data;
-          set({
-            qrs,
-            totalRecords: total,
-            totalPages,
-            currentPage,
-            loading: false
-          });
-        } else {
-          set({ loading: false, error: 'No se encontró la empresa para el usuario' });
-        }
-      } else {
-        set({ loading: false, error: 'No autorizado para ver estos QR' });
-      }
+      const response = await axiosInstance.get('/Qr/all');
+      set({ qrs: response.data, loading: false });
     } catch (error) {
-      console.error('Error al obtener QRs:', error.response || error.message);
-      set({ loading: false, error: 'Error al obtener QRs' });
+      console.error('Error al obtener todos los QRs:', error.response || error.message);
+      set({ loading: false, error: 'Error al obtener todos los QRs' });
     }
   },
+
+  getQrsByEmpresa: async (page = 1, limit = 10) => {
+    set({ loading: true, error: null });
+  
+    // Obtén el ID de la empresa desde localStorage
+    const empresaId = localStorage.getItem('empresaId');
+  
+    if (!empresaId) {
+      set({ loading: false, error: 'No se encontró el ID de la empresa en localStorage' });
+      return;
+    }
+  
+    try {
+      // Realiza la llamada a la API con el ID de la empresa
+      const response = await axiosInstance.get(`/Qr/empresa/${empresaId}`, {
+        params: { page, limit }
+      });
+      
+      const { qrs, total, totalPages, currentPage } = response.data;
+      set({
+        qrs,
+        totalRecords: total,
+        totalPages,
+        currentPage,
+        loading: false
+      });
+    } catch (error) {
+      console.error('Error al obtener los QRs por empresa:', error.response || error.message);
+      set({ loading: false, error: 'Error al obtener los QRs por empresa' });
+    }
+  },
+  
 
   getQrsByUser: async (userId) => {
     set({ loading: true, error: null });
@@ -104,7 +100,6 @@ export const useQrStore = create((set) => ({
       const response = await axiosInstance.get(`/Qr/${id}`);
       console.log("QR obtenido:", response.data);
   
-      // Actualiza el estado con el QR recibido
       set({
         qr: response.data,
         loading: false,
@@ -115,12 +110,9 @@ export const useQrStore = create((set) => ({
     } catch (error) {
       console.error('Error al obtener QR por ID:', error.response || error.message);
       set({ loading: false, error: 'Error al obtener QR por ID' });
-      return null; // Devuelve null en caso de error
+      return null;
     }
   },
-  
-
-
 
   updateQr: async (id, data) => {
     set({ loading: true, error: null });
@@ -143,7 +135,7 @@ export const useQrStore = create((set) => ({
   deleteQr: async (id) => {
     set({ loading: true, error: null });
     try {
-      await axiosInstance.delete(`/Qr/${id}`); // Usa la ruta correcta
+      await axiosInstance.delete(`/Qr/${id}`);
       set((state) => ({
         qrs: state.qrs.filter((qr) => qr._id !== id),
         loading: false,
@@ -153,7 +145,6 @@ export const useQrStore = create((set) => ({
       set({ loading: false, error: 'Error al eliminar QR' });
     }
   },
-  
 
   useQr: async (id) => {
     set({ loading: true, error: null });
@@ -205,6 +196,7 @@ export const useQrStore = create((set) => ({
       throw error;
     }
   },
+
   generateQrFromBackend: async (qrId) => {
     set({ loading: true, error: null });
     try {
@@ -231,11 +223,6 @@ export const useQrStore = create((set) => ({
       throw error;
     }
   }
-  
-  
-  
-  
-  
 }));
 
 export default useQrStore;
