@@ -52,116 +52,116 @@ export const QrDetails = () => {
     window.open(`https://wa.me/${formattedNumber}`, "_blank");
   };
   const handleWhatsAppShare = () => {
-    if (!qrRef.current) {
-      alert("No hay código QR para compartir.");
-      return;
-    }
+  if (!qrRef.current) {
+    alert("No hay código QR para compartir.");
+    return;
+  }
 
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const svg = qrRef.current.querySelector("svg");
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  const svg = qrRef.current.querySelector("svg");
 
-    if (!svg) {
-      console.error("No se encontró el SVG del QR.");
-      alert("Error al cargar el código QR.");
-      return;
-    }
+  if (!svg) {
+    console.error("No se encontró el SVG del QR.");
+    alert("Error al cargar el código QR.");
+    return;
+  }
 
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const img = new Image();
-    img.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
+  const svgData = new XMLSerializer().serializeToString(svg);
+  const img = new Image();
+  img.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
 
-    img.onload = () => {
-      const padding = 9;
-      const fontSize = 5;
-      const lineHeight = fontSize + 4;
-      const maxWidth = 300;
-      const textHeight = 80;
-      const marginTop = 25;
-      const marginBottom = -50;
+  img.onload = () => {
+    const padding = 10;
+    const fontSize = 12; // Ajuste del tamaño de fuente para mejor legibilidad
+    const lineHeight = fontSize + 6; // Ajuste del interlineado
+    const maxWidth = 280; // Ancho máximo ajustado para evitar que el texto se amontone
+    const textHeight = 100; // Altura del área de texto ajustada para acomodar tres líneas
+    const marginTop = 20;
+    const marginBottom = 0;
 
-      canvas.width = img.width + padding * 2;
-      canvas.height =
-        img.height + textHeight + padding * 2 + marginTop + marginBottom;
+    canvas.width = img.width + padding * 2;
+    canvas.height = img.height + textHeight + padding * 2 + marginTop + marginBottom;
 
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.drawImage(img, padding, padding);
+    ctx.drawImage(img, padding, padding);
 
-      const mensaje = `¡Hola! 🎉\nTe invitamos a usar este QR\npara obtener beneficios exclusivos con ${
-        qr.empresaId?.name || "nuestra empresa"
-      }.`;
+    const mensaje = `¡Hola! 🎉\nTe invitamos a usar este QR\npara obtener beneficios exclusivos con ${
+      qr.empresaId?.name || "nuestra empresa"
+    }.`; // Mantén el mensaje en el mismo formato
 
-      ctx.font = `${fontSize}px Arial`;
-      ctx.fillStyle = "#333";
-      ctx.textAlign = "center";
+    ctx.font = `${fontSize}px Arial`;
+    ctx.fillStyle = "#333";
+    ctx.textAlign = "center";
 
-      const words = mensaje.split(" ");
-      const lines = [];
-      let currentLine = "";
+    const words = mensaje.split(" ");
+    const lines = [];
+    let currentLine = "";
 
-      for (let i = 0; i < words.length; i++) {
-        const testLine = currentLine + words[i] + " ";
-        const testWidth = ctx.measureText(testLine).width;
-        if (testWidth > maxWidth) {
-          lines.push(currentLine);
-          currentLine = words[i] + " ";
-        } else {
-          currentLine = testLine;
-        }
-      }
-      lines.push(currentLine);
-
-      const textYStart = img.height + padding + marginTop;
-
-      lines.forEach((line, index) => {
-        ctx.fillText(line, canvas.width / 2, textYStart + index * lineHeight);
-      });
-
-      const combinedImage = canvas.toDataURL("image/png");
-
-      const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
-      const byteCharacters = atob(combinedImage.split(",")[1]);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: "image/png" });
-      const file = new File([blob], "qr-code-with-message.png", {
-        type: "image/png",
-      });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        // Usar navigator.share si está disponible
-        navigator
-          .share({
-            files: [file],
-            title: "Código QR con mensaje",
-            text: mensaje,
-          })
-          .then(() => console.log("Compartido con éxito"))
-          .catch((error) => console.log("Error al compartir", error));
-      } else if (isMobile) {
-        const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-        window.open(url, "_blank");
+    // Ajuste para dividir el mensaje en líneas
+    for (let i = 0; i < words.length; i++) {
+      const testLine = currentLine + words[i] + " ";
+      const testWidth = ctx.measureText(testLine).width;
+      if (testWidth > maxWidth) {
+        lines.push(currentLine);
+        currentLine = words[i] + " ";
       } else {
-        // Si el navegador no puede compartir archivos, mostrar el QR en una nueva pestaña
-        const downloadLink = document.createElement("a");
-        downloadLink.href = combinedImage;
-        downloadLink.download = "qr-code.png";
-        downloadLink.target = "_blank"; // Abrir en una nueva pestaña
-        downloadLink.click();
+        currentLine = testLine;
       }
-    };
+    }
+    lines.push(currentLine);
 
-    img.onerror = () => {
-      console.error("Error al cargar la imagen del QR");
-      alert("Error al cargar la imagen del QR");
-    };
+    const textYStart = img.height + padding + marginTop;
+
+    // Dibujar las líneas del texto centradas
+    lines.forEach((line, index) => {
+      ctx.fillText(line, canvas.width / 2, textYStart + index * lineHeight);
+    });
+
+    const combinedImage = canvas.toDataURL("image/png");
+
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+    const byteCharacters = atob(combinedImage.split(",")[1]);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: "image/png" });
+    const file = new File([blob], "qr-code-with-message.png", {
+      type: "image/png",
+    });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator
+        .share({
+          files: [file],
+          title: "Código QR con mensaje",
+          text: mensaje,
+        })
+        .then(() => console.log("Compartido con éxito"))
+        .catch((error) => console.log("Error al compartir", error));
+    } else if (isMobile) {
+      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, "_blank");
+    } else {
+      const downloadLink = document.createElement("a");
+      downloadLink.href = combinedImage;
+      downloadLink.download = "qr-code.png";
+      downloadLink.target = "_blank";
+      downloadLink.click();
+    }
   };
+
+  img.onerror = () => {
+    console.error("Error al cargar la imagen del QR");
+    alert("Error al cargar la imagen del QR");
+  };
+};
+
 
   if (loading) {
     return <CircularProgress />;
