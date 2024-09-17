@@ -73,7 +73,7 @@ export const QrDetails = () => {
 
     img.onload = () => {
       const padding = 8;
-      const fontSize = 10;
+      const fontSize = 6;
       const lineHeight = fontSize + 4;
       const maxWidth = 300;
       const textHeight = 80;
