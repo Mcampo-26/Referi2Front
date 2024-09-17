@@ -76,12 +76,12 @@ export const QrDetails = () => {
     const fontSize = 9; // Tamaño de fuente reducido
     const lineHeight = fontSize + 4;
     const maxWidth = 280; // Ancho máximo reducido para el texto
-    const textHeight = 100; // Altura del área de texto aumentada
+    const textHeight = 80; // Altura del área de texto ajustada
     const marginTop = 20; // Margen superior ajustado
-    const marginBottom = 0; // Margen inferior ajustado
+    const marginBottom = 0; // Margen inferior ajustado a 0
 
     canvas.width = img.width + padding * 2;
-    canvas.height = img.height + textHeight + padding * 2 + marginTop + marginBottom;
+    canvas.height = img.height + textHeight + padding * 2 + marginTop; // Ajuste de altura sin margen inferior extra
 
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -157,6 +157,7 @@ export const QrDetails = () => {
     alert("Error al cargar la imagen del QR");
   };
 };
+
 
 
   if (loading) {
