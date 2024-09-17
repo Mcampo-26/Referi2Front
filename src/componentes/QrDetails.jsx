@@ -72,8 +72,8 @@ export const QrDetails = () => {
     img.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
 
     img.onload = () => {
-      const padding = 8;
-      const fontSize = 6;
+      const padding = 9;
+      const fontSize = 5;
       const lineHeight = fontSize + 4;
       const maxWidth = 300;
       const textHeight = 80;
