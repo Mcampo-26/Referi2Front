@@ -379,15 +379,15 @@ export const QrMain = () => {
       alert("No hay código QR para compartir.");
       return;
     }
-
+  
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const svg = qrRef.current.querySelector("svg");
-
+  
     const svgData = new XMLSerializer().serializeToString(svg);
     const img = new Image();
     img.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
-
+  
     img.onload = () => {
       const padding = 10;
       const fontSize = 13;
@@ -396,26 +396,26 @@ export const QrMain = () => {
       const textHeight = 80;
       const marginTop = 25;
       const marginBottom = -50;
-
+  
       canvas.width = img.width + padding * 2;
       canvas.height =
         img.height + textHeight + padding * 2 + marginTop + marginBottom;
-
+  
       ctx.fillStyle = "#fff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+  
       ctx.drawImage(img, padding, padding);
-
+  
       const mensaje = `¡Hola! 🎉\nTe invitamos a usar este QR\npara obtener beneficios exclusivos con ${nombreEmpresa}.`;
-
+  
       ctx.font = `${fontSize}px Arial`;
       ctx.fillStyle = "#333";
       ctx.textAlign = "center";
-
+  
       const words = mensaje.split(" ");
       const lines = [];
       let currentLine = "";
-
+  
       for (let i = 0; i < words.length; i++) {
         const testLine = currentLine + words[i] + " ";
         const testWidth = ctx.measureText(testLine).width;
@@ -427,52 +427,57 @@ export const QrMain = () => {
         }
       }
       lines.push(currentLine);
-
+  
       const textYStart = img.height + padding + marginTop;
-
+  
       lines.forEach((line, index) => {
         ctx.fillText(line, canvas.width / 2, textYStart + index * lineHeight);
       });
-
+  
       const combinedImage = canvas.toDataURL("image/png");
-
+  
       const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
-      if (isMobile) {
+  
+      const byteCharacters = atob(combinedImage.split(",")[1]);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: "image/png" });
+      const file = new File([blob], "qr-code-with-message.png", {
+        type: "image/png",
+      });
+  
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        // Usar navigator.share si está disponible
+        navigator
+          .share({
+            files: [file],
+            title: "Código QR con mensaje",
+            text: mensaje,
+          })
+          .then(() => console.log("Compartido con éxito"))
+          .catch((error) => console.log("Error al compartir", error));
+      } else if (isMobile) {
         const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
         window.open(url, "_blank");
       } else {
-        const byteCharacters = atob(combinedImage.split(",")[1]);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: "image/png" });
-        const file = new File([blob], "qr-code-with-message.png", {
-          type: "image/png",
-        });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator
-            .share({
-              files: [file],
-              title: "Código QR con mensaje",
-              text: mensaje,
-            })
-            .then(() => console.log("Compartido con éxito"))
-            .catch((error) => console.log("Error al compartir", error));
-        } else {
-          alert("Tu navegador no soporta compartir archivos o texto.");
-        }
+        // Si el navegador no puede compartir archivos, mostrar el QR en una nueva pestaña
+        const downloadLink = document.createElement("a");
+        downloadLink.href = combinedImage;
+        downloadLink.download = "qr-code.png";
+        downloadLink.target = "_blank"; // Abrir en una nueva pestaña
+        downloadLink.click();
       }
     };
-
+  
     img.onerror = () => {
       console.error("Error al cargar la imagen del QR");
       alert("Error al cargar la imagen del QR");
     };
   };
+  
 
   const handlePaymentChange = (e) => {
     setIsPayment(e.target.checked);
