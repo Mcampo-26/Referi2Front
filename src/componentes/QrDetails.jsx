@@ -51,7 +51,7 @@ export const QrDetails = () => {
     const formattedNumber = phoneNumber.replace(/\D/g, "");
     window.open(`https://wa.me/${formattedNumber}`, "_blank");
   };
- const handleWhatsAppShare = () => {
+const handleWhatsAppShare = () => {
   if (!qrRef.current) {
     alert("No hay código QR para compartir.");
     return;
@@ -72,14 +72,14 @@ export const QrDetails = () => {
   img.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
 
   img.onload = () => {
-    const padding = 2;
-    const fontSize = 12;
-    const lineHeight = fontSize + 6;
-    const maxWidth = 280;
+    const padding = 20; // Aumentar el padding para los márgenes
+    const fontSize = 14; // Tamaño de fuente más grande
+    const lineHeight = fontSize + 8; // Espacio entre líneas
+    const maxWidth = 240; // Reducir ancho máximo para mejor ajuste de texto
     const textHeight = lineHeight * 3;
     const marginTop = 20;
-    const marginBottom = 0;
 
+    // Ajuste del tamaño del lienzo para incluir el texto con márgenes adecuados
     canvas.width = img.width + padding * 2;
     canvas.height = img.height + textHeight + padding * 2 + marginTop;
 
@@ -88,10 +88,9 @@ export const QrDetails = () => {
 
     ctx.drawImage(img, padding, padding);
 
-    // Formato del mensaje con saltos de línea explícitos
     const mensaje = `¡Hola! 🎉\n\nTe invitamos a usar este QR para obtener beneficios exclusivos con ${
       qr.empresaId?.name || "nuestra empresa"
-    }.\n\nUsa este código para más detalles.`; // Ajuste del mensaje para mantenerlo en tres líneas
+    }`; 
 
     ctx.font = `${fontSize}px Arial`;
     ctx.fillStyle = "#333";
@@ -160,6 +159,7 @@ export const QrDetails = () => {
     alert("Error al cargar la imagen del QR");
   };
 };
+
 
 
   if (loading) {
