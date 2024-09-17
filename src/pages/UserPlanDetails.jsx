@@ -22,7 +22,7 @@ export const UserPlanDetails = () => {
 
   useEffect(() => {
     if (isAuthenticated && usuario) {
-      fetchPlanDetails();
+      fetchPlanDetails().catch(err => console.error('Error fetching plan details:', err));
     }
   }, [fetchPlanDetails, isAuthenticated, usuario]);
 
@@ -31,7 +31,7 @@ export const UserPlanDetails = () => {
   }
 
   const { nombre, email, telefono, empresa, role } = usuario;
-  const expiryDate = planDetails ? new Date(planDetails.expiryDate) : null;
+  const expiryDate = planDetails && planDetails.expiryDate ? new Date(planDetails.expiryDate) : null;
   const isPlanExpired = expiryDate && isAfter(new Date(), expiryDate);
 
   const handleRenewClick = () => {
@@ -85,7 +85,7 @@ export const UserPlanDetails = () => {
           </Card>
         </Grid>
 
-        {planDetails && (
+        {planDetails ? (
           <Grid item xs={12} sm={6} md={4}>
             <Card className="shadow-lg rounded-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300" sx={{ backgroundColor: theme.palette.mode === 'dark' ? '#2b2b2b' : '#fff' }}>
               <CardContent>
@@ -95,8 +95,8 @@ export const UserPlanDetails = () => {
                     Detalles del Plan
                   </Typography>
                 </Box>
-                <Typography variant="body1"><strong>Plan:</strong> {planDetails.planName}</Typography>
-                <Typography variant="body1"><strong>Monto:</strong> ${planDetails.amount}</Typography>
+                <Typography variant="body1"><strong>Plan:</strong> {planDetails.planName || 'No disponible'}</Typography>
+                <Typography variant="body1"><strong>Monto:</strong> ${planDetails.amount || 'No disponible'}</Typography>
                 <Typography variant="body1">
                   <strong>Fecha de Expiración:</strong> 
                   {isValid(expiryDate) ? format(expiryDate, 'dd/MM/yyyy') : 'Fecha no válida'}
@@ -115,6 +115,23 @@ export const UserPlanDetails = () => {
                   sx={{ marginTop: 2 }}
                 >
                   Renovar Plan
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        ) : (
+          <Grid item xs={12} sm={6} md={4}>
+            <Card className="shadow-lg rounded-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300" sx={{ backgroundColor: theme.palette.mode === 'dark' ? '#2b2b2b' : '#fff' }}>
+              <CardContent>
+                <Typography variant="body1">No tienes un plan activo.</Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  onClick={() => navigate('/planSelector')}
+                  sx={{ marginTop: 2 }}
+                >
+                  Seleccionar Plan
                 </Button>
               </CardContent>
             </Card>
