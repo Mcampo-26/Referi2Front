@@ -16,36 +16,42 @@ import Brightness4 from "@mui/icons-material/Brightness4";
 import Brightness7 from "@mui/icons-material/Brightness7";
 import CloseIcon from '@mui/icons-material/Close';
 import MenuItem from "@mui/material/MenuItem";
-import Badge from "@mui/material/Badge"; // Importa Badge
+import Badge from "@mui/material/Badge"; 
 import useUsuariosStore from "../store/useUsuariosStore";
-import useMensajesStore from "../store/useMensajesStore"; // Importa useMensajesStore
+import useMensajesStore from "../store/useMensajesStore"; 
 import Brand from '../assets/Brand.jpg';
 
 export const Navbar = ({ toggleDarkMode, darkMode }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [empresaNombre, setEmpresaNombre] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [permisos, setPermisos] = useState({});
   const { usuario, isAuthenticated, role, logoutUsuario } = useUsuariosStore((state) => ({
     usuario: state.usuario,
     isAuthenticated: state.isAuthenticated,
     role: state.role,
     logoutUsuario: state.logoutUsuario,
   }));
-  const { getUnreadMessagesCountByUser } = useMensajesStore(); // Usa la función correcta del store
+  const { getUnreadMessagesCountByUser } = useMensajesStore(); 
   const navigate = useNavigate();
+  const storedRole = localStorage.getItem('roleName') || '';
+const storedEmpresaNombre = localStorage.getItem('empresaName') || ''
 
+  // Obtener permisos del localStorage cuando el usuario está autenticado
   useEffect(() => {
     if (isAuthenticated) {
+      const storedPermisos = localStorage.getItem('permisos');
+      if (storedPermisos) {
+        setPermisos(JSON.parse(storedPermisos)); // Guardar los permisos en el estado
+      }
       const nombre = localStorage.getItem('empresaName');
       if (nombre) {
         setEmpresaNombre(nombre);
       }
-      // Obtiene la cantidad de mensajes no leídos
       getUnreadMessagesCountByUser(usuario._id).then(count => setUnreadCount(count));
     }
   }, [isAuthenticated, getUnreadMessagesCountByUser, usuario]);
 
-  
   const handleLogout = () => {
     closeMenu();
     Swal.fire({
@@ -53,69 +59,63 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
       timer: 2000,
       didOpen: () => Swal.showLoading(),
     }).then(() => {
-      logoutUsuario(); // Llama a la función de logout del store
-      navigate('/login', { replace: true }); // Redirige después de cerrar sesión
+      logoutUsuario(); 
+      navigate('/login', { replace: true }); 
     });
   };
 
-  const handleEmpresasClick = () => {
-    const empresaId = localStorage.getItem('empresaId');
-    if (empresaId) {
-      navigate(`/empresaDetails/${empresaId}`);
-    }
-    closeMenu();
-  };
 
+
+  // Crear mapa de roles por ID
   const roleMap = {
     "668692d09bbe1e9ff25a4826": "SuperAdmin",
     "66aba1fc753d20ba639d2aaf": "Admin",
-    "668697449bbe1e9ff25a4889": "Referidor",
-    "6686d371d64d18acf5ba6bb5": "Vendedor",
+ 
   };
 
-  const generateNavItems = (roleId) => {
-    const role = roleMap[roleId] || ""; // Convertir el id al nombre usando el mapa
-  
+  const generateNavItems = (roleId, permisos) => {
     const commonItems = [
-      { id: 4, text: "Mis QR", to: "/Referidos" },
-      { id: 12, text: "Contacto", to: "/contacto" },
-      { id: 14, text: "Mensajes", to: "/mensajes" },
-      { id: 5, text: "Cerrar Sesión", action: handleLogout },
+      { id: 12, text: "Contacto", to: "/contacto" }, // No filtramos estos
+      { id: 14, text: "Mensajes", to: "/mensajes" }, // No filtramos estos
+      { id: 5, text: "Cerrar Sesión", action: handleLogout }, // Cerrar sesión siempre visible
     ];
   
-    switch (role) {
-      case "SuperAdmin":
-        return [
-          { id: 1, text: "Inicio", to: "/" },
-          { id: 8, text: "Crear", to: "/QrMain" },
-          { id: 6, text: "Usuarios", to: "/Users" },
-          { id: 10, text: "Empresas", to: "/Empresas" },
-          { id: 9, text: "Roles", to: "/roles" },
-          { id: 11, text: "Planes de Pago", to: "/planSelector" },
-          { id: 13, text: "Cuenta", to: "/UserPlan" },
-         
-          ...commonItems,
-        ];
-      case "Admin":
-        return [
-          { id: 8, text: "Crear", to: "/QrMain" },
-          { id: 2, text: "Escanear QR", to: "/Escanear" },
-          { id: 6, text: "Usuarios", to: "/Users" },
-         
-          { id: 13, text: "Cuenta", to: "/UserPlan" },
-          { id: 10, text: "Empresa", action: handleEmpresasClick },
-          ...commonItems,
-        ];
-      case "Referidor":
-      case "Vendedor":
-        return commonItems;
-      default:
-        return [{ id: 5, text: "Cerrar Sesión", action: handleLogout }];
-    }
-  };
+    const allItems = [
+      { id: 1, text: "Inicio", to: "/", permissionKey: "viewHome" },
+      { id: 8, text: "Crear", to: "/QrMain", permissionKey: "createQr" },
+      { id: 4, text: "Mis QR", to: "/Referidos", permissionKey: "viewQr" },
+      { id: 6, text: "Usuarios", to: "/Users", permissionKey: "viewUsers" },
+      { id: 10, text: roleId === "668692d09bbe1e9ff25a4826" ? "Empresas" : "Empresa", to: "/Empresas", permissionKey: "viewEmpresas" },
 
-  const navItems = isAuthenticated && role
-    ? generateNavItems(role) 
+      { id: 9, text: "Roles", to: "/roles", permissionKey: "viewRoles" },
+      { id: 11, text: "Planes de Pago", to: "/planSelector", permissionKey: "viewPlanes" },
+      { id: 13, text: "Cuenta", to: "/UserPlan", permissionKey: "viewCuenta" },
+      { id: 2, text: "Escanear QR", to: "/Escanear", permissionKey: "viewEscanear" }, // Agregado Escanear
+      ...commonItems
+    ];
+  
+    // Si el usuario es SuperAdmin o Admin, mostrar todos los ítems sin filtrar por permisos
+    if (roleId === "668692d09bbe1e9ff25a4826" || roleId === "66aba1fc753d20ba639d2aaf") {
+      return allItems;
+    }
+  
+    // Filtrar ítems según los permisos almacenados
+    return allItems.filter(item => {
+      // Si no tiene permisoKey o está en commonItems, siempre mostrarlo
+      if (!item.permissionKey) {
+        return true;
+      }
+      
+      // Mostrar si el permiso está en true
+      return permisos[item.permissionKey] === true;
+    });
+  };
+  
+
+
+  // Si el usuario está autenticado, mostrar ítems basados en los permisos o rol
+  const navItems = isAuthenticated
+    ? generateNavItems(role, permisos) 
     : [
         { id: 6, text: "Iniciar Sesión", to: "/Login" },
         { id: 7, text: "Registrarse", to: "/Register" },
@@ -153,7 +153,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
             </RouterLink>
           </Box>
 
-          {isAuthenticated && (
+          {isAuthenticated && role && (
             <Typography 
               variant="body1" 
               sx={{ 
@@ -164,7 +164,7 @@ export const Navbar = ({ toggleDarkMode, darkMode }) => {
                 mb: { xs: 1, md: 0 }
               }}
             >
-              {`Hola, ${role ? ` eres ${roleMap[role]} de ${empresaNombre}` : ''}`}
+             {`Hola, ${storedRole ? `eres ${storedRole} de ${storedEmpresaNombre}` : ''}`}
             </Typography>
           )}
 

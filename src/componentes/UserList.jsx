@@ -74,12 +74,27 @@ export const UserList = () => {
   const theme = useTheme();
 
   useEffect(() => {
-    if (role === superAdminRoleId) {
-      getUsuarios(currentPage);
-    } else if (role === adminRoleId && empresaId) {
-      getUsuariosByEmpresa(empresaId);
+    // Obtener el rol y la empresa directamente del localStorage
+    const storedRole = localStorage.getItem("roleId");
+    const storedEmpresaId = localStorage.getItem("empresaId");
+    
+    console.log("Valor de role desde localStorage:", storedRole);  // Log para verificar el rol
+    console.log("Valor de empresaId desde localStorage:", storedEmpresaId);  // Log para verificar el empresaId
+  
+    if (storedRole) {
+      if (storedRole === superAdminRoleId) {
+        getUsuarios(currentPage);  // Llama a la función para obtener todos los usuarios si es SuperAdmin
+      } else if (storedEmpresaId) {
+        getUsuariosByEmpresa(storedEmpresaId);  // Obtén usuarios solo por empresa si no es SuperAdmin
+      }
+    } else {
+      console.log("No se puede determinar el rol o la empresa. No se cargan usuarios.");
     }
-  }, [role, empresaId, getUsuarios, getUsuariosByEmpresa, currentPage]);
+  }, [currentPage, getUsuarios, getUsuariosByEmpresa]);
+  
+  
+  
+  
 
   const handleSort = (column) => {
     if (column === orderBy) {

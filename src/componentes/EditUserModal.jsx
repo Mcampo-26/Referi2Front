@@ -71,18 +71,19 @@ export const EditUserModal = ({ isOpen, handleClose, editedUser }) => {
     }));
   };
 
-  const validateInputs = () => {
-    if (!updatedUser.nombre.trim()) return "El nombre del usuario es requerido.";
-    if (!updatedUser.email.trim()) return "El correo electrónico es requerido.";
-    if (!updatedUser.role) return "El rol del usuario es requerido.";
-  
-    // Permitir "Ninguna" empresa solo si el usuario es SuperAdmin
-    if (updatedUser.role !== "668692d09bbe1e9ff25a4826" && !updatedUser.empresa) {
-      return "La empresa es requerida.";
-    }
-  
-    return null;
-  };
+const validateInputs = () => {
+  if (!updatedUser.nombre.trim()) return "El nombre del usuario es requerido.";
+  if (!updatedUser.email.trim()) return "El correo electrónico es requerido.";
+  if (!updatedUser.role) return "El rol del usuario es requerido.";
+
+  // Permitir "Ninguna" empresa solo si el usuario es SuperAdmin
+  if (updatedUser.role !== "668692d09bbe1e9ff25a4826" && !updatedUser.empresa) {
+    return "La empresa es requerida.";
+  }
+
+  return null;
+};
+
   ;
 
   const handleSubmit = async (event) => {
