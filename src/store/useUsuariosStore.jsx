@@ -16,8 +16,14 @@ export const useUsuariosStore = create((set, get) => ({
   getUsuarios: async (page = 1, limit = 10) => {
     set({ loading: true, error: null });
     try {
+      console.log(`Frontend: solicitando usuarios con page=${page} y limit=${limit}`);
+      
       const response = await axiosInstance.get('/usuarios/get', { params: { page, limit } });
+      
+      console.log('Respuesta del servidor:', response.data);
+      
       const { usuarios, total, totalPages, currentPage } = response.data;
+      
       set({
         usuarios,
         totalRecords: total,
@@ -25,11 +31,14 @@ export const useUsuariosStore = create((set, get) => ({
         currentPage,
         loading: false,
       });
+      
+      console.log(`Usuarios obtenidos: ${usuarios.length}`);
     } catch (error) {
       console.error('Error al obtener usuarios:', error.response || error.message);
       set({ loading: false, error: 'Error al obtener usuarios' });
     }
   },
+
 
   getUsuarioById: (id) => {
     const { usuarios } = get();
@@ -103,9 +112,11 @@ export const useUsuariosStore = create((set, get) => ({
   
       if (response.status === 200) {
         const { usuario, token } = response.data;
-        const role = usuario.role ? usuario.role._id : null; // Almacena el ID del rol en lugar del nombre
+        const roleId = usuario.role ? usuario.role._id : null; // Almacena el ID del rol
+        const roleName = usuario.role ? usuario.role.name : null; // Almacena el nombre del rol
         const empresaId = usuario.empresa ? usuario.empresa._id : null;
         const empresaName = usuario.empresa ? usuario.empresa.name : null;
+        const permisos = usuario.role ? usuario.role.permisos : {}; // Obtén los permisos asociados al rol
   
         // Guardar en localStorage inmediatamente
         localStorage.setItem('usuario', JSON.stringify(usuario));
@@ -113,9 +124,11 @@ export const useUsuariosStore = create((set, get) => ({
         localStorage.setItem('token', token);
         localStorage.setItem('userName', usuario.nombre || '');
         localStorage.setItem('userEmail', usuario.email || '');
-        localStorage.setItem('role', role || '');
+        localStorage.setItem('roleId', roleId || ''); // Guarda el ID del rol
+        localStorage.setItem('roleName', roleName || ''); // Guarda el nombre del rol
         localStorage.setItem('empresaId', empresaId || '');
         localStorage.setItem('empresaName', empresaName || '');
+        localStorage.setItem('permisos', JSON.stringify(permisos)); // Almacenar permisos en localStorage
         localStorage.setItem('userId', usuario._id);
   
         // Actualizar el estado
@@ -123,7 +136,7 @@ export const useUsuariosStore = create((set, get) => ({
           usuario,
           userId: usuario._id,
           isAuthenticated: true,
-          role: role,
+          role: roleId,
           empresaId: empresaId,
           empresaName: empresaName,
           loading: false,
@@ -140,6 +153,7 @@ export const useUsuariosStore = create((set, get) => ({
       return false;
     }
   },
+  
   
   logoutUsuario: () => {
     localStorage.clear(); // Elimina todo del localStorage

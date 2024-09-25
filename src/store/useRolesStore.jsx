@@ -1,6 +1,5 @@
-import {create} from 'zustand';
-import axios from 'axios';
-import { URL } from '../utilities/config';
+import { create } from 'zustand';
+import axiosInstance from '../utilities/axiosInstance'; // Usamos axiosInstance
 
 const useRolesStore = create((set) => ({
   roles: [],
@@ -10,7 +9,7 @@ const useRolesStore = create((set) => ({
   getAllRoles: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.get(`${URL}/roles/all`);
+      const response = await axiosInstance.get('/roles/all');
       set({
         roles: response.data,
         loading: false,
@@ -24,7 +23,7 @@ const useRolesStore = create((set) => ({
   createRole: async (role) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post(`${URL}/roles/create`, role);
+      const response = await axiosInstance.post('/roles/create', role); // Usamos axiosInstance
       const nuevoRol = response.data;
       set((state) => ({
         roles: [...state.roles, nuevoRol],
@@ -37,10 +36,46 @@ const useRolesStore = create((set) => ({
     }
   },
 
+  getRoleById: async (roleId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosInstance.get(`/roles/${roleId}`); // Usamos axiosInstance
+      const role = response.data;
+      set((state) => ({
+        roles: [...state.roles, role],
+        loading: false,
+      }));
+      return role;
+    } catch (error) {
+      console.error('Error al obtener rol:', error);
+      set({ loading: false, error: 'Error al obtener rol' });
+    }
+  },
+
+  getRolesByUser: async (empresaId, userRole) => {
+    set({ loading: true, error: null });
+    try {
+      let response;
+      if (userRole === "SuperAdmin") {
+        response = await axiosInstance.get('/roles/all');
+      } else {
+        response = await axiosInstance.get(`/roles/empresa/${empresaId}`);
+      }
+
+      set({
+        roles: response.data,
+        loading: false,
+      });
+    } catch (error) {
+      console.error('Error al obtener roles:', error.response || error.message);
+      set({ loading: false, error: 'Error al obtener roles' });
+    }
+  },
+
   deleteRole: async (id) => {
     set({ loading: true, error: null });
     try {
-      await axios.delete(`${URL}/roles/delete/${id}`);
+      await axiosInstance.delete(`/roles/delete/${id}`); // Usamos axiosInstance
       set((state) => ({
         roles: state.roles.filter((role) => role._id !== id),
         loading: false,
@@ -51,10 +86,27 @@ const useRolesStore = create((set) => ({
     }
   },
 
+  getRolesByEmpresa: async (empresaId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosInstance.get(`/roles/empresa/${empresaId}`); // Usamos axiosInstance
+      set({
+        roles: response.data,
+        loading: false,
+      });
+    } catch (error) {
+      console.error("Error al obtener roles por empresa:", error);
+      set({
+        loading: false,
+        error: 'Error al obtener roles por empresa',
+      });
+    }
+  },
+
   updateRole: async ({ roleId, updatedRole }) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.put(`${URL}/roles/update/${roleId}`, updatedRole);
+      const response = await axiosInstance.put(`/roles/update/${roleId}`, updatedRole); // Usamos axiosInstance
       const updatedRoleData = response.data;
       set((state) => ({
         roles: state.roles.map((role) =>
@@ -67,6 +119,8 @@ const useRolesStore = create((set) => ({
       set({ loading: false, error: 'Error al actualizar rol' });
     }
   },
+
+
 }));
 
 export default useRolesStore;

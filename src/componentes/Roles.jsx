@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import useRolesStore from "../store/useRolesStore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
@@ -31,14 +32,17 @@ const MySwal = withReactContent(Swal);
 export const Roles = () => {
   const {
     roles,
-    getAllRoles,
+    getRolesByEmpresa, 
+    getRolesByUser,
     loading,
     error,
+    getAllRoles,
     createRole,
     updateRole,
     deleteRole,
     totalPages,
   } = useRolesStore();
+
   const [showModal, setShowModal] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -47,12 +51,33 @@ export const Roles = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const theme = useTheme();
 
-  useEffect(() => {
-    getAllRoles();
-  }, [currentPage]);
+  // Asegúrate de obtener correctamente el rol desde el localStorage
+  const userRole = localStorage.getItem("roleName"); // Aquí debería obtener el nombre del rol
+  const empresaId = localStorage.getItem("empresaId");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("Roles en el estado:", roles);
+    const empresaId = localStorage.getItem('empresaId');
+    if (empresaId) {
+      getRolesByEmpresa(empresaId);
+    } else {
+      console.error("No se encontró empresaId en localStorage");
+    }
+  }, [getRolesByEmpresa]);
+  
+  useEffect(() => {
+    // Llamar a getRolesByUser con el empresaId y userRole
+    if (userRole) {
+      getRolesByUser(empresaId, userRole);
+    } else {
+      console.error("userRole no está definido o no se obtuvo correctamente del localStorage.");
+    }
+  }, [empresaId, userRole, getRolesByUser]);
+
+  // Observa cambios en roles y mostrarlos en la consola
+  useEffect(() => {
+    console.log("Roles para renderizar:", roles);
   }, [roles]);
 
   const toggleModal = () => {
@@ -93,7 +118,7 @@ export const Roles = () => {
               confirmButtonColor: "#3085d6",
               confirmButtonText: "Ok",
             });
-            getAllRoles(); // Refrescar la lista de roles
+            getRolesByEmpresa(localStorage.getItem("empresaId")); // Refrescar la lista de roles
           })
           .catch((error) => {
             MySwal.fire({
@@ -107,11 +132,30 @@ export const Roles = () => {
     });
   };
 
+  const handleRowClick = (roleId) => {
+    // Navegar a RolesDetails pasando el ID del rol
+    navigate(`/rolesDetails/${roleId}`);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    const empresaId = localStorage.getItem('empresaId');
+    const roleName = localStorage.getItem('roleName'); // Obtener el rol desde localStorage
+  
+    // Permitir creación sin empresaId si el rol es SuperAdmin
+    if (!empresaId && roleName !== 'SuperAdmin') {
+      MySwal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'El ID de la empresa es requerido para crear un rol.',
+      });
+      return;
+    }
+  
     if (newRoleName.trim() !== "") {
-      toggleModal(); // Cierra el modal antes de mostrar el SweetAlert
-
+      toggleModal();
+  
       setTimeout(async () => {
         try {
           MySwal.fire({
@@ -122,28 +166,43 @@ export const Roles = () => {
               Swal.showLoading();
             },
             customClass: {
-              popup: "z-50", // Clase Tailwind para ajustar el z-index
+              popup: "z-50",
             },
             backdrop: `rgba(0,0,0,0.4)`,
           });
-
+  
           if (isEditing) {
+            // Si estamos editando, solo enviamos el nombre del rol
             await updateRole({
               roleId: editingRoleId,
               updatedRole: { name: newRoleName },
             });
           } else {
-            await createRole({ name: newRoleName });
+            // Si estamos creando un nuevo rol
+            const roleData = { name: newRoleName };
+  
+            // Añadir empresaId solo si el usuario no es SuperAdmin
+            if (roleName !== 'SuperAdmin') {
+              roleData.empresaId = empresaId;
+            }
+  
+            await createRole(roleData);
           }
-
-          await getAllRoles();
+  
+          // Si no es SuperAdmin, refrescar roles por empresa, de lo contrario refrescar todos los roles
+          if (roleName !== 'SuperAdmin') {
+            await getRolesByEmpresa(empresaId); // Refrescar roles después de la creación
+          } else {
+            await getAllRoles(); // SuperAdmin puede ver todos los roles, refrescar lista general
+          }
+  
           MySwal.close();
           MySwal.fire({
             icon: "success",
             title: "Roles actualizados",
             text: "Los roles se han actualizado correctamente.",
             customClass: {
-              popup: "z-50", // Clase Tailwind para ajustar el z-index
+              popup: "z-50",
             },
             backdrop: `rgba(0,0,0,0.4)`,
           });
@@ -154,25 +213,28 @@ export const Roles = () => {
             title: "Error",
             text: "Hubo un error al actualizar los roles.",
             customClass: {
-              popup: "z-50", // Clase Tailwind para ajustar el z-index
+              popup: "z-50",
             },
             backdrop: `rgba(0,0,0,0.4)`,
           });
           console.error("Error al actualizar los roles:", error);
         }
-      }, 500); // Retraso de 500ms antes de mostrar el SweetAlert "Guardando..."
+      }, 500);
     } else {
       MySwal.fire({
         icon: "error",
         title: "Error",
         text: "El nombre del rol no puede estar vacío.",
         customClass: {
-          popup: "z-50", // Clase Tailwind para ajustar el z-index
+          popup: "z-50",
         },
         backdrop: `rgba(0,0,0,0.4)`,
       });
     }
   };
+  
+  
+  
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -316,18 +378,24 @@ export const Roles = () => {
             </TableHead>
             <TableBody>
               {filteredRoles.map((role, index) => (
-                <TableRow key={`${role._id}-${index}`}>
+                <TableRow key={`${role._id}-${index}`} onClick={() => handleRowClick(role._id)} style={{ cursor: 'pointer' }}>
                   <TableCell>{role.name}</TableCell>
                   <TableCell align="right">
                     <FontAwesomeIcon
                       icon={faPenToSquare}
                       className="h-6 w-5 text-blue-400 hover:text-blue-700 cursor-pointer mr-4"
-                      onClick={() => handleEdit(role)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(role);
+                      }}
                     />
                     <FontAwesomeIcon
                       icon={faTrash}
                       className="h-4 w-4 text-red-600 hover:text-red-800 cursor-pointer"
-                      onClick={() => handleDelete(role._id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(role._id);
+                      }}
                     />
                   </TableCell>
                 </TableRow>

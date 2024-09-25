@@ -26,6 +26,7 @@ import { UserPlanDetails } from './pages/UserPlanDetails';
 import { VerifyAccount } from '../src/componentes/VerifyAccount';
 import { ProtectedRoute } from './componentes/ProtectedRoute';
 import { Mensajes } from "./componentes/Mensajes";
+import {RolesDetails} from "./componentes/RolesDetails"
 
 // Definición de temas
 const lightTheme = createTheme({
@@ -99,32 +100,40 @@ function App() {
   
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login', { replace: true });
-    } else if (blockBackButton) {
-      // Empuja un nuevo estado al historial para prevenir navegación hacia atrás
+    // Verifica si el usuario está autenticado y la ruta actual es diferente de /login o /register
+    const currentPath = window.location.pathname;
+    
+    if (!isAuthenticated && currentPath !== '/login' && currentPath !== '/register') {
+      // Redirige a la página principal si no está autenticado y no está en login o register
+      navigate('/', { replace: true });
+    } else if (blockBackButton && isAuthenticated) {
+      // Función para empujar un nuevo estado al historial
       const pushState = () => {
-        window.history.pushState(null, "", window.location.href);
+        window.history.pushState(null, "", window.location.href); // Empuja el estado actual al historial
       };
-
-      pushState(); // Empuja el estado inicialmente
-
+  
+      pushState(); // Empuja el estado inicialmente al cargar la página
+  
+      // Función para manejar el evento de retroceso (botón "Atrás" del navegador)
       const handlePopState = () => {
-        pushState(); // Empuja un nuevo estado cada vez que el usuario intenta retroceder
-        navigate(window.location.pathname, { replace: true }); // Redirige a la página actual inmediatamente
+        pushState(); // Empuja nuevamente el estado al intentar retroceder
+        navigate(window.location.pathname, { replace: true }); // Redirige a la página actual para evitar navegación hacia atrás
       };
-
+  
+      // Escucha el evento de retroceso en el historial del navegador
       window.addEventListener("popstate", handlePopState);
-
-      // Este código empuja repetidamente estados al historial para bloquear completamente el botón "Atrás"
-      const intervalId = setInterval(pushState, 100); // Cada 100 ms se asegura de que el historial esté actualizado
-
+  
+      // Intervalo que empuja repetidamente estados al historial para bloquear el retroceso
+      const intervalId = setInterval(pushState, 100); // Cada 100 ms asegura que el historial esté actualizado
+  
+      // Cleanup: Elimina el event listener y el intervalo al desmontar el componente o cambiar el estado de bloqueo
       return () => {
         window.removeEventListener("popstate", handlePopState);
-        clearInterval(intervalId); // Limpia el intervalo al desmontar el componente o al cambiar el estado de bloqueo
+        clearInterval(intervalId);
       };
     }
   }, [isAuthenticated, blockBackButton, navigate]);
+  
 
   useEffect(() => {
     if (darkMode) {
@@ -171,6 +180,9 @@ function App() {
           <Route path="/UserPlan" element={<ProtectedRoute element={<UserPlanDetails />} />} />
           <Route path="/verify" element={<VerifyAccount />} />
           <Route path="/mensajes" element={<Mensajes />} />
+          <Route path="/rolesDetails/:roleId" element={<RolesDetails />} />
+
+
         </Routes>
       </div>
     </ThemeProvider>

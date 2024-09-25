@@ -38,26 +38,32 @@ export const Empresas = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredEmpresas, setFilteredEmpresas] = useState([]);
 
+  // ID del rol de SuperAdmin
   const superAdminRoleId = "668692d09bbe1e9ff25a4826";
-  const roleId = localStorage.getItem('role'); // Obtén el roleId desde el localStorage
+  
+  // Obtener los valores del localStorage
+  const roleId = localStorage.getItem('roleId');
   const empresaId = localStorage.getItem('empresaId');
 
+  // Comprobamos el rol del usuario
   useEffect(() => {
     if (roleId === superAdminRoleId) {
-      // Si el usuario tiene el rol de SuperAdmin, obtiene todas las empresas
-      getAllEmpresas();
-    } else if (roleId === 'Admin' && empresaId) {
-      // Si el usuario es Admin, obtiene solo la empresa asignada
-      getEmpresaById(empresaId);
+      console.log("Es SuperAdmin, obteniendo todas las empresas...");
+      getAllEmpresas();  // SuperAdmin obtiene todas las empresas
+    } else if (empresaId) {
+      console.log("Es Admin u otro rol, obteniendo su empresa por ID:", empresaId);
+      getEmpresaById(empresaId);  // Otros roles solo obtienen su propia empresa
+    } else {
+      console.log("No se puede determinar el rol o la empresa.");
     }
   }, [roleId, empresaId, getAllEmpresas, getEmpresaById]);
 
+  // Filtrar las empresas para mostrar: SuperAdmin ve todas, otros roles ven solo su empresa
   useEffect(() => {
-    if (roleId === 'Admin' && empresa) {
-      // Si es Admin, y hay una empresa cargada, la agregamos al array para que se renderice
-      setFilteredEmpresas([empresa]);
-    } else {
-      setFilteredEmpresas(empresas);
+    if (roleId === superAdminRoleId) {
+      setFilteredEmpresas(empresas);  // SuperAdmin ve todas las empresas
+    } else if (empresa) {
+      setFilteredEmpresas([empresa]);  // Otros roles ven solo su empresa
     }
   }, [roleId, empresa, empresas]);
 
@@ -100,9 +106,9 @@ export const Empresas = () => {
               confirmButtonText: "Ok",
             });
             if (roleId === superAdminRoleId) {
-              getAllEmpresas();
-            } else if (roleId === 'Admin' && empresaId) {
-              getEmpresaById(empresaId);
+              getAllEmpresas(); // Refrescar todas las empresas
+            } else if (empresaId) {
+              getEmpresaById(empresaId); // Refrescar solo la empresa del Admin
             }
           })
           .catch((error) => {
@@ -130,9 +136,9 @@ export const Empresas = () => {
         }
 
         if (roleId === superAdminRoleId) {
-          getAllEmpresas();
-        } else if (roleId === 'Admin' && empresaId) {
-          getEmpresaById(empresaId);
+          getAllEmpresas(); // Refrescar todas las empresas
+        } else if (empresaId) {
+          getEmpresaById(empresaId); // Refrescar solo la empresa del Admin
         }
       } catch (error) {
         MySwal.fire({
@@ -200,9 +206,11 @@ export const Empresas = () => {
             </Button>
           )}
         </Box>
-        <Button variant="contained" color="primary" onClick={handleCreate}>
-          + Agregar Empresa
-        </Button>
+        {roleId === superAdminRoleId && (
+          <Button variant="contained" color="primary" onClick={handleCreate}>
+            + Agregar Empresa
+          </Button>
+        )}
       </Box>
 
       <Dialog open={showModal} onClose={toggleModal}>
