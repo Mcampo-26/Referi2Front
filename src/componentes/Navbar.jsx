@@ -42,15 +42,23 @@ const storedEmpresaNombre = localStorage.getItem('empresaName') || ''
     if (isAuthenticated) {
       const storedPermisos = localStorage.getItem('permisos');
       if (storedPermisos) {
-        setPermisos(JSON.parse(storedPermisos)); // Guardar los permisos en el estado
+        try {
+          setPermisos(JSON.parse(storedPermisos)); // Guardar los permisos en el estado
+        } catch (error) {
+          console.error("Error al parsear permisos:", error);
+          localStorage.removeItem('permisos'); // Opcionalmente eliminar los permisos corruptos
+        }
       }
+      
       const nombre = localStorage.getItem('empresaName');
       if (nombre) {
         setEmpresaNombre(nombre);
       }
+  
       getUnreadMessagesCountByUser(usuario._id).then(count => setUnreadCount(count));
     }
   }, [isAuthenticated, getUnreadMessagesCountByUser, usuario]);
+  
 
   const handleLogout = () => {
     closeMenu();
